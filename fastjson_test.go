@@ -1,6 +1,7 @@
 package fastjson
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -558,6 +559,16 @@ func TestParserParse(t *testing.T) {
 		ss := v.String()
 		if ss != s {
 			t.Fatalf("unexpected string representation for object; got %q; want %q", ss, s)
+		}
+
+		s = strings.TrimSpace(largeFixture)
+		v, err = p.Parse(s)
+		if err != nil {
+			t.Fatalf("cannot parse largeFixture: %s", err)
+		}
+		ss = v.String()
+		if ss != s {
+			t.Fatalf("unexpected string representation for object; got\n%q; want\n%q", ss, s)
 		}
 	})
 }
