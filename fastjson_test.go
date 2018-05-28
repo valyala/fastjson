@@ -15,6 +15,39 @@ func TestParserPool(t *testing.T) {
 	}
 }
 
+func TestValueGetInt(t *testing.T) {
+	var p Parser
+
+	if err := p.Parse(`{"foo": 123, "bar": "433", "baz": true}`); err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	v := p.Value()
+	n := v.GetInt("foo")
+	if n != 123 {
+		t.Fatalf("unexpected value; got %d; want %d", n, 123)
+	}
+	n = v.GetInt("bar")
+	if n != 0 {
+		t.Fatalf("unexpected non-zero value; got %d", n)
+	}
+	f := v.GetFloat64("foo")
+	if f != 123.0 {
+		t.Fatalf("unexpected value; got %f; want %f", f, 123.0)
+	}
+	sb := v.GetStringBytes("bar")
+	if string(sb) != "433" {
+		t.Fatalf("unexpected value; got %q; want %q", sb, "443")
+	}
+	bv := v.GetBool("baz")
+	if !bv {
+		t.Fatalf("unexpected value; got %v; want %v", bv, true)
+	}
+	bv = v.GetBool("bar")
+	if bv {
+		t.Fatalf("unexpected value; got %v; want %v", bv, false)
+	}
+}
+
 func TestValueGet(t *testing.T) {
 	var pp ParserPool
 
@@ -331,9 +364,9 @@ func TestParserParse(t *testing.T) {
 		if tp != TypeNumber || tp.String() != "number" {
 			t.Fatalf("unexpected type obtained for integer: %#v", v)
 		}
-		n := v.Number()
-		if n != 12345.0 {
-			t.Fatalf("unexpected value obtained for integer; got %f; want %f", n, 12345.0)
+		n := v.Int()
+		if n != 12345 {
+			t.Fatalf("unexpected value obtained for integer; got %d; want %d", n, 12345)
 		}
 		s := v.String()
 		if s != "12345" {
@@ -350,7 +383,7 @@ func TestParserParse(t *testing.T) {
 		if tp != TypeNumber || tp.String() != "number" {
 			t.Fatalf("unexpected type obtained for integer: %#v", v)
 		}
-		n := v.Number()
+		n := v.Float64()
 		if n != -12.345 {
 			t.Fatalf("unexpected value obtained for integer; got %f; want %f", n, -12.345)
 		}

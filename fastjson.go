@@ -631,6 +631,58 @@ func (v *Value) Get(keys ...string) *Value {
 	return v
 }
 
+// GetFloat64 returns float64 value by the given keys path.
+//
+// Array indexes may be represented as decimal numbers.
+//
+// 0 is returned for non-existing keys path or invalid value type.
+func (v *Value) GetFloat64(keys ...string) float64 {
+	v = v.Get(keys...)
+	if v == nil || v.Type() != TypeNumber {
+		return 0
+	}
+	return v.Float64()
+}
+
+// GetInt returns int value by the given keys path.
+//
+// Array indexes may be represented as decimal numbers.
+//
+// 0 is returned for non-existing keys path or invalid value type.
+func (v *Value) GetInt(keys ...string) int {
+	v = v.Get(keys...)
+	if v == nil || v.Type() != TypeNumber {
+		return 0
+	}
+	return v.Int()
+}
+
+// GetStringBytes returns string value by the given keys path.
+//
+// Array indexes may be represented as decimal numbers.
+//
+// nil is returned for non-existing keys path or invalid value type.
+func (v *Value) GetStringBytes(keys ...string) []byte {
+	v = v.Get(keys...)
+	if v == nil || v.Type() != TypeString {
+		return nil
+	}
+	return v.StringBytes()
+}
+
+// GetBool returns bool value by the given keys path.
+//
+// Array indexes may be represented as decimal numbers.
+//
+// false is returned for non-existing keys path or invalid value type.
+func (v *Value) GetBool(keys ...string) bool {
+	v = v.Get(keys...)
+	if v != nil && v.Type() == TypeTrue {
+		return true
+	}
+	return false
+}
+
 // Object returns the underlying JSON object for the v.
 //
 // The returned object is valid until Parse is called on the Parser returned v.
@@ -665,8 +717,8 @@ func (v *Value) StringBytes() []byte {
 	return s2b(v.s)
 }
 
-// Number returns the underlying JSON number for the v.
-func (v *Value) Number() float64 {
+// Float64 returns the underlying JSON number for the v.
+func (v *Value) Float64() float64 {
 	if v.t == typeRawNumber {
 		v.n = parseNumberOrZero(v.s)
 		v.t = TypeNumber
@@ -675,6 +727,12 @@ func (v *Value) Number() float64 {
 		panic(fmt.Errorf("BUG: value doesn't contain number; it contains %s", v.t))
 	}
 	return v.n
+}
+
+// Int returns the underlying JSON int for the v.
+func (v *Value) Int() int {
+	f := v.Float64()
+	return int(f)
 }
 
 var (
