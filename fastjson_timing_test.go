@@ -25,6 +25,9 @@ func benchmarkParse(b *testing.B, s string) {
 	b.Run("stdjson-struct", func(b *testing.B) {
 		benchmarkStdJSONParseStruct(b, s)
 	})
+	b.Run("stdjson-empty-struct", func(b *testing.B) {
+		benchmarkStdJSONParseEmptyStruct(b, s)
+	})
 	b.Run("fastjson", func(b *testing.B) {
 		benchmarkFastJSONParse(b, s)
 	})
@@ -36,8 +39,12 @@ func benchmarkFastJSONParse(b *testing.B, s string) {
 	b.RunParallel(func(pb *testing.PB) {
 		var p Parser
 		for pb.Next() {
-			if err := p.Parse(s); err != nil {
+			v, err := p.Parse(s)
+			if err != nil {
 				panic(fmt.Errorf("unexpected error: %s", err))
+			}
+			if v.Type() != TypeObject {
+				panic(fmt.Errorf("unexpected value type; got %s; want %s", v.Type(), TypeObject))
 			}
 		}
 	})
@@ -69,6 +76,20 @@ func benchmarkStdJSONParseStruct(b *testing.B, s string) {
 			Company map[string]interface{}
 			Users   []interface{}
 		}
+		for pb.Next() {
+			if err := json.Unmarshal(bb, &m); err != nil {
+				panic(fmt.Errorf("unexpected error: %s", err))
+			}
+		}
+	})
+}
+
+func benchmarkStdJSONParseEmptyStruct(b *testing.B, s string) {
+	b.ReportAllocs()
+	b.SetBytes(int64(len(s)))
+	bb := s2b(s)
+	b.RunParallel(func(pb *testing.PB) {
+		var m struct{}
 		for pb.Next() {
 			if err := json.Unmarshal(bb, &m); err != nil {
 				panic(fmt.Errorf("unexpected error: %s", err))

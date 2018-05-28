@@ -18,45 +18,34 @@ type Parser struct {
 	// b contains the parsed string.
 	b []byte
 
-	// v contains the parsed value.
-	v *Value
-
 	// c is a cache for json values.
 	c cache
 }
 
 // Parse parses s containing JSON.
 //
-// The parsed value may be obtained via Value call.
-func (p *Parser) Parse(s string) error {
+// The returned value is valid until the next call to Parse*.
+func (p *Parser) Parse(s string) (*Value, error) {
 	s = skipWS(s)
 	p.b = append(p.b[:0], s...)
 	p.c.reset()
 
 	v, tail, err := parseValue(b2s(p.b), &p.c)
 	if err != nil {
-		return fmt.Errorf("cannot parse JSON: %s; unparsed tail: %q", err, tail)
+		return nil, fmt.Errorf("cannot parse JSON: %s; unparsed tail: %q", err, tail)
 	}
 	tail = skipWS(tail)
 	if len(tail) > 0 {
-		return fmt.Errorf("unexpected tail: %q", tail)
+		return nil, fmt.Errorf("unexpected tail: %q", tail)
 	}
-	p.v = v
-	return nil
+	return v, nil
 }
 
 // ParseBytes parses b containing JSON.
 //
-// The parsed value may be obtained via Value call.
-func (p *Parser) ParseBytes(b []byte) error {
+// The returned Value is valid until the next call to Parse*.
+func (p *Parser) ParseBytes(b []byte) (*Value, error) {
 	return p.Parse(b2s(b))
-}
-
-// Value returns the parsed value.
-//
-// The parsed value is valid until the next call to Parse.
-func (p *Parser) Value() *Value {
-	return p.v
 }
 
 type cache struct {

@@ -8,7 +8,7 @@ func TestParserPool(t *testing.T) {
 	var pp ParserPool
 	for i := 0; i < 10; i++ {
 		p := pp.Get()
-		if err := p.Parse("null"); err != nil {
+		if _, err := p.Parse("null"); err != nil {
 			t.Fatalf("cannot parse null: %s", err)
 		}
 		pp.Put(p)
@@ -18,10 +18,10 @@ func TestParserPool(t *testing.T) {
 func TestValueGetInt(t *testing.T) {
 	var p Parser
 
-	if err := p.Parse(`{"foo": 123, "bar": "433", "baz": true}`); err != nil {
+	v, err := p.Parse(`{"foo": 123, "bar": "433", "baz": true}`)
+	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
-	v := p.Value()
 	n := v.GetInt("foo")
 	if n != 123 {
 		t.Fatalf("unexpected value; got %d; want %d", n, 123)
@@ -52,10 +52,10 @@ func TestValueGet(t *testing.T) {
 	var pp ParserPool
 
 	p := pp.Get()
-	if err := p.ParseBytes([]byte(`{"xx":33.33,"foo":[123,{"bar":["baz"],"x":"y"}]}`)); err != nil {
+	v, err := p.ParseBytes([]byte(`{"xx":33.33,"foo":[123,{"bar":["baz"],"x":"y"}]}`))
+	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
-	v := p.Value()
 
 	t.Run("positive", func(t *testing.T) {
 		vv := v.Get("foo", "1")
@@ -123,160 +123,160 @@ func TestParserParse(t *testing.T) {
 	var p Parser
 
 	t.Run("empty-json", func(t *testing.T) {
-		err := p.Parse("")
+		_, err := p.Parse("")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing empty json")
 		}
-		err = p.Parse("\n\t    \n")
+		_, err = p.Parse("\n\t    \n")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing empty json")
 		}
 	})
 
 	t.Run("invalid-tail", func(t *testing.T) {
-		err := p.Parse("123 456")
+		_, err := p.Parse("123 456")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing invalid tail")
 		}
-		err = p.Parse("[] 1223")
+		_, err = p.Parse("[] 1223")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing invalid tail")
 		}
 	})
 
 	t.Run("invalid-json", func(t *testing.T) {
-		err := p.Parse("foobar")
+		_, err := p.Parse("foobar")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing invalid json")
 		}
-		err = p.Parse("tree")
+		_, err = p.Parse("tree")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing invalid json")
 		}
-		err = p.Parse("nil")
+		_, err = p.Parse("nil")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing invalid json")
 		}
-		err = p.Parse("[foo]")
+		_, err = p.Parse("[foo]")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing invalid json")
 		}
-		err = p.Parse("{foo}")
+		_, err = p.Parse("{foo}")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing invalid json")
 		}
-		err = p.Parse("[123 34]")
+		_, err = p.Parse("[123 34]")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing invalid json")
 		}
-		err = p.Parse(`{"foo" "bar"}`)
+		_, err = p.Parse(`{"foo" "bar"}`)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing invalid json")
 		}
-		err = p.Parse(`{"foo":123 "bar":"baz"}`)
+		_, err = p.Parse(`{"foo":123 "bar":"baz"}`)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing invalid json")
 		}
-		err = p.Parse("-2134.453eec+43")
+		_, err = p.Parse("-2134.453eec+43")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing invalid json")
 		}
-		err = p.Parse("-2134.453E+43")
+		_, err = p.Parse("-2134.453E+43")
 		if err != nil {
 			t.Fatalf("unexpected error when paring number: %s", err)
 		}
 	})
 
 	t.Run("incomplete-object", func(t *testing.T) {
-		err := p.Parse(" {  ")
+		_, err := p.Parse(" {  ")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete object")
 		}
-		err = p.Parse(`{"foo"`)
+		_, err = p.Parse(`{"foo"`)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete object")
 		}
-		err = p.Parse(`{"foo":`)
+		_, err = p.Parse(`{"foo":`)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete object")
 		}
-		err = p.Parse(`{"foo":null`)
+		_, err = p.Parse(`{"foo":null`)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete object")
 		}
-		err = p.Parse(`{"foo":null,`)
+		_, err = p.Parse(`{"foo":null,`)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete object")
 		}
-		err = p.Parse(`{"foo":null,}`)
+		_, err = p.Parse(`{"foo":null,}`)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete object")
 		}
-		err = p.Parse(`{"foo":null,"bar"}`)
+		_, err = p.Parse(`{"foo":null,"bar"}`)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete object")
 		}
-		err = p.Parse(`{"foo":null,"bar":"baz"}`)
+		_, err = p.Parse(`{"foo":null,"bar":"baz"}`)
 		if err != nil {
 			t.Fatalf("unexpected error when parsing object: %s", err)
 		}
 	})
 
 	t.Run("incomplete-array", func(t *testing.T) {
-		err := p.Parse("  [ ")
+		_, err := p.Parse("  [ ")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete array")
 		}
-		err = p.Parse("[123")
+		_, err = p.Parse("[123")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete array")
 		}
-		err = p.Parse("[123,")
+		_, err = p.Parse("[123,")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete array")
 		}
-		err = p.Parse("[123,]")
+		_, err = p.Parse("[123,]")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete array")
 		}
-		err = p.Parse("[123,{}")
+		_, err = p.Parse("[123,{}")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete array")
 		}
-		err = p.Parse("[123,{},]")
+		_, err = p.Parse("[123,{},]")
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete array")
 		}
-		err = p.Parse("[123,{},[]]")
+		_, err = p.Parse("[123,{},[]]")
 		if err != nil {
 			t.Fatalf("unexpected error when parsing array: %s", err)
 		}
 	})
 
 	t.Run("incomplete-string", func(t *testing.T) {
-		err := p.Parse(`  "foo`)
+		_, err := p.Parse(`  "foo`)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete string")
 		}
-		err = p.Parse(`"foo\`)
+		_, err = p.Parse(`"foo\`)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete string")
 		}
-		err = p.Parse(`"foo\"`)
+		_, err = p.Parse(`"foo\"`)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing incomplete string")
 		}
-		err = p.Parse(`"foo\\\""`)
+		_, err = p.Parse(`"foo\\\""`)
 		if err != nil {
 			t.Fatalf("unexpected error when parsing string: %s", err)
 		}
 	})
 
 	t.Run("empty-object", func(t *testing.T) {
-		if err := p.Parse("{}"); err != nil {
+		v, err := p.Parse("{}")
+		if err != nil {
 			t.Fatalf("cannot parse empty object: %s", err)
 		}
-		v := p.Value()
 		tp := v.Type()
 		if tp != TypeObject || tp.String() != "object" {
 			t.Fatalf("unexpected value obtained for empty object: %#v", v)
@@ -292,10 +292,10 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("empty-array", func(t *testing.T) {
-		if err := p.Parse("[]"); err != nil {
+		v, err := p.Parse("[]")
+		if err != nil {
 			t.Fatalf("cannot parse empty array: %s", err)
 		}
-		v := p.Value()
 		tp := v.Type()
 		if tp != TypeArray || tp.String() != "array" {
 			t.Fatalf("unexpected value obtained for empty array: %#v", v)
@@ -311,10 +311,10 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("null", func(t *testing.T) {
-		if err := p.Parse("null"); err != nil {
+		v, err := p.Parse("null")
+		if err != nil {
 			t.Fatalf("cannot parse null: %s", err)
 		}
-		v := p.Value()
 		tp := v.Type()
 		if tp != TypeNull || tp.String() != "null" {
 			t.Fatalf("unexpected value obtained for null: %#v", v)
@@ -326,10 +326,10 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("true", func(t *testing.T) {
-		if err := p.Parse("true"); err != nil {
+		v, err := p.Parse("true")
+		if err != nil {
 			t.Fatalf("cannot parse true: %s", err)
 		}
-		v := p.Value()
 		tp := v.Type()
 		if tp != TypeTrue || tp.String() != "true" {
 			t.Fatalf("unexpected value obtained for true: %#v", v)
@@ -341,10 +341,10 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("false", func(t *testing.T) {
-		if err := p.Parse("false"); err != nil {
+		v, err := p.Parse("false")
+		if err != nil {
 			t.Fatalf("cannot parse false: %s", err)
 		}
-		v := p.Value()
 		tp := v.Type()
 		if tp != TypeFalse || tp.String() != "false" {
 			t.Fatalf("unexpected value obtained for false: %#v", v)
@@ -356,10 +356,10 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("integer", func(t *testing.T) {
-		if err := p.Parse("12345"); err != nil {
+		v, err := p.Parse("12345")
+		if err != nil {
 			t.Fatalf("cannot parse integer: %s", err)
 		}
-		v := p.Value()
 		tp := v.Type()
 		if tp != TypeNumber || tp.String() != "number" {
 			t.Fatalf("unexpected type obtained for integer: %#v", v)
@@ -375,10 +375,10 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("float", func(t *testing.T) {
-		if err := p.Parse("-12.345"); err != nil {
+		v, err := p.Parse("-12.345")
+		if err != nil {
 			t.Fatalf("cannot parse integer: %s", err)
 		}
-		v := p.Value()
 		tp := v.Type()
 		if tp != TypeNumber || tp.String() != "number" {
 			t.Fatalf("unexpected type obtained for integer: %#v", v)
@@ -394,10 +394,10 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("string", func(t *testing.T) {
-		if err := p.Parse(`"foo bar"`); err != nil {
+		v, err := p.Parse(`"foo bar"`)
+		if err != nil {
 			t.Fatalf("cannot parse string: %s", err)
 		}
-		v := p.Value()
 		tp := v.Type()
 		if tp != TypeString || tp.String() != "string" {
 			t.Fatalf("unexpected type obtained for string: %#v", v)
@@ -413,10 +413,10 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("string-escaped", func(t *testing.T) {
-		if err := p.Parse(`"\n\t\\foo\"bar\u3423x\/\b\f\r\\"`); err != nil {
+		v, err := p.Parse(`"\n\t\\foo\"bar\u3423x\/\b\f\r\\"`)
+		if err != nil {
 			t.Fatalf("cannot parse string: %s", err)
 		}
-		v := p.Value()
 		tp := v.Type()
 		if tp != TypeString {
 			t.Fatalf("unexpected type obtained for string: %#v", v)
@@ -432,11 +432,11 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("object-one-element", func(t *testing.T) {
-		if err := p.Parse(`  {
-	"foo"   : "bar"  }	 `); err != nil {
+		v, err := p.Parse(`  {
+	"foo"   : "bar"  }	 `)
+		if err != nil {
 			t.Fatalf("cannot parse object: %s", err)
 		}
-		v := p.Value()
 		tp := v.Type()
 		if tp != TypeObject {
 			t.Fatalf("unexpected type obtained for object: %#v", v)
@@ -458,10 +458,10 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("object-multi-elements", func(t *testing.T) {
-		if err := p.Parse(`{"foo": [1,2,3  ]  ,"bar":{},"baz":123.456}`); err != nil {
+		v, err := p.Parse(`{"foo": [1,2,3  ]  ,"bar":{},"baz":123.456}`)
+		if err != nil {
 			t.Fatalf("cannot parse object: %s", err)
 		}
-		v := p.Value()
 		tp := v.Type()
 		if tp != TypeObject {
 			t.Fatalf("unexpected type obtained for object: %#v", v)
@@ -491,10 +491,10 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("array-one-element", func(t *testing.T) {
-		if err := p.Parse(`   [{"bar":[  [],[[]]   ]} ]  `); err != nil {
+		v, err := p.Parse(`   [{"bar":[  [],[[]]   ]} ]  `)
+		if err != nil {
 			t.Fatalf("cannot parse array: %s", err)
 		}
-		v := p.Value()
 		tp := v.Type()
 		if tp != TypeArray {
 			t.Fatalf("unexpected type obtained for array: %#v", v)
@@ -514,10 +514,10 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("array-multi-elements", func(t *testing.T) {
-		if err := p.Parse(`   [1,"foo",{"bar":[     ],"baz":""}    ,[  "x" ,	"y"   ]     ]   `); err != nil {
+		v, err := p.Parse(`   [1,"foo",{"bar":[     ],"baz":""}    ,[  "x" ,	"y"   ]     ]   `)
+		if err != nil {
 			t.Fatalf("cannot parse array: %s", err)
 		}
-		v := p.Value()
 		tp := v.Type()
 		if tp != TypeArray {
 			t.Fatalf("unexpected type obtained for array: %#v", v)
@@ -547,10 +547,10 @@ func TestParserParse(t *testing.T) {
 
 	t.Run("complex-object", func(t *testing.T) {
 		s := `{"foo":[-1.345678,[[[[[]]]],{}],"bar"],"baz":{"bbb":123}}`
-		if err := p.Parse(s); err != nil {
+		v, err := p.Parse(s)
+		if err != nil {
 			t.Fatalf("cannot parse complex object: %s", err)
 		}
-		v := p.Value()
 		if v.Type() != TypeObject {
 			t.Fatalf("unexpected type obtained for object: %#v", v)
 		}
