@@ -9,7 +9,6 @@ script:
   - GOOS=darwin go build
   - GOOS=freebsd go build
   - GOOS=windows go build
-  - GOARCH=386 go build
 
   # run tests on a standard platform
   - go test -v -coverprofile=coverage.txt -covermode=atomic
