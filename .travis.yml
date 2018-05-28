@@ -2,7 +2,6 @@ language: go
 
 go:
   - 1.10.x
-  - 1.9.x
 
 script:
   # build test for supported platforms
@@ -13,4 +12,9 @@ script:
   - GOARCH=386 go build
 
   # run tests on a standard platform
-  - go test -v
+  - go test -v -coverprofile=coverage.txt -covermode=atomic
+  - go test -v -race
+
+after_success:
+  # Upload coverage results to codecov.io
+  - bash <(curl -s https://codecov.io/bash)
