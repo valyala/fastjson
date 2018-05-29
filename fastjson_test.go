@@ -150,7 +150,7 @@ func TestParserParse(t *testing.T) {
 			t.Fatalf("unexpected string; got %q; want %q", s, "fo")
 		}
 
-		v, err = p.Parse(`"foo\ubar"`)
+		v, err = p.Parse(`"foo\ubarz2134"`)
 		if err != nil {
 			t.Fatalf("unexpected error when parsing string")
 		}
