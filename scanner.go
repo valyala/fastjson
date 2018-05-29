@@ -9,6 +9,8 @@ import (
 // Scanner may be re-used for subsequent parsing.
 //
 // Scanner cannot be used from concurrent goroutines.
+//
+// Use Parser for parsing only a single JSON value.
 type Scanner struct {
 	// b contains a working copy of json value passed to Init.
 	b []byte

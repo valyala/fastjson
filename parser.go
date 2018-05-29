@@ -15,7 +15,7 @@ import (
 // Parser cannot be used from concurrent goroutines.
 // Use per-goroutine parsers or ParserPool instead.
 type Parser struct {
-	// b contains the parsed string.
+	// b contains working copy of the string to be parsed.
 	b []byte
 
 	// c is a cache for json values.
@@ -25,6 +25,8 @@ type Parser struct {
 // Parse parses s containing JSON.
 //
 // The returned value is valid until the next call to Parse*.
+//
+// Use Scanner if a stream of JSON values must be parsed.
 func (p *Parser) Parse(s string) (*Value, error) {
 	s = skipWS(s)
 	p.b = append(p.b[:0], s...)
@@ -44,6 +46,8 @@ func (p *Parser) Parse(s string) (*Value, error) {
 // ParseBytes parses b containing JSON.
 //
 // The returned Value is valid until the next call to Parse*.
+//
+// Use Scanner if a stream of JSON values must be parsed.
 func (p *Parser) ParseBytes(b []byte) (*Value, error) {
 	return p.Parse(b2s(b))
 }
