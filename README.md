@@ -5,6 +5,7 @@
 
 # fastjson - fast JSON parser for Go
 
+
 ## Features
 
   * Fast. As usual, up to 10x faster than the standard [encoding/json](https://golang.org/pkg/encoding/json/).
@@ -13,6 +14,16 @@
   * Provides simple [API](http://godoc.org/github.com/valyala/fastjson).
   * Outperforms [jsonparser](https://github.com/buger/jsonparser) when accessing
     multiple unrelated fields, since `fastjson` parses the input JSON only once.
+
+
+## Known limitations
+
+  * May work slowly when accessing JSON object items by key if the object
+    contains more than 1000 items.
+  * Cannot parse JSON from `io.Reader`. There is [Scanner](https://godoc.org/github.com/valyala/fastjson#Scanner)
+    for parsing stream of JSON values from a string.
+  * May eat a lot of memory when parsing big JSONs with sizes exceeding 10Mb
+    or with millions of items.
 
 
 ## Benchmarks
