@@ -677,7 +677,7 @@ func (v *Value) GetBool(keys ...string) bool {
 // The returned object is valid until Parse is called on the Parser returned v.
 func (v *Value) Object() *Object {
 	if v.t != TypeObject {
-		panic(fmt.Errorf("BUG: value doesn't contain object; it contains %s", v.t))
+		panic(fmt.Errorf("BUG: value doesn't contain object; it contains %s", v.Type()))
 	}
 	return &v.o
 }
@@ -687,7 +687,7 @@ func (v *Value) Object() *Object {
 // The returned array is valid until Parse is called on the Parser returned v.
 func (v *Value) Array() []*Value {
 	if v.t != TypeArray {
-		panic(fmt.Errorf("BUG: value doesn't contain array; it contains %s", v.t))
+		panic(fmt.Errorf("BUG: value doesn't contain array; it contains %s", v.Type()))
 	}
 	return v.a
 }
@@ -701,7 +701,7 @@ func (v *Value) StringBytes() []byte {
 		v.t = TypeString
 	}
 	if v.t != TypeString {
-		panic(fmt.Errorf("BUG: value doesn't contain string; it contains %s", v.t))
+		panic(fmt.Errorf("BUG: value doesn't contain string; it contains %s", v.Type()))
 	}
 	return s2b(v.s)
 }
@@ -713,7 +713,7 @@ func (v *Value) Float64() float64 {
 		v.t = TypeNumber
 	}
 	if v.t != TypeNumber {
-		panic(fmt.Errorf("BUG: value doesn't contain number; it contains %s", v.t))
+		panic(fmt.Errorf("BUG: value doesn't contain number; it contains %s", v.Type()))
 	}
 	return v.n
 }
@@ -722,6 +722,18 @@ func (v *Value) Float64() float64 {
 func (v *Value) Int() int {
 	f := v.Float64()
 	return int(f)
+}
+
+// Bool returns the underlying JSON bool for the v.
+func (v *Value) Bool() bool {
+	switch v.t {
+	case TypeTrue:
+		return true
+	case TypeFalse:
+		return false
+	default:
+		panic(fmt.Errorf("BUG: value doesn't contain bool; it contains %s", v.Type()))
+	}
 }
 
 var (
