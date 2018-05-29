@@ -344,7 +344,7 @@ func parseRawString(s string) (string, string, error) {
 func parseRawNumber(s string) (string, string, error) {
 	ch := s[0]
 	if ch != '-' && (ch < '0' || ch > '9') {
-		return "", s, fmt.Errorf("unexpected chars in the number: %q", s)
+		return "", s, fmt.Errorf("unexpected char: %q", s[:1])
 	}
 
 	// Find the end of the number.
@@ -361,14 +361,6 @@ func parseRawNumber(s string) (string, string, error) {
 	ns := s[:n]
 	s = s[n:]
 	return ns, s, nil
-}
-
-func parseNumberOrZero(s string) float64 {
-	f, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		return 0
-	}
-	return f
 }
 
 // Object represents JSON object.
@@ -479,18 +471,26 @@ func (v *Value) reset() {
 	v.t = TypeNull
 }
 
-// String returns string representation of the v.
-//
-// The function is for debugging purposes only. It isn't optimized for speed.
-func (v *Value) String() string {
+func (v *Value) normalizeType() {
 	switch v.t {
 	case typeRawString:
 		v.s = unescapeStringBestEffort(v.s)
 		v.t = TypeString
 	case typeRawNumber:
-		v.n = parseNumberOrZero(v.s)
+		f, err := strconv.ParseFloat(v.s, 64)
+		if err != nil {
+			f = 0
+		}
+		v.n = f
 		v.t = TypeNumber
 	}
+}
+
+// String returns string representation of the v.
+//
+// The function is for debugging purposes only. It isn't optimized for speed.
+func (v *Value) String() string {
+	v.normalizeType()
 
 	switch v.t {
 	case TypeObject:
@@ -580,14 +580,7 @@ func (t Type) String() string {
 
 // Type returns the type of the v.
 func (v *Value) Type() Type {
-	switch v.t {
-	case typeRawString:
-		v.s = unescapeStringBestEffort(v.s)
-		v.t = TypeString
-	case typeRawNumber:
-		v.n = parseNumberOrZero(v.s)
-		v.t = TypeNumber
-	}
+	v.normalizeType()
 	return v.t
 }
 
@@ -695,10 +688,7 @@ func (v *Value) Array() []*Value {
 //
 // The returned string is valid until Parse is called on the Parser returned v.
 func (v *Value) StringBytes() []byte {
-	if v.t == typeRawString {
-		v.s = unescapeStringBestEffort(v.s)
-		v.t = TypeString
-	}
+	v.normalizeType()
 	if v.t != TypeString {
 		panic(fmt.Errorf("BUG: value doesn't contain string; it contains %s", v.Type()))
 	}
@@ -707,10 +697,7 @@ func (v *Value) StringBytes() []byte {
 
 // Float64 returns the underlying JSON number for the v.
 func (v *Value) Float64() float64 {
-	if v.t == typeRawNumber {
-		v.n = parseNumberOrZero(v.s)
-		v.t = TypeNumber
-	}
+	v.normalizeType()
 	if v.t != TypeNumber {
 		panic(fmt.Errorf("BUG: value doesn't contain number; it contains %s", v.Type()))
 	}
