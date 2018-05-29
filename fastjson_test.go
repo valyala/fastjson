@@ -16,7 +16,7 @@ func TestParserPool(t *testing.T) {
 	}
 }
 
-func TestValueGetInt(t *testing.T) {
+func TestValueGetTyped(t *testing.T) {
 	var p Parser
 
 	v, err := p.Parse(`{"foo": 123, "bar": "433", "baz": true}`)
@@ -35,9 +35,25 @@ func TestValueGetInt(t *testing.T) {
 	if f != 123.0 {
 		t.Fatalf("unexpected value; got %f; want %f", f, 123.0)
 	}
+	f = v.GetFloat64("bar")
+	if f != 0 {
+		t.Fatalf("unexpected value; got %f; want %f", f, 0.0)
+	}
+	f = v.GetFloat64("foooo", "bar")
+	if f != 0 {
+		t.Fatalf("unexpected value; got %f; want %f", f, 0.0)
+	}
+	f = v.GetFloat64()
+	if f != 0 {
+		t.Fatalf("unexpected value; got %f; want %f", f, 0.0)
+	}
 	sb := v.GetStringBytes("bar")
 	if string(sb) != "433" {
 		t.Fatalf("unexpected value; got %q; want %q", sb, "443")
+	}
+	sb = v.GetStringBytes("foo")
+	if sb != nil {
+		t.Fatalf("unexpected value; got %q; want %q", sb, []byte(nil))
 	}
 	bv := v.GetBool("baz")
 	if !bv {
@@ -78,10 +94,10 @@ func TestValueGet(t *testing.T) {
 					t.Fatalf("unexpected array; got %q; want %q", s, `["baz"]`)
 				}
 			case "x":
+				sb := v.StringBytes()
 				if v.Type() != TypeString {
 					t.Fatalf("unexpected value type; got %d; want %d", v.Type(), TypeString)
 				}
-				sb := v.StringBytes()
 				if string(sb) != "y" {
 					t.Fatalf("unexpected string; got %q; want %q", sb, "y")
 				}
@@ -122,6 +138,40 @@ func TestValueGet(t *testing.T) {
 
 func TestParserParse(t *testing.T) {
 	var p Parser
+
+	t.Run("invalid-string-escape", func(t *testing.T) {
+		v, err := p.Parse(`"fo\u"`)
+		if err != nil {
+			t.Fatalf("unexpected error when parsing string")
+		}
+		// Make sure only valid string part remains
+		s := v.StringBytes()
+		if string(s) != "fo" {
+			t.Fatalf("unexpected string; got %q; want %q", s, "fo")
+		}
+
+		v, err = p.Parse(`"foo\ubar"`)
+		if err != nil {
+			t.Fatalf("unexpected error when parsing string")
+		}
+		s = v.StringBytes()
+		if string(s) != "foo" {
+			t.Fatalf("unexpected string; got %q; want %q", s, "foo")
+		}
+	})
+
+	t.Run("invalid-number", func(t *testing.T) {
+		v, err := p.Parse("123+456")
+		if err != nil {
+			t.Fatalf("unexpected error when parsing int")
+		}
+
+		// Make sure invalid int isn't parsed.
+		n := v.Int()
+		if n != 0 {
+			t.Fatalf("unexpected int; got %d; want %d", n, 0)
+		}
+	})
 
 	t.Run("empty-json", func(t *testing.T) {
 		_, err := p.Parse("")
@@ -380,11 +430,11 @@ func TestParserParse(t *testing.T) {
 		if err != nil {
 			t.Fatalf("cannot parse integer: %s", err)
 		}
+		n := v.Float64()
 		tp := v.Type()
 		if tp != TypeNumber || tp.String() != "number" {
 			t.Fatalf("unexpected type obtained for integer: %#v", v)
 		}
-		n := v.Float64()
 		if n != -12.345 {
 			t.Fatalf("unexpected value obtained for integer; got %f; want %f", n, -12.345)
 		}
