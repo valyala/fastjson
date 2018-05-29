@@ -56,7 +56,7 @@ func (sc *Scanner) Next() bool {
 
 	sc.s = skipWS(sc.s)
 	if len(sc.s) == 0 {
-		sc.err = eof
+		sc.err = errEOF
 		return false
 	}
 
@@ -74,7 +74,7 @@ func (sc *Scanner) Next() bool {
 
 // Error returns the last error.
 func (sc *Scanner) Error() error {
-	if sc.err == eof {
+	if sc.err == errEOF {
 		return nil
 	}
 	return sc.err
@@ -87,4 +87,4 @@ func (sc *Scanner) Value() *Value {
 	return sc.v
 }
 
-var eof = errors.New("end of s")
+var errEOF = errors.New("end of s")

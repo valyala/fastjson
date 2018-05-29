@@ -27,7 +27,8 @@ func TestScanner(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		sc.Init(`[] sdfdsfdf`)
-		for sc.Next() {}
+		for sc.Next() {
+		}
 		if err := sc.Error(); err == nil {
 			t.Fatalf("expecting non-nil error")
 		}
