@@ -62,9 +62,9 @@ As you can see, `fastsjon` outperforms `encoding/json`:
   * Q: _There are a ton of other high-perf packages for JSON parsing in Go. Why creating yet another package?_
     A: Because other solutions suck. They require either rigid JSON schema
        via struct magic or perform poorly when multiple unrelated fields
-       must be obtained from the parsed JSON. Additionlly, their APIs suck.
+       must be obtained from the parsed JSON.
 
-  * Q: What is the main purpose for `fastjson`?
+  * Q: _What is the main purpose for `fastjson`?_
     A: High-perf JSON parsing for [RTB](https://www.iab.com/wp-content/uploads/2015/05/OpenRTB_API_Specification_Version_2_3_1.pdf)
        and other [JSON-RPC](https://en.wikipedia.org/wiki/JSON-RPC) solutions.
 
