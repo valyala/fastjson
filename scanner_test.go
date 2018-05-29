@@ -32,5 +32,8 @@ func TestScanner(t *testing.T) {
 		if err := sc.Error(); err == nil {
 			t.Fatalf("expecting non-nil error")
 		}
+		if sc.Next() {
+			t.Fatalf("Next must return false")
+		}
 	})
 }
