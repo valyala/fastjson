@@ -9,7 +9,7 @@
 
   * Fast. As usual, up to 10x faster than the standard [encoding/json](https://golang.org/pkg/encoding/json/).
     See [benchmarks](#benchmarks).
-  * Parses arbitrary JSON without schema, reflection and struct magic.
+  * Parses arbitrary JSON without schema, reflection, struct magic and code generation.
   * Provides simple [API](http://godoc.org/github.com/valyala/fastjson).
   * Outperforms [jsonparser](https://github.com/buger/jsonparser) when accessing
     multiple unrelated fields, since `fastjson` parses the input JSON only once.
