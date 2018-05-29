@@ -66,9 +66,9 @@ func TestValueGet(t *testing.T) {
 		o := vv.Object()
 
 		n := 0
-		o.Visit(func(k string, v *Value) {
+		o.Visit(func(k []byte, v *Value) {
 			n++
-			switch k {
+			switch string(k) {
 			case "bar":
 				if v.Type() != TypeArray {
 					t.Fatalf("unexpected value type; got %d; want %d", v.Type(), TypeArray)
@@ -570,5 +570,42 @@ func TestParserParse(t *testing.T) {
 		if ss != s {
 			t.Fatalf("unexpected string representation for object; got\n%q; want\n%q", ss, s)
 		}
+	})
+
+	t.Run("complex-object-visit-all", func(t *testing.T) {
+		n := 0
+		var f func(k []byte, v *Value)
+		f = func(k []byte, v *Value) {
+			switch v.Type() {
+			case TypeObject:
+				v.Object().Visit(f)
+			case TypeArray:
+				for _, vv := range v.Array() {
+					f(nil, vv)
+				}
+			case TypeString:
+				n += len(v.StringBytes())
+			case TypeNumber:
+				n += v.Int()
+			}
+		}
+
+		s := strings.TrimSpace(largeFixture)
+		v, err := p.Parse(s)
+		if err != nil {
+			t.Fatalf("cannot parse largeFixture: %s", err)
+		}
+		v.Object().Visit(f)
+
+		if n != 21473 {
+			t.Fatalf("unexpected n; got %d; want %d", n, 21473)
+		}
+
+		// Make sure the json remains valid after visiting all the items.
+		ss := v.String()
+		if ss != s {
+			t.Fatalf("unexpected string representation for object; got\n%q; want\n%q", ss, s)
+		}
+
 	})
 }

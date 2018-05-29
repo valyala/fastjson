@@ -448,12 +448,12 @@ func (o *Object) Get(key string) *Value {
 // Visit calls f for each item in the o.
 //
 // f cannot hold key and/or v after returning.
-func (o *Object) Visit(f func(key string, v *Value)) {
+func (o *Object) Visit(f func(key []byte, v *Value)) {
 	o.unescapeKeys()
 
 	for i := range o.kvs {
 		kv := &o.kvs[i]
-		f(kv.k, kv.v)
+		f(s2b(kv.k), kv.v)
 	}
 }
 
