@@ -7,7 +7,7 @@ import (
 // Scanner scans a series of JSON values. Values may be delimited by whitespace.
 //
 // Scanner may parse JSON lines ( http://jsonlines.org/ ).
-
+//
 // Scanner may be re-used for subsequent parsing.
 //
 // Scanner cannot be used from concurrent goroutines.
