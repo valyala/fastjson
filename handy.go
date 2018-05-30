@@ -8,6 +8,8 @@ var handyPool ParserPool
 // Array indexes may be represented as decimal numbers in keys.
 //
 // An empty string is returned on error. Use Parser for proper error handling.
+//
+// Parser is faster for obtaining multiple fields from JSON.
 func GetString(data []byte, keys ...string) string {
 	p := handyPool.Get()
 	v, err := p.ParseBytes(data)
@@ -27,6 +29,8 @@ func GetString(data []byte, keys ...string) string {
 // Array indexes may be represented as decimal numbers in keys.
 //
 // nil is returned on error. Use Parser for proper error handling.
+//
+// Parser is faster for obtaining multiple fields from JSON.
 func GetBytes(data []byte, keys ...string) []byte {
 	p := handyPool.Get()
 	v, err := p.ParseBytes(data)
@@ -52,6 +56,8 @@ func GetBytes(data []byte, keys ...string) []byte {
 // Array indexes may be represented as decimal numbers in keys.
 //
 // 0 is returned on error. Use Parser for proper error handling.
+//
+// Parser is faster for obtaining multiple fields from JSON.
 func GetInt(data []byte, keys ...string) int {
 	p := handyPool.Get()
 	v, err := p.ParseBytes(data)
@@ -70,6 +76,8 @@ func GetInt(data []byte, keys ...string) int {
 // Array indexes may be represented as decimal numbers in keys.
 //
 // 0 is returned on error. Use Parser for proper error handling.
+//
+// Parser is faster for obtaining multiple fields from JSON.
 func GetFloat64(data []byte, keys ...string) float64 {
 	p := handyPool.Get()
 	v, err := p.ParseBytes(data)
@@ -88,6 +96,8 @@ func GetFloat64(data []byte, keys ...string) float64 {
 // Array indexes may be represented as decimal numbers in keys.
 //
 // False is returned on error. Use Parser for proper error handling.
+//
+// Parser is faster for obtaining multiple fields from JSON.
 func GetBool(data []byte, keys ...string) bool {
 	p := handyPool.Get()
 	v, err := p.ParseBytes(data)
@@ -103,6 +113,8 @@ func GetBool(data []byte, keys ...string) bool {
 // Exists returns true if the field identified by keys path exists in JSON data.
 //
 // Array indexes may be represented as decimal numbers in keys.
+//
+// Parser is faster when multiple fields must be checked in the JSON.
 func Exists(data []byte, keys ...string) bool {
 	p := handyPool.Get()
 	v, err := p.ParseBytes(data)
