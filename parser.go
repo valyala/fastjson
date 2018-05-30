@@ -297,15 +297,22 @@ func unescapeStringBestEffort(s string) string {
 			b = append(b, '\t')
 		case 'u':
 			if len(s) < 4 {
-				return b2s(b)
+				// Too short escape sequence. Just store it unchanged.
+				b = append(b, '\\', ch)
+				break
 			}
 			xs := s[:4]
 			x, err := strconv.ParseUint(xs, 16, 16)
 			if err != nil {
-				return b2s(b)
+				// Invalid escape sequence. Just store it unchanged.
+				b = append(b, '\\', ch)
+				break
 			}
 			b = append(b, string(rune(x))...)
 			s = s[4:]
+		default:
+			// Unknown escape sequence. Just store it unchanged.
+			b = append(b, '\\', ch)
 		}
 		n = strings.IndexByte(s, '\\')
 		if n < 0 {
@@ -328,17 +335,17 @@ func parseRawString(s string) (string, string, error) {
 	for {
 		n := strings.IndexByte(s, '"')
 		if n < 0 {
-			return "", s, fmt.Errorf(`missing closing '"'`)
+			return "", "", fmt.Errorf(`missing closing '"'`)
 		}
 		if n == 0 || s[n-1] != '\\' {
 			return ss[:len(ss)-len(s)+n], s[n+1:], nil
 		}
 
-		i := n - 2
-		for i > 0 && s[i] == '\\' {
+		i := n - 1
+		for i > 0 && s[i-1] == '\\' {
 			i--
 		}
-		if uint(n-i)%2 == 1 {
+		if uint(n-i)%2 == 0 {
 			return ss[:len(ss)-len(s)+n], s[n+1:], nil
 		}
 		s = s[n+1:]
@@ -346,6 +353,7 @@ func parseRawString(s string) (string, string, error) {
 }
 
 func parseRawNumber(s string) (string, string, error) {
+	// The caller must ensure len(s) > 0
 	ch := s[0]
 	if ch != '-' && (ch < '0' || ch > '9') {
 		return "", s, fmt.Errorf("unexpected char: %q", s[:1])
@@ -475,28 +483,11 @@ func (v *Value) reset() {
 	v.t = TypeNull
 }
 
-func (v *Value) normalizeType() {
-	switch v.t {
-	case typeRawString:
-		v.s = unescapeStringBestEffort(v.s)
-		v.t = TypeString
-	case typeRawNumber:
-		f, err := strconv.ParseFloat(v.s, 64)
-		if err != nil {
-			f = 0
-		}
-		v.n = f
-		v.t = TypeNumber
-	}
-}
-
 // String returns string representation of the v.
 //
 // The function is for debugging purposes only. It isn't optimized for speed.
 func (v *Value) String() string {
-	v.normalizeType()
-
-	switch v.t {
+	switch v.Type() {
 	case TypeObject:
 		return v.o.String()
 	case TypeArray:
@@ -524,7 +515,7 @@ func (v *Value) String() string {
 	case TypeNull:
 		return "null"
 	default:
-		panic(fmt.Errorf("BUG: unknown Value type: %d", v.t))
+		panic(fmt.Errorf("BUG: unknown Value type: %d", v.Type()))
 	}
 }
 
@@ -584,13 +575,24 @@ func (t Type) String() string {
 
 // Type returns the type of the v.
 func (v *Value) Type() Type {
-	v.normalizeType()
+	switch v.t {
+	case typeRawString:
+		v.s = unescapeStringBestEffort(v.s)
+		v.t = TypeString
+	case typeRawNumber:
+		f, err := strconv.ParseFloat(v.s, 64)
+		if err != nil {
+			f = 0
+		}
+		v.n = f
+		v.t = TypeNumber
+	}
 	return v.t
 }
 
 // Get returns value by the given keys path.
 //
-// Array indexes may be represented as decimal numbers.
+// Array indexes may be represented as decimal numbers in keys.
 //
 // nil is returned for non-existing keys path.
 //
@@ -616,50 +618,76 @@ func (v *Value) Get(keys ...string) *Value {
 	return v
 }
 
+// GetObject returns object value by the given keys path.
+//
+// Array indexes may be represented as decimal numbers in keys.
+//
+// nil is returned for non-existing keys path or for invalid value type.
+func (v *Value) GetObject(keys ...string) *Object {
+	v = v.Get(keys...)
+	if v == nil || v.Type() != TypeObject {
+		return nil
+	}
+	return &v.o
+}
+
+// GetArray returns array value by the given keys path.
+//
+// Array indexes may be represented as decimal numbers in keys.
+//
+// nil is returned for non-existing keys path or for invalid value type.
+func (v *Value) GetArray(keys ...string) []*Value {
+	v = v.Get(keys...)
+	if v == nil || v.Type() != TypeArray {
+		return nil
+	}
+	return v.a
+}
+
 // GetFloat64 returns float64 value by the given keys path.
 //
-// Array indexes may be represented as decimal numbers.
+// Array indexes may be represented as decimal numbers in keys.
 //
-// 0 is returned for non-existing keys path or invalid value type.
+// 0 is returned for non-existing keys path or for invalid value type.
 func (v *Value) GetFloat64(keys ...string) float64 {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeNumber {
 		return 0
 	}
-	return v.Float64()
+	return v.n
 }
 
 // GetInt returns int value by the given keys path.
 //
-// Array indexes may be represented as decimal numbers.
+// Array indexes may be represented as decimal numbers in keys.
 //
-// 0 is returned for non-existing keys path or invalid value type.
+// 0 is returned for non-existing keys path or for invalid value type.
 func (v *Value) GetInt(keys ...string) int {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeNumber {
 		return 0
 	}
-	return v.Int()
+	return int(v.n)
 }
 
 // GetStringBytes returns string value by the given keys path.
 //
-// Array indexes may be represented as decimal numbers.
+// Array indexes may be represented as decimal numbers in keys.
 //
-// nil is returned for non-existing keys path or invalid value type.
+// nil is returned for non-existing keys path or for invalid value type.
 func (v *Value) GetStringBytes(keys ...string) []byte {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeString {
 		return nil
 	}
-	return v.StringBytes()
+	return s2b(v.s)
 }
 
 // GetBool returns bool value by the given keys path.
 //
-// Array indexes may be represented as decimal numbers.
+// Array indexes may be represented as decimal numbers in keys.
 //
-// false is returned for non-existing keys path or invalid value type.
+// false is returned for non-existing keys path or for invalid value type.
 func (v *Value) GetBool(keys ...string) bool {
 	v = v.Get(keys...)
 	if v != nil && v.Type() == TypeTrue {
@@ -671,58 +699,68 @@ func (v *Value) GetBool(keys ...string) bool {
 // Object returns the underlying JSON object for the v.
 //
 // The returned object is valid until Parse is called on the Parser returned v.
-func (v *Value) Object() *Object {
-	if v.t != TypeObject {
-		panic(fmt.Errorf("BUG: value doesn't contain object; it contains %s", v.Type()))
+//
+// Use GetObject if you don't need error handling.
+func (v *Value) Object() (*Object, error) {
+	if v.Type() != TypeObject {
+		return nil, fmt.Errorf("value doesn't contain object; it contains %s", v.Type())
 	}
-	return &v.o
+	return &v.o, nil
 }
 
 // Array returns the underlying JSON array for the v.
 //
 // The returned array is valid until Parse is called on the Parser returned v.
-func (v *Value) Array() []*Value {
-	if v.t != TypeArray {
-		panic(fmt.Errorf("BUG: value doesn't contain array; it contains %s", v.Type()))
+//
+// Use GetArray if you don't need error handling.
+func (v *Value) Array() ([]*Value, error) {
+	if v.Type() != TypeArray {
+		return nil, fmt.Errorf("value doesn't contain array; it contains %s", v.Type())
 	}
-	return v.a
+	return v.a, nil
 }
 
 // StringBytes returns the underlying JSON string for the v.
 //
 // The returned string is valid until Parse is called on the Parser returned v.
-func (v *Value) StringBytes() []byte {
-	v.normalizeType()
-	if v.t != TypeString {
-		panic(fmt.Errorf("BUG: value doesn't contain string; it contains %s", v.Type()))
+//
+// Use GetStringBytes if you don't need error handling.
+func (v *Value) StringBytes() ([]byte, error) {
+	if v.Type() != TypeString {
+		return nil, fmt.Errorf("value doesn't contain string; it contains %s", v.Type())
 	}
-	return s2b(v.s)
+	return s2b(v.s), nil
 }
 
 // Float64 returns the underlying JSON number for the v.
-func (v *Value) Float64() float64 {
-	v.normalizeType()
-	if v.t != TypeNumber {
-		panic(fmt.Errorf("BUG: value doesn't contain number; it contains %s", v.Type()))
+//
+// Use GetFloat64 if you don't need error handling.
+func (v *Value) Float64() (float64, error) {
+	if v.Type() != TypeNumber {
+		return 0, fmt.Errorf("value doesn't contain number; it contains %s", v.Type())
 	}
-	return v.n
+	return v.n, nil
 }
 
 // Int returns the underlying JSON int for the v.
-func (v *Value) Int() int {
-	f := v.Float64()
-	return int(f)
+//
+// Use GetInt if you don't need error handling.
+func (v *Value) Int() (int, error) {
+	f, err := v.Float64()
+	return int(f), err
 }
 
 // Bool returns the underlying JSON bool for the v.
-func (v *Value) Bool() bool {
-	switch v.t {
+//
+// Use GetBool if you don't need error handling.
+func (v *Value) Bool() (bool, error) {
+	switch v.Type() {
 	case TypeTrue:
-		return true
+		return true, nil
 	case TypeFalse:
-		return false
+		return false, nil
 	default:
-		panic(fmt.Errorf("BUG: value doesn't contain bool; it contains %s", v.Type()))
+		return false, fmt.Errorf("value doesn't contain bool; it contains %s", v.Type())
 	}
 }
 

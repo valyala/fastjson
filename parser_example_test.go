@@ -55,10 +55,10 @@ func ExampleValue_Get() {
 	}
 
 	vv := v.Get("foo", "0", "bar", "x")
-	fmt.Printf("foo[0].bar.x=%s\n", vv.StringBytes())
+	fmt.Printf("foo[0].bar.x=%s\n", vv.GetStringBytes())
 
 	vv = v.Get("qwe")
-	fmt.Printf("qwe=%v\n", vv.Bool())
+	fmt.Printf("qwe=%v\n", vv.GetBool())
 
 	vv = v.Get("foo", "1")
 	fmt.Printf("foo[1]=%s\n", vv)
@@ -116,8 +116,12 @@ func ExampleObject_Visit() {
 	if err != nil {
 		log.Fatalf("cannot parse json: %s", err)
 	}
+	o, err := v.Object()
+	if err != nil {
+		log.Fatalf("cannot obtain object from json value: %s", err)
+	}
 
-	v.Object().Visit(func(k []byte, v *fastjson.Value) {
+	o.Visit(func(k []byte, v *fastjson.Value) {
 		switch string(k) {
 		case "obj":
 			fmt.Printf("object %s\n", v)
