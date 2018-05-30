@@ -18,12 +18,8 @@
 
 ## Known limitations
 
-  * May work slowly when accessing JSON object items by key if the object
-    contains more than 1000 items.
   * Cannot parse JSON from `io.Reader`. There is [Scanner](https://godoc.org/github.com/valyala/fastjson#Scanner)
     for parsing stream of JSON values from a string.
-  * May eat a lot of memory when parsing big JSONs with sizes exceeding 10Mb
-    or with millions of items.
 
 
 ## Benchmarks
