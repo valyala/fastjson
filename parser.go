@@ -463,7 +463,7 @@ func (o *Object) Visit(f func(key []byte, v *Value)) {
 
 // Value represents any JSON value.
 //
-// Use Type in order to determine the actual type of the JSON value.
+// Call Type in order to determine the actual type of the JSON value.
 //
 // Value cannot be used from concurrent goroutines.
 // Use per-goroutine parsers or ParserPool instead.
