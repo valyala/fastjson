@@ -440,9 +440,8 @@ func (o *Object) Len() int {
 func (o *Object) Get(key string) *Value {
 	o.unescapeKeys()
 
-	for i := range o.kvs {
-		kv := &o.kvs[i]
-		if string(kv.k) == key {
+	for _, kv := range o.kvs {
+		if kv.k == key {
 			return kv.v
 		}
 	}
@@ -455,8 +454,7 @@ func (o *Object) Get(key string) *Value {
 func (o *Object) Visit(f func(key []byte, v *Value)) {
 	o.unescapeKeys()
 
-	for i := range o.kvs {
-		kv := &o.kvs[i]
+	for _, kv := range o.kvs {
 		f(s2b(kv.k), kv.v)
 	}
 }
