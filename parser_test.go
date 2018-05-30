@@ -1,6 +1,7 @@
 package fastjson
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -985,4 +986,39 @@ func TestParserParse(t *testing.T) {
 		}
 
 	})
+}
+
+func TestParseBigObject(t *testing.T) {
+	const itemsCount = 10000
+
+	// build big json object
+	var ss []string
+	for i := 0; i < itemsCount; i++ {
+		s := fmt.Sprintf(`"key_%d": "value_%d"`, i, i)
+		ss = append(ss, s)
+	}
+	s := "{" + strings.Join(ss, ",") + "}"
+
+	// parse it
+	var p Parser
+	v, err := p.Parse(s)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	// Look up object items
+	for i := 0; i < itemsCount; i++ {
+		k := fmt.Sprintf("key_%d", i)
+		expectedV := fmt.Sprintf("value_%d", i)
+		sb := v.GetStringBytes(k)
+		if string(sb) != expectedV {
+			t.Fatalf("unexpected value obtained; got %q; want %q", sb, expectedV)
+		}
+	}
+
+	// verify non-existing key returns nil
+	sb := v.GetStringBytes("non-existing-key")
+	if sb != nil {
+		t.Fatalf("unexpected non-nil value for non-existing-key: %q", sb)
+	}
 }
