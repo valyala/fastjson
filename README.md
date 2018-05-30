@@ -8,7 +8,7 @@
 
 ## Features
 
-  * Fast. As usual, up to 10x faster than the standard [encoding/json](https://golang.org/pkg/encoding/json/).
+  * Fast. As usual, up to 15x faster than the standard [encoding/json](https://golang.org/pkg/encoding/json/).
     See [benchmarks](#benchmarks).
   * Parses arbitrary JSON without schema, reflection, struct magic and code generation
     contrary to [easyjson](https://github.com/mailru/easyjson).
