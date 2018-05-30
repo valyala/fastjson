@@ -10,10 +10,12 @@
 
   * Fast. As usual, up to 10x faster than the standard [encoding/json](https://golang.org/pkg/encoding/json/).
     See [benchmarks](#benchmarks).
-  * Parses arbitrary JSON without schema, reflection, struct magic and code generation.
+  * Parses arbitrary JSON without schema, reflection, struct magic and code generation
+    contrary to [easyjson](https://github.com/mailru/easyjson).
   * Provides simple [API](http://godoc.org/github.com/valyala/fastjson).
-  * Outperforms [jsonparser](https://github.com/buger/jsonparser) when accessing
-    multiple unrelated fields, since `fastjson` parses the input JSON only once.
+  * Outperforms [jsonparser](https://github.com/buger/jsonparser) and [gjson](https://github.com/tidwall/gjson)
+    when accessing multiple unrelated fields, since `fastjson` parses the input JSON only once.
+  * Validates the parsed JSON unlike [gjson](https://github.com/tidwall/gjson).
 
 
 ## Known limitations
@@ -69,7 +71,8 @@ As you can see, `fastsjon` outperforms `encoding/json`:
   * Q: _There are a ton of other high-perf packages for JSON parsing in Go. Why creating yet another package?_
     A: Because other packages require either rigid JSON schema via struct magic
        and code generation or perform poorly when multiple unrelated fields
-       must be obtained from the parsed JSON. Additionally, `fastjson` provides nicer [API](http://godoc.org/github.com/valyala/fastjson).
+       must be obtained from the parsed JSON.
+       Additionally, `fastjson` provides nicer [API](http://godoc.org/github.com/valyala/fastjson).
 
   * Q: _What is the main purpose for `fastjson`?_
     A: High-perf JSON parsing for [RTB](https://www.iab.com/wp-content/uploads/2015/05/OpenRTB_API_Specification_Version_2_3_1.pdf)
