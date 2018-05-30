@@ -7,7 +7,7 @@ import (
 )
 
 func TestGetStringConcurrent(t *testing.T) {
-	const concurrency = 10
+	const concurrency = 4
 	data := []byte(largeFixture)
 
 	ch := make(chan error, concurrency)
@@ -24,7 +24,35 @@ func TestGetStringConcurrent(t *testing.T) {
 
 	for i := 0; i < concurrency; i++ {
 		select {
-		case <-time.After(time.Second*5):
+		case <-time.After(time.Second * 5):
+			t.Fatalf("timeout")
+		case err := <-ch:
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+		}
+	}
+}
+
+func TestGetBytesConcurrent(t *testing.T) {
+	const concurrency = 4
+	data := []byte(largeFixture)
+
+	ch := make(chan error, concurrency)
+
+	for i := 0; i < concurrency; i++ {
+		go func() {
+			b := GetBytes(data, "non-existing-key")
+			if b != nil {
+				ch <- fmt.Errorf("unexpected non-empty string got: %q", b)
+			}
+			ch <- nil
+		}()
+	}
+
+	for i := 0; i < concurrency; i++ {
+		select {
+		case <-time.After(time.Second * 5):
 			t.Fatalf("timeout")
 		case err := <-ch:
 			if err != nil {
