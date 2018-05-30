@@ -10,7 +10,7 @@ import (
 func BenchmarkObjectGetBig(b *testing.B) {
 	for _, itemsCount := range []int{10, 100, 1000, 10000, 100000} {
 		b.Run(fmt.Sprintf("items_%d", itemsCount), func(b *testing.B) {
-			for _, lookupsCount := range []int{1, 2, 4, 8, 16, 32, 64} {
+			for _, lookupsCount := range []int{0, 1, 2, 4, 8, 16, 32, 64} {
 				b.Run(fmt.Sprintf("lookups_%d", lookupsCount), func(b *testing.B) {
 					benchmarkObjectGetBig(b, itemsCount, lookupsCount)
 				})
