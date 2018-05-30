@@ -1,8 +1,38 @@
 package fastjson
 
 import (
+	"fmt"
 	"testing"
+	"time"
 )
+
+func TestGetStringConcurrent(t *testing.T) {
+	const concurrency = 10
+	data := []byte(largeFixture)
+
+	ch := make(chan error, concurrency)
+
+	for i := 0; i < concurrency; i++ {
+		go func() {
+			s := GetString(data, "non-existing-key")
+			if s != "" {
+				ch <- fmt.Errorf("unexpected non-empty string got: %q", s)
+			}
+			ch <- nil
+		}()
+	}
+
+	for i := 0; i < concurrency; i++ {
+		select {
+		case <-time.After(time.Second*5):
+			t.Fatalf("timeout")
+		case err := <-ch:
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+		}
+	}
+}
 
 func TestGetString(t *testing.T) {
 	data := []byte(`{"foo":"bar", "baz": 1234}`)
