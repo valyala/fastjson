@@ -6,6 +6,37 @@ import (
 	"time"
 )
 
+func TestValid(t *testing.T) {
+	if !Valid(`123`) {
+		t.Fatalf("cannot validate number")
+	}
+	if !Valid(`"foobar"`) {
+		t.Fatalf("cannot validate string")
+	}
+	if !Valid(`null`) {
+		t.Fatalf("cannot validate null")
+	}
+	if !Valid(`true`) {
+		t.Fatalf("cannot validate true")
+	}
+	if !Valid(`false`) {
+		t.Fatalf("cannot validate false")
+	}
+	if Valid(`foobar`) {
+		t.Fatalf("validation failed")
+	}
+	if Valid(`XDF`) {
+		t.Fatalf("validation failed")
+	}
+
+	if !ValidBytes([]byte(`{"foo":["bar", 123]}`)) {
+		t.Fatalf("cannot validate valid JSON")
+	}
+	if ValidBytes([]byte(`{"foo": bar`)) {
+		t.Fatalf("validation valied")
+	}
+}
+
 func TestGetStringConcurrent(t *testing.T) {
 	const concurrency = 4
 	data := []byte(largeFixture)
