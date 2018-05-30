@@ -588,6 +588,14 @@ func (v *Value) Type() Type {
 	return v.t
 }
 
+// Exists returns true if the field exists for the given keys path.
+//
+// Array indexes may be represented as decimal numbers in keys.
+func (v *Value) Exists(keys ...string) bool {
+	v = v.Get(keys...)
+	return v != nil
+}
+
 // Get returns value by the given keys path.
 //
 // Array indexes may be represented as decimal numbers in keys.

@@ -229,6 +229,17 @@ func TestValueGetTyped(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
+
+	if !v.Exists("foo") {
+		t.Fatalf("foo must exist in the v")
+	}
+	if v.Exists("foo", "bar") {
+		t.Fatalf("foo.bar mustn't exist in the v")
+	}
+	if v.Exists("foobar") {
+		t.Fatalf("foobar mustn't exist in the v")
+	}
+
 	o := v.GetObject("obj")
 	os := o.String()
 	if os != "{}" {
