@@ -77,6 +77,7 @@ As you can see, `fastsjon` outperforms `encoding/json`:
   * Q: _What is the main purpose for `fastjson`?_
     A: High-perf JSON parsing for [RTB](https://www.iab.com/wp-content/uploads/2015/05/OpenRTB_API_Specification_Version_2_3_1.pdf)
        and other [JSON-RPC](https://en.wikipedia.org/wiki/JSON-RPC) services.
+       Use [gjson](https://github.com/tidwall/gjson) if you need fetching only a few fields from the JSON.
 
   * Q: _Why fastjson doesn't provide fast marshaling (serialization)?_
     A: Because other solutions exist. I'd recommend [quicktemplate](https://github.com/valyala/quicktemplate#use-cases)
