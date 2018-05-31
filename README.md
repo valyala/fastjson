@@ -56,24 +56,24 @@ Legend:
   * `fastjson` - standard fastjson parsing.
 
 ```
-$ GOMAXPROCS=1 go test github.com/valyala/fastjson -bench=.
+$ GOMAXPROCS=1 go test github.com/valyala/fastjson -bench=Parse
 goos: linux
 goarch: amd64
 pkg: github.com/valyala/fastjson
-BenchmarkParse/small/stdjson-map         	  200000	      7079 ns/op	  26.70 MB/s	     960 B/op	      51 allocs/op
-BenchmarkParse/small/stdjson-struct      	  500000	      3256 ns/op	  58.04 MB/s	     224 B/op	       4 allocs/op
-BenchmarkParse/small/stdjson-empty-struct         	  500000	      2490 ns/op	  75.89 MB/s	     168 B/op	       2 allocs/op
-BenchmarkParse/small/fastjson                     	 3000000	       482 ns/op	 391.81 MB/s	       0 B/op	       0 allocs/op
-BenchmarkParse/medium/stdjson-map                 	   30000	     40381 ns/op	  57.65 MB/s	   10196 B/op	     208 allocs/op
-BenchmarkParse/medium/stdjson-struct              	   30000	     47130 ns/op	  49.39 MB/s	    9174 B/op	     258 allocs/op
-BenchmarkParse/medium/stdjson-empty-struct        	  100000	     20798 ns/op	 111.93 MB/s	     280 B/op	       5 allocs/op
-BenchmarkParse/medium/fastjson                    	  300000	      4218 ns/op	 551.84 MB/s	       0 B/op	       0 allocs/op
-BenchmarkParse/large/stdjson-map                  	    2000	    618105 ns/op	  45.50 MB/s	  210758 B/op	    2785 allocs/op
-BenchmarkParse/large/stdjson-struct               	    5000	    283911 ns/op	  99.06 MB/s	   15616 B/op	     353 allocs/op
-BenchmarkParse/large/stdjson-empty-struct         	    5000	    249950 ns/op	 112.51 MB/s	     280 B/op	       5 allocs/op
-BenchmarkParse/large/fastjson                     	   30000	     56235 ns/op	 500.09 MB/s	       9 B/op	       0 allocs/op
+BenchmarkParse/small/stdjson-map         	  200000	      7035 ns/op	  26.86 MB/s	     960 B/op	      51 allocs/op
+BenchmarkParse/small/stdjson-struct      	  500000	      3261 ns/op	  57.95 MB/s	     224 B/op	       4 allocs/op
+BenchmarkParse/small/stdjson-empty-struct         	  500000	      2482 ns/op	  76.14 MB/s	     168 B/op	       2 allocs/op
+BenchmarkParse/small/fastjson                     	 3000000	       492 ns/op	 383.99 MB/s	       0 B/op	       0 allocs/op
+BenchmarkParse/medium/stdjson-map                 	   30000	     40471 ns/op	  57.52 MB/s	   10196 B/op	     208 allocs/op
+BenchmarkParse/medium/stdjson-struct              	   30000	     47830 ns/op	  48.67 MB/s	    9174 B/op	     258 allocs/op
+BenchmarkParse/medium/stdjson-empty-struct        	  100000	     20721 ns/op	 112.35 MB/s	     280 B/op	       5 allocs/op
+BenchmarkParse/medium/fastjson                    	  300000	      4306 ns/op	 540.53 MB/s	       0 B/op	       0 allocs/op
+BenchmarkParse/large/stdjson-map                  	    2000	    622297 ns/op	  45.19 MB/s	  210734 B/op	    2785 allocs/op
+BenchmarkParse/large/stdjson-struct               	    5000	    286903 ns/op	  98.02 MB/s	   15616 B/op	     353 allocs/op
+BenchmarkParse/large/stdjson-empty-struct         	    5000	    250080 ns/op	 112.46 MB/s	     280 B/op	       5 allocs/op
+BenchmarkParse/large/fastjson                     	   30000	     56675 ns/op	 496.21 MB/s	       9 B/op	       0 allocs/op
 PASS
-ok  	github.com/valyala/fastjson	19.762s
+ok  	github.com/valyala/fastjson	20.068s
 ```
 
 As you can see, `fastsjon` outperforms `encoding/json`:
