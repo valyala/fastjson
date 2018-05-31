@@ -507,7 +507,20 @@ func TestParserParse(t *testing.T) {
 		}
 		_, err = p.Parse("-2134.453E+43")
 		if err != nil {
-			t.Fatalf("unexpected error when paring number: %s", err)
+			t.Fatalf("unexpected error when parsing number: %s", err)
+		}
+
+		_, err = p.Parse(`"{\"foo\": 123}`)
+		if err == nil {
+			t.Fatalf("expecting non-nil error when parsing invalid json")
+		}
+		v, err := p.Parse(`"{\"foo\": 123}"`)
+		if err != nil {
+			t.Fatalf("unexpected error when parsing json string: %s", err)
+		}
+		sb := v.GetStringBytes()
+		if string(sb) != `{"foo": 123}` {
+			t.Fatalf("unexpected string value; got %q; want %q", sb, `{"foo": 123}`)
 		}
 	})
 
