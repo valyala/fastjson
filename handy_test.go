@@ -258,4 +258,8 @@ func TestExists(t *testing.T) {
 	if Exists(data, "foo", "bar") {
 		t.Fatalf("found unexpected foo.bar")
 	}
+
+	if Exists([]byte(`invalid JSON`), "foo", "bar") {
+		t.Fatalf("Exists returned true on invalid json")
+	}
 }
