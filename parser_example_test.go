@@ -137,3 +137,26 @@ func ExampleObject_Visit() {
 	// array [23,4,"bar"]
 	// string "foobar"
 }
+
+func ExampleValue_GetStringBytes() {
+	s := `[
+		{"foo": "bar"},
+		[123, "baz"]
+	]`
+
+	var p fastjson.Parser
+	v, err := p.Parse(s)
+	if err != nil {
+		log.Fatalf("cannot parse json: %s", err)
+	}
+	fmt.Printf("v[0].foo = %q\n", v.GetStringBytes("0", "foo"))
+	fmt.Printf("v[1][1] = %q\n", v.GetStringBytes("1", "1"))
+	fmt.Printf("v[1][0] = %q\n", v.GetStringBytes("1", "0"))
+	fmt.Printf("v.foo.bar.baz = %q\n", v.GetStringBytes("foo", "bar", "baz"))
+
+	// Output:
+	// v[0].foo = "bar"
+	// v[1][1] = "baz"
+	// v[1][0] = ""
+	// v.foo.bar.baz = ""
+}
