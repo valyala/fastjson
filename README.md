@@ -22,6 +22,11 @@
 
 ## Known limitations
 
+  * Requies extra care to work with - references to all the objects recursively
+    returned by [Parser](https://godoc.org/github.com/valyala/fastjson#Parser)
+    must be released before then next call to [Parse](https://godoc.org/github.com/valyala/fastjson#Parser.Parse).
+    Otherwise the program may work improperly and/or may crash.
+    Adhere recommendations from [docs](https://godoc.org/github.com/valyala/fastjson).
   * Cannot parse JSON from `io.Reader`. There is [Scanner](https://godoc.org/github.com/valyala/fastjson#Scanner)
     for parsing stream of JSON values from a string.
 
