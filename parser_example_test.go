@@ -63,10 +63,19 @@ func ExampleValue_Get() {
 	vv = v.Get("foo", "1")
 	fmt.Printf("foo[1]=%s\n", vv)
 
+	vv = v.Get("foo").Get("1").Get("1")
+	fmt.Printf("foo[1][1]=%s\n", vv)
+
+	// non-existing key
+	vv = v.Get("foo").Get("bar").Get("baz", "1234")
+	fmt.Printf("foo.bar.baz[1234]=%v\n", vv)
+
 	// Output:
 	// foo[0].bar.x=434
 	// qwe=true
 	// foo[1]=[null,false]
+	// foo[1][1]=false
+	// foo.bar.baz[1234]=<nil>
 }
 
 func ExampleValue_Type() {

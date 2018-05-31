@@ -604,6 +604,9 @@ func (v *Value) Exists(keys ...string) bool {
 //
 // The returned value is valid until Parse is called on the Parser returned v.
 func (v *Value) Get(keys ...string) *Value {
+	if v == nil {
+		return nil
+	}
 	for _, key := range keys {
 		switch v.t {
 		case TypeObject:
