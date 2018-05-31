@@ -525,29 +525,29 @@ func (v *Value) String() string {
 type Type int
 
 const (
+	// TypeNull is JSON null.
+	TypeNull Type = 0
+
 	// TypeObject is JSON object type.
-	TypeObject = Type(0)
+	TypeObject Type = 1
 
 	// TypeArray is JSON array type.
-	TypeArray = Type(1)
+	TypeArray Type = 2
 
 	// TypeString is JSON string type.
-	TypeString = Type(2)
+	TypeString Type = 3
 
 	// TypeNumber is JSON number type.
-	TypeNumber = Type(3)
+	TypeNumber Type = 4
 
 	// TypeTrue is JSON true.
-	TypeTrue = Type(4)
+	TypeTrue Type = 5
 
 	// TypeFalse is JSON false.
-	TypeFalse = Type(5)
+	TypeFalse Type = 6
 
-	// TypeNull is JSON null.
-	TypeNull = Type(6)
-
-	typeRawString = Type(7)
-	typeRawNumber = Type(8)
+	typeRawString Type = 7
+	typeRawNumber Type = 8
 )
 
 // String returns string representation of t.
