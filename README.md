@@ -22,7 +22,7 @@
 
 ## Known limitations
 
-  * Requies extra care to work with - references to all the objects recursively
+  * Requies extra care to work with - references to certain objects recursively
     returned by [Parser](https://godoc.org/github.com/valyala/fastjson#Parser)
     must be released before then next call to [Parse](https://godoc.org/github.com/valyala/fastjson#Parser.Parse).
     Otherwise the program may work improperly and/or may crash.
@@ -89,3 +89,12 @@ As you can see, `fastsjon` outperforms `encoding/json`:
   * Q: _Why fastjson doesn't provide fast marshaling (serialization)?_
     A: Because other solutions exist. I'd recommend [quicktemplate](https://github.com/valyala/quicktemplate#use-cases)
        for high-performance JSON marshaling :)
+
+  * Q: _`fastjson` crashes my program!_ A: There is high probability of improper use.
+       * Make sure you don't hold references to objects recursively returned by `Parser` / `Scanner`
+         beyond the next `Parser.Parse` / `Scanner.Next` call
+         if such restriction is mentioned in [docs](https://github.com/valyala/fastjson/issues/new).
+       * Make sure you don't access `fastjson` objects from concurrently running goroutines
+         if such restriction is mentioned in [docs](https://github.com/valyala/fastjson/issues/new).
+       * Carefully read the [docs](https://godoc.org/github.com/valyala/fastjson).
+       * If you program continue crashing after fixing issues mentioned above, [file a bug](https://github.com/valyala/fastjson/issues/new).
