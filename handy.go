@@ -130,6 +130,8 @@ func GetBool(data []byte, keys ...string) bool {
 //
 // Array indexes may be represented as decimal numbers in keys.
 //
+// False is returned on error. Use Parser for proper error handling.
+//
 // Parser is faster when multiple fields must be checked in the JSON.
 func Exists(data []byte, keys ...string) bool {
 	p := handyPool.Get()

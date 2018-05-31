@@ -21,6 +21,9 @@ func (pp *ParserPool) Get() *Parser {
 }
 
 // Put returns p to pp.
+//
+// p and objects recursively returned from p cannot be used after p
+// is put into pp.
 func (pp *ParserPool) Put(p *Parser) {
 	pp.pool.Put(p)
 }
