@@ -629,6 +629,8 @@ func (v *Value) Get(keys ...string) *Value {
 // Array indexes may be represented as decimal numbers in keys.
 //
 // nil is returned for non-existing keys path or for invalid value type.
+//
+// The returned object is valid until Parse is called on the Parser returned v.
 func (v *Value) GetObject(keys ...string) *Object {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeObject {
@@ -642,6 +644,8 @@ func (v *Value) GetObject(keys ...string) *Object {
 // Array indexes may be represented as decimal numbers in keys.
 //
 // nil is returned for non-existing keys path or for invalid value type.
+//
+// The returned array is valid until Parse is called on the Parser returned v.
 func (v *Value) GetArray(keys ...string) []*Value {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeArray {
@@ -681,6 +685,8 @@ func (v *Value) GetInt(keys ...string) int {
 // Array indexes may be represented as decimal numbers in keys.
 //
 // nil is returned for non-existing keys path or for invalid value type.
+//
+// The returned string is valid until Parse is called on the Parser returned v.
 func (v *Value) GetStringBytes(keys ...string) []byte {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeString {
