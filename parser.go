@@ -452,6 +452,10 @@ func (o *Object) Get(key string) *Value {
 //
 // f cannot hold key and/or v after returning.
 func (o *Object) Visit(f func(key []byte, v *Value)) {
+	if o == nil {
+		return
+	}
+
 	o.unescapeKeys()
 
 	for _, kv := range o.kvs {

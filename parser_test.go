@@ -307,6 +307,21 @@ func TestValueGetTyped(t *testing.T) {
 	}
 }
 
+func TestVisitNil(t *testing.T) {
+	var p Parser
+	v, err := p.Parse(`{}`)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	o := v.GetObject("non-existing-key")
+	if o != nil {
+		t.Fatalf("obtained an object for non-existing key: %#v", o)
+	}
+	o.Visit(func(k []byte, v *Value) {
+		t.Fatalf("unexpected visit call; k=%q; v=%s", k, v)
+	})
+}
+
 func TestValueGet(t *testing.T) {
 	var pp ParserPool
 
