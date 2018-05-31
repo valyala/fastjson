@@ -6,34 +6,34 @@ import (
 	"time"
 )
 
-func TestValid(t *testing.T) {
-	if !Valid(`123`) {
-		t.Fatalf("cannot validate number")
+func TestValidate(t *testing.T) {
+	if err := Validate(`123`); err != nil {
+		t.Fatalf("cannot validate number: %s", err)
 	}
-	if !Valid(`"foobar"`) {
-		t.Fatalf("cannot validate string")
+	if err := Validate(`"foobar"`); err != nil {
+		t.Fatalf("cannot validate string: %s", err)
 	}
-	if !Valid(`null`) {
-		t.Fatalf("cannot validate null")
+	if err := Validate(`null`); err != nil {
+		t.Fatalf("cannot validate null: %s", err)
 	}
-	if !Valid(`true`) {
-		t.Fatalf("cannot validate true")
+	if err := Validate(`true`); err != nil {
+		t.Fatalf("cannot validate true: %s", err)
 	}
-	if !Valid(`false`) {
-		t.Fatalf("cannot validate false")
+	if err := Validate(`false`); err != nil {
+		t.Fatalf("cannot validate false: %s", err)
 	}
-	if Valid(`foobar`) {
-		t.Fatalf("validation failed")
+	if err := Validate(`foobar`); err == nil {
+		t.Fatalf("validation unexpectedly passed")
 	}
-	if Valid(`XDF`) {
-		t.Fatalf("validation failed")
+	if err := Validate(`XDF`); err == nil {
+		t.Fatalf("validation unexpectedly passed")
 	}
 
-	if !ValidBytes([]byte(`{"foo":["bar", 123]}`)) {
-		t.Fatalf("cannot validate valid JSON")
+	if err := ValidateBytes([]byte(`{"foo":["bar", 123]}`)); err != nil {
+		t.Fatalf("cannot validate valid JSON: %s", err)
 	}
-	if ValidBytes([]byte(`{"foo": bar`)) {
-		t.Fatalf("validation valied")
+	if err := ValidateBytes([]byte(`{"foo": bar`)); err == nil {
+		t.Fatalf("validation unexpectedly passed")
 	}
 }
 

@@ -2,22 +2,20 @@ package fastjson
 
 var handyPool ParserPool
 
-// Valid returns true if the JSON s is valid.
-func Valid(s string) bool {
+// Validate validates JSON s.
+func Validate(s string) error {
 	p := handyPool.Get()
 	_, err := p.Parse(s)
-	ok := err == nil
 	handyPool.Put(p)
-	return ok
+	return err
 }
 
-// ValidBytes returns true if the JSON b is valid.
-func ValidBytes(b []byte) bool {
+// ValidateBytes validates JSON b.
+func ValidateBytes(b []byte) error {
 	p := handyPool.Get()
 	_, err := p.ParseBytes(b)
-	ok := err == nil
 	handyPool.Put(p)
-	return ok
+	return err
 }
 
 // GetString returns string value for the field identified by keys path
