@@ -31,6 +31,15 @@
     for parsing stream of JSON values from a string.
 
 
+## Security
+
+  * `fastjson` shouldn't crash or panic when parsing input strings specially crafted
+    by an attacker. It must return error on invalid input JSON.
+  * `fastjson` requires up to `sizeof(Value) * len(inputJSON)` bytes of memory
+    for parsing `inputJSON` string. Limit the maximum size of the `inputJSON`
+    before parsing it in order to limit the maximum memory usage.
+
+
 ## Benchmarks
 
 Legend:
@@ -90,7 +99,8 @@ As you can see, `fastsjon` outperforms `encoding/json`:
     A: Because other solutions exist. I'd recommend [quicktemplate](https://github.com/valyala/quicktemplate#use-cases)
        for high-performance JSON marshaling :)
 
-  * Q: _`fastjson` crashes my program!_ A: There is high probability of improper use.
+  * Q: _`fastjson` crashes my program!_
+    A: There is high probability of improper use.
        * Make sure you don't hold references to objects recursively returned by `Parser` / `Scanner`
          beyond the next `Parser.Parse` / `Scanner.Next` call
          if such restriction is mentioned in [docs](https://github.com/valyala/fastjson/issues/new).
