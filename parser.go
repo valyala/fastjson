@@ -1,6 +1,7 @@
 package fastjson
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -401,16 +402,18 @@ func (o *Object) reset() {
 func (o *Object) String() string {
 	o.unescapeKeys()
 
-	var sb strings.Builder
-	fmt.Fprintf(&sb, "{")
+	// Use bytes.Buffer instead of strings.Builder,
+        // so it works on go 1.9 and below.
+	var bb bytes.Buffer
+	bb.WriteString("{")
 	for i, kv := range o.kvs {
-		fmt.Fprintf(&sb, "%q:%s", kv.k, kv.v)
+		fmt.Fprintf(&bb, "%q:%s", kv.k, kv.v)
 		if i != len(o.kvs)-1 {
-			fmt.Fprintf(&sb, ",")
+			bb.WriteString(",")
 		}
 	}
-	fmt.Fprintf(&sb, "}")
-	return sb.String()
+	bb.WriteString("}")
+	return bb.String()
 }
 
 func (o *Object) getKV() *kv {
@@ -499,16 +502,18 @@ func (v *Value) String() string {
 	case TypeObject:
 		return v.o.String()
 	case TypeArray:
-		var sb strings.Builder
-		fmt.Fprintf(&sb, "[")
+		// Use bytes.Buffer instead of strings.Builder,
+	        // so it works on go 1.9 and below.
+		var bb bytes.Buffer
+		bb.WriteString("[")
 		for i, vv := range v.a {
-			fmt.Fprintf(&sb, "%s", vv)
+			fmt.Fprintf(&bb, "%s", vv)
 			if i != len(v.a)-1 {
-				fmt.Fprintf(&sb, ",")
+				bb.WriteString(",")
 			}
 		}
-		fmt.Fprintf(&sb, "]")
-		return sb.String()
+		bb.WriteString("]")
+		return bb.String()
 	case TypeString:
 		return fmt.Sprintf("%q", v.s)
 	case TypeNumber:
