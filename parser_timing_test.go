@@ -7,6 +7,33 @@ import (
 	"testing"
 )
 
+func BenchmarkParseRawString(b *testing.B) {
+	for _, s := range []string{`""`, `"a"`, `"abcd"`, `"abcdefghijk"`, `"qwertyuiopasdfghjklzxcvb"`} {
+		b.Run(s, func(b *testing.B) {
+			benchmarkParseRawString(b, s)
+		})
+	}
+}
+
+func benchmarkParseRawString(b *testing.B, s string) {
+	b.ReportAllocs()
+	b.SetBytes(int64(len(s)))
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			rs, tail, err := parseRawString(s)
+			if err != nil {
+				panic(fmt.Errorf("cannot parse %q: %s", s, err))
+			}
+			if rs != s[1:len(s)-1] {
+				panic(fmt.Errorf("invalid string obtained; got %q; want %q", rs, s[1:len(s)-1]))
+			}
+			if len(tail) > 0 {
+				panic(fmt.Errorf("non-empty tail got: %q", tail))
+			}
+		}
+	})
+}
+
 func BenchmarkParseRawNumber(b *testing.B) {
 	for _, s := range []string{"1", "1234", "123456", "-1234", "1234567890.1234567", "-1.32434e+12"} {
 		b.Run(s, func(b *testing.B) {
@@ -16,6 +43,8 @@ func BenchmarkParseRawNumber(b *testing.B) {
 }
 
 func benchmarkParseRawNumber(b *testing.B, s string) {
+	b.ReportAllocs()
+	b.SetBytes(int64(len(s)))
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			rn, tail, err := parseRawNumber(s)

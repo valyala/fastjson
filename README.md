@@ -56,7 +56,7 @@ Legend:
   * `fastjson` - standard fastjson parsing.
 
 ```
-$ GOMAXPROCS=1 go test github.com/valyala/fastjson -bench=Parse
+$ GOMAXPROCS=1 go test github.com/valyala/fastjson -bench=Parse$
 goos: linux
 goarch: amd64
 pkg: github.com/valyala/fastjson
