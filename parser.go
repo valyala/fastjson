@@ -355,7 +355,7 @@ func parseRawString(s string) (string, string, error) {
 func parseRawNumber(s string) (string, string, error) {
 	// The caller must ensure len(s) > 0
 	ch := s[0]
-	if ch != '-' && (ch < '0' || ch > '9') {
+	if (ch < '0' || ch > '9') && ch != '-' {
 		return "", s, fmt.Errorf("unexpected char: %q", s[:1])
 	}
 
@@ -363,7 +363,7 @@ func parseRawNumber(s string) (string, string, error) {
 	n := len(s)
 	for i := 1; i < len(s); i++ {
 		ch := s[i]
-		if ch == '-' || (ch >= '0' && ch <= '9') || ch == '.' || ch == 'e' || ch == 'E' || ch == '+' {
+		if (ch >= '0' && ch <= '9') || ch == '-' || ch == '.' || ch == 'e' || ch == 'E' || ch == '+' {
 			continue
 		}
 		n = i
