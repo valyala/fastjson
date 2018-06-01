@@ -7,6 +7,31 @@ import (
 	"testing"
 )
 
+func BenchmarkParseRawNumber(b *testing.B) {
+	for _, s := range []string{"1", "1234", "123456", "-1234", "1234567890.1234567", "-1.32434e+12"} {
+		b.Run(s, func(b *testing.B) {
+			benchmarkParseRawNumber(b, s)
+		})
+	}
+}
+
+func benchmarkParseRawNumber(b *testing.B, s string) {
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			rn, tail, err := parseRawNumber(s)
+			if err != nil {
+				panic(fmt.Errorf("cannot parse %q: %s", s, err))
+			}
+			if rn != s {
+				panic(fmt.Errorf("invalid number obtained; got %q; want %q", rn, s))
+			}
+			if len(tail) > 0 {
+				panic(fmt.Errorf("non-empty tail got: %q", tail))
+			}
+		}
+	})
+}
+
 func BenchmarkObjectGetBig(b *testing.B) {
 	for _, itemsCount := range []int{10, 100, 1000, 10000, 100000} {
 		b.Run(fmt.Sprintf("items_%d", itemsCount), func(b *testing.B) {
