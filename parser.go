@@ -330,17 +330,19 @@ func parseRawString(s string) (string, string, error) {
 		return "", s, fmt.Errorf(`missing opening '"'`)
 	}
 	s = s[1:]
+
+	n := strings.IndexByte(s, '"')
+	if n < 0 {
+		return "", "", fmt.Errorf(`missing closing '"'`)
+	}
+	if n == 0 || s[n-1] != '\\' {
+		// Fast path. No escaped ".
+		return s[:n], s[n+1:], nil
+	}
+
+	// Slow path - possible escaped " found.
 	ss := s
-
 	for {
-		n := strings.IndexByte(s, '"')
-		if n < 0 {
-			return "", "", fmt.Errorf(`missing closing '"'`)
-		}
-		if n == 0 || s[n-1] != '\\' {
-			return ss[:len(ss)-len(s)+n], s[n+1:], nil
-		}
-
 		i := n - 1
 		for i > 0 && s[i-1] == '\\' {
 			i--
@@ -349,6 +351,14 @@ func parseRawString(s string) (string, string, error) {
 			return ss[:len(ss)-len(s)+n], s[n+1:], nil
 		}
 		s = s[n+1:]
+
+		n = strings.IndexByte(s, '"')
+		if n < 0 {
+			return "", "", fmt.Errorf(`missing closing '"'`)
+		}
+		if n == 0 || s[n-1] != '\\' {
+			return ss[:len(ss)-len(s)+n], s[n+1:], nil
+		}
 	}
 }
 
