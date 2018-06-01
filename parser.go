@@ -354,25 +354,21 @@ func parseRawString(s string) (string, string, error) {
 
 func parseRawNumber(s string) (string, string, error) {
 	// The caller must ensure len(s) > 0
-	ch := s[0]
-	if (ch < '0' || ch > '9') && ch != '-' {
-		return "", s, fmt.Errorf("unexpected char: %q", s[:1])
-	}
 
 	// Find the end of the number.
-	n := len(s)
-	for i := 1; i < len(s); i++ {
+	for i := 0; i < len(s); i++ {
 		ch := s[i]
 		if (ch >= '0' && ch <= '9') || ch == '-' || ch == '.' || ch == 'e' || ch == 'E' || ch == '+' {
 			continue
 		}
-		n = i
-		break
+		if i == 0 {
+			return "", s, fmt.Errorf("unexpected char: %q", s[:1])
+		}
+		ns := s[:i]
+		s = s[i:]
+		return ns, s, nil
 	}
-
-	ns := s[:n]
-	s = s[n:]
-	return ns, s, nil
+	return s, "", nil
 }
 
 // Object represents JSON object.
