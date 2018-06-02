@@ -497,6 +497,9 @@ func (v *Value) reset() {
 // String returns string representation of the v.
 //
 // The function is for debugging purposes only. It isn't optimized for speed.
+//
+// Don't confuse this function with StringBytes, which must be called
+// for obtaining the underlying JSON string for the v.
 func (v *Value) String() string {
 	switch v.Type() {
 	case TypeObject:
