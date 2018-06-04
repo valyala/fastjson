@@ -403,7 +403,7 @@ func (o *Object) String() string {
 	o.unescapeKeys()
 
 	// Use bytes.Buffer instead of strings.Builder,
-        // so it works on go 1.9 and below.
+	// so it works on go 1.9 and below.
 	var bb bytes.Buffer
 	bb.WriteString("{")
 	for i, kv := range o.kvs {
@@ -506,7 +506,7 @@ func (v *Value) String() string {
 		return v.o.String()
 	case TypeArray:
 		// Use bytes.Buffer instead of strings.Builder,
-	        // so it works on go 1.9 and below.
+		// so it works on go 1.9 and below.
 		var bb bytes.Buffer
 		bb.WriteString("[")
 		for i, vv := range v.a {
