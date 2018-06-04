@@ -130,6 +130,9 @@ func benchmarkParse(b *testing.B, s string) {
 	b.Run("fastjson", func(b *testing.B) {
 		benchmarkFastJSONParse(b, s)
 	})
+	b.Run("fastjson-get", func(b *testing.B) {
+		benchmarkFastJSONParseGet(b, s)
+	})
 }
 
 func benchmarkFastJSONParse(b *testing.B, s string) {
@@ -144,6 +147,35 @@ func benchmarkFastJSONParse(b *testing.B, s string) {
 			}
 			if v.Type() != TypeObject {
 				panic(fmt.Errorf("unexpected value type; got %s; want %s", v.Type(), TypeObject))
+			}
+		}
+	})
+}
+
+func benchmarkFastJSONParseGet(b *testing.B, s string) {
+	b.ReportAllocs()
+	b.SetBytes(int64(len(s)))
+	b.RunParallel(func(pb *testing.PB) {
+		var p Parser
+		var n int
+		for pb.Next() {
+			v, err := p.Parse(s)
+			if err != nil {
+				panic(fmt.Errorf("unexpected error: %s", err))
+			}
+			n += v.GetInt("sid")
+			n += len(v.GetStringBytes("uuid"))
+			p := v.Get("person")
+			if p != nil {
+				n++
+			}
+			c := v.Get("company")
+			if c != nil {
+				n++
+			}
+			u := v.Get("users")
+			if u != nil {
+				n++
 			}
 		}
 	})

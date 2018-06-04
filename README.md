@@ -47,34 +47,37 @@ Legend:
   * `small` - small-length parsing. JSON length is 190 bytes.
   * `medium` - medium-length parsing. JSON length is 2.4KB.
   * `large` - large-length parsing. JSON length is 24KB.
-  * `stdjson-map` - `encoding/json`, parsing into a `map[string]interface{}`
-  * `stdjson-struct` - `encoding/json`, parsing into a struct containing
-    a subset of fields of the parsed JSON.
-  * `stdjson-empty-struct` - `encoding/json`, parsing into an empty struct.
+  * `stdjson-map` - parsing into a `map[string]interface{}` using `encoding/json`.
+  * `stdjson-struct` - parsing into a struct containing
+    a subset of fields of the parsed JSON, using `encoding/json`.
+  * `stdjson-empty-struct` - parsing into an empty struct using `encoding/json`.
     This is the fastests possible solution for `encoding/json`, may be used
     for json validation.
-  * `fastjson` - standard fastjson parsing.
+  * `fastjson` - parsing using `fastjson` without fields access.
+  * `fastjson-get` - parsing using `fastjson` with fields access similar to `stdjson-struct`.
 
 ```
-$ GOMAXPROCS=1 go test github.com/valyala/fastjson -bench=Parse$
+$ GOMAXPROCS=1 go test -bench=Parse$
 goos: linux
 goarch: amd64
 pkg: github.com/valyala/fastjson
-BenchmarkParse/small/stdjson-map         	  200000	      6760 ns/op	  27.96 MB/s	     960 B/op	      51 allocs/op
-BenchmarkParse/small/stdjson-struct      	  500000	      3186 ns/op	  59.32 MB/s	     224 B/op	       4 allocs/op
-BenchmarkParse/small/stdjson-empty-struct         	  500000	      2428 ns/op	  77.81 MB/s	     168 B/op	       2 allocs/op
-BenchmarkParse/small/fastjson                     	 3000000	       471 ns/op	 400.84 MB/s	       0 B/op	       0 allocs/op
-BenchmarkParse/medium/stdjson-map                 	   50000	     39068 ns/op	  59.59 MB/s	   10194 B/op	     208 allocs/op
-BenchmarkParse/medium/stdjson-struct              	   30000	     46551 ns/op	  50.01 MB/s	    9174 B/op	     258 allocs/op
-BenchmarkParse/medium/stdjson-empty-struct        	  100000	     20275 ns/op	 114.82 MB/s	     280 B/op	       5 allocs/op
-BenchmarkParse/medium/fastjson                    	  300000	      4167 ns/op	 558.66 MB/s	       0 B/op	       0 allocs/op
-BenchmarkParse/large/stdjson-map                  	    2000	    608865 ns/op	  46.19 MB/s	  210715 B/op	    2785 allocs/op
-BenchmarkParse/large/stdjson-struct               	    5000	    278995 ns/op	 100.80 MB/s	   15616 B/op	     353 allocs/op
-BenchmarkParse/large/stdjson-empty-struct         	    5000	    243519 ns/op	 115.49 MB/s	     280 B/op	       5 allocs/op
-BenchmarkParse/large/fastjson                     	   30000	     54295 ns/op	 517.96 MB/s	       9 B/op	       0 allocs/op
+BenchmarkParse/small/stdjson-map         	  200000	      6631 ns/op	  28.50 MB/s	     960 B/op	      51 allocs/op
+BenchmarkParse/small/stdjson-struct      	  500000	      3141 ns/op	  60.17 MB/s	     224 B/op	       4 allocs/op
+BenchmarkParse/small/stdjson-empty-struct         	  500000	      2360 ns/op	  80.07 MB/s	     168 B/op	       2 allocs/op
+BenchmarkParse/small/fastjson                     	 3000000	       457 ns/op	 413.04 MB/s	       0 B/op	       0 allocs/op
+BenchmarkParse/small/fastjson-get                 	 2000000	       660 ns/op	 286.15 MB/s	       0 B/op	       0 allocs/op
+BenchmarkParse/medium/stdjson-map                 	   50000	     38041 ns/op	  61.20 MB/s	   10195 B/op	     208 allocs/op
+BenchmarkParse/medium/stdjson-struct              	   30000	     45253 ns/op	  51.44 MB/s	    9173 B/op	     258 allocs/op
+BenchmarkParse/medium/stdjson-empty-struct        	  100000	     19950 ns/op	 116.69 MB/s	     280 B/op	       5 allocs/op
+BenchmarkParse/medium/fastjson                    	  300000	      4063 ns/op	 572.97 MB/s	       0 B/op	       0 allocs/op
+BenchmarkParse/medium/fastjson-get                	  300000	      4174 ns/op	 557.70 MB/s	       0 B/op	       0 allocs/op
+BenchmarkParse/large/stdjson-map                  	    2000	    592670 ns/op	  47.45 MB/s	  210752 B/op	    2785 allocs/op
+BenchmarkParse/large/stdjson-struct               	    5000	    272348 ns/op	 103.26 MB/s	   15616 B/op	     353 allocs/op
+BenchmarkParse/large/stdjson-empty-struct         	    5000	    238023 ns/op	 118.15 MB/s	     280 B/op	       5 allocs/op
+BenchmarkParse/large/fastjson                     	   30000	     52874 ns/op	 531.89 MB/s	       9 B/op	       0 allocs/op
+BenchmarkParse/large/fastjson-get                 	   30000	     53173 ns/op	 528.89 MB/s	       9 B/op	       0 allocs/op
 PASS
-ok  	github.com/valyala/fastjson	20.235s
-
+ok  	github.com/valyala/fastjson	25.181s
 ```
 
 As you can see, `fastsjon` outperforms `encoding/json`:
