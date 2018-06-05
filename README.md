@@ -152,5 +152,5 @@ As you can see, `fastsjon` outperforms `encoding/json`:
        * Make sure you don't access `fastjson` objects from concurrently running goroutines
          if such restriction is mentioned in [docs](https://github.com/valyala/fastjson/issues/new).
        * Build and run your program with [-race](https://golang.org/doc/articles/race_detector.html) flag.
-         Make sure the race detector doesn't any race.
+         Make sure the race detector detects zero races.
        * If your program continue crashing after fixing issues mentioned above, [file a bug](https://github.com/valyala/fastjson/issues/new).
