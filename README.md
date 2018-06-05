@@ -31,6 +31,47 @@
     for parsing stream of JSON values from a string.
 
 
+## Usage
+
+One-liner accessing a single field:
+```go
+	s := []byte(`{"foo": [123, "bar"]}`)
+	fmt.Printf("foo.0=%s\n", fastjson.GetInt(s, "foo", "0"))
+
+	// Output:
+	// foo.1=123
+```
+
+Accessing multiple fields with error handling:
+```go
+        var p fastjson.Parser
+        v, err := p.Parse(`{
+                "str": "bar",
+                "int": 123,
+                "float": 1.23,
+                "bool": true,
+                "arr": [1, "foo", {}]
+        }`)
+        if err != nil {
+                log.Fatal(err)
+        }
+        fmt.Printf("foo=%s\n", v.GetStringBytes("str"))
+        fmt.Printf("int=%d\n", v.GetInt("int"))
+        fmt.Printf("float=%f\n", v.GetFloat64("float"))
+        fmt.Printf("bool=%v\n", v.GetBool("bool"))
+        fmt.Printf("arr.1=%s\n", v.GetStringBytes("arr", "1"))
+
+        // Output:
+        // foo=bar
+        // int=123
+        // float=1.230000
+        // bool=true
+        // arr.1=foo
+```
+
+See also [examples](https://godoc.org/github.com/valyala/fastjson#pkg-examples).
+
+
 ## Security
 
   * `fastjson` shouldn't crash or panic when parsing input strings specially crafted
@@ -82,8 +123,8 @@ ok  	github.com/valyala/fastjson	25.181s
 
 As you can see, `fastsjon` outperforms `encoding/json`:
 
-  * by a factor of 15x for `small`-length parsing;
-  * by a factor of 11x for `medium`-length and `large`-length parsing.
+  * by up to a factor of 15x for `small`-length parsing;
+  * by up to a factor of 11x for `medium`-length and `large`-length parsing.
 
 
 ## FAQ
