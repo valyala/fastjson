@@ -36,7 +36,7 @@
 One-liner accessing a single field:
 ```go
 	s := []byte(`{"foo": [123, "bar"]}`)
-	fmt.Printf("foo.0=%s\n", fastjson.GetInt(s, "foo", "0"))
+	fmt.Printf("foo.0=%d\n", fastjson.GetInt(s, "foo", "0"))
 
 	// Output:
 	// foo.1=123
