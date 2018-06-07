@@ -110,61 +110,57 @@ func parseValue(s string, c *cache) (*Value, string, error) {
 		return nil, s, fmt.Errorf("cannot parse empty string")
 	}
 
-	var v *Value
-	var err error
-
-	switch s[0] {
-	case '{':
-		v, s, err = parseObject(s, c)
+	if s[0] == '{' {
+		v, tail, err := parseObject(s, c)
 		if err != nil {
-			return nil, s, fmt.Errorf("cannot parse object: %s", err)
+			return nil, tail, fmt.Errorf("cannot parse object: %s", err)
 		}
-		return v, s, nil
-	case '[':
-		v, s, err = parseArray(s, c)
+		return v, tail, nil
+	}
+	if s[0] == '[' {
+		v, tail, err := parseArray(s, c)
 		if err != nil {
-			return nil, s, fmt.Errorf("cannot parse array: %s", err)
+			return nil, tail, fmt.Errorf("cannot parse array: %s", err)
 		}
-		return v, s, nil
-	case '"':
-		var ss string
-		ss, s, err = parseRawString(s)
+		return v, tail, nil
+	}
+	if s[0] == '"' {
+		ss, tail, err := parseRawString(s)
 		if err != nil {
-			return nil, s, fmt.Errorf("cannot parse string: %s", err)
+			return nil, tail, fmt.Errorf("cannot parse string: %s", err)
 		}
-		v = c.getValue()
+		v := c.getValue()
 		v.t = typeRawString
 		v.s = ss
-		return v, s, nil
-	case 't':
+		return v, tail, nil
+	}
+	if s[0] == 't' {
 		if !strings.HasPrefix(s, "true") {
 			return nil, s, fmt.Errorf("unexpected value found: %q", s)
 		}
-		s = s[len("true"):]
-		return valueTrue, s, nil
-	case 'f':
+		return valueTrue, s[len("true"):], nil
+	}
+	if s[0] == 'f' {
 		if !strings.HasPrefix(s, "false") {
 			return nil, s, fmt.Errorf("unexpected value found: %q", s)
 		}
-		s = s[len("false"):]
-		return valueFalse, s, nil
-	case 'n':
+		return valueFalse, s[len("false"):], nil
+	}
+	if s[0] == 'n' {
 		if !strings.HasPrefix(s, "null") {
 			return nil, s, fmt.Errorf("unexpected value found: %q", s)
 		}
-		s = s[len("null"):]
-		return valueNull, s, nil
-	default:
-		var ns string
-		ns, s, err = parseRawNumber(s)
-		if err != nil {
-			return nil, s, fmt.Errorf("cannot parse number: %s", err)
-		}
-		v = c.getValue()
-		v.t = typeRawNumber
-		v.s = ns
-		return v, s, nil
+		return valueNull, s[len("null"):], nil
 	}
+
+	ns, tail, err := parseRawNumber(s)
+	if err != nil {
+		return nil, tail, fmt.Errorf("cannot parse number: %s", err)
+	}
+	v := c.getValue()
+	v.t = typeRawNumber
+	v.s = ns
+	return v, tail, nil
 }
 
 func parseArray(s string, c *cache) (*Value, string, error) {
