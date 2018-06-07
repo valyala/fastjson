@@ -617,11 +617,10 @@ func (t Type) String() string {
 
 // Type returns the type of the v.
 func (v *Value) Type() Type {
-	switch v.t {
-	case typeRawString:
+	if v.t == typeRawString {
 		v.s = unescapeStringBestEffort(v.s)
 		v.t = TypeString
-	case typeRawNumber:
+	} else if v.t == typeRawNumber {
 		f, err := strconv.ParseFloat(v.s, 64)
 		if err != nil {
 			f = 0
