@@ -651,19 +651,18 @@ func (v *Value) Get(keys ...string) *Value {
 		return nil
 	}
 	for _, key := range keys {
-		switch v.t {
-		case TypeObject:
+		if v.t == TypeObject {
 			v = v.o.Get(key)
 			if v == nil {
 				return nil
 			}
-		case TypeArray:
+		} else if v.t == TypeArray {
 			n, err := strconv.Atoi(key)
 			if err != nil || n < 0 || n >= len(v.a) {
 				return nil
 			}
 			v = v.a[n]
-		default:
+		} else {
 			return nil
 		}
 	}
