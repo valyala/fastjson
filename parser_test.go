@@ -118,7 +118,7 @@ func TestParseRawString(t *testing.T) {
 func testParseRawStringError(t *testing.T, s, expectedTail string) {
 	t.Helper()
 
-	_, tail, err := parseRawString(s)
+	_, tail, err := parseRawString(s[1:])
 	if err == nil {
 		t.Fatalf("expecting non-nil error on parseRawString")
 	}
@@ -127,7 +127,7 @@ func testParseRawStringError(t *testing.T, s, expectedTail string) {
 	}
 
 	// parseRawKey results must be identical to parseRawString.
-	_, tail, err = parseRawKey(s)
+	_, tail, err = parseRawKey(s[1:])
 	if err == nil {
 		t.Fatalf("expecting non-nil error on parseRawKey")
 	}
@@ -139,7 +139,7 @@ func testParseRawStringError(t *testing.T, s, expectedTail string) {
 func testParseRawStringSuccess(t *testing.T, s, expectedRS, expectedTail string) {
 	t.Helper()
 
-	rs, tail, err := parseRawString(s)
+	rs, tail, err := parseRawString(s[1:])
 	if err != nil {
 		t.Fatalf("unexpected error on parseRawString: %s", err)
 	}
@@ -151,7 +151,7 @@ func testParseRawStringSuccess(t *testing.T, s, expectedRS, expectedTail string)
 	}
 
 	// parseRawKey results must be identical to parseRawString.
-	rs, tail, err = parseRawKey(s)
+	rs, tail, err = parseRawKey(s[1:])
 	if err != nil {
 		t.Fatalf("unexpected error on parseRawKey: %s", err)
 	}
