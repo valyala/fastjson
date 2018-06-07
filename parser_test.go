@@ -107,9 +107,6 @@ func TestParseRawString(t *testing.T) {
 	})
 
 	t.Run("error", func(t *testing.T) {
-		testParseRawStringError(t, ``, "")
-		testParseRawStringError(t, ` `, " ")
-		testParseRawStringError(t, `invalid prefix`, "invalid prefix")
 		testParseRawStringError(t, `"`, "")
 		testParseRawStringError(t, `"unclosed string`, "")
 		testParseRawStringError(t, `"\"`, "")
@@ -123,10 +120,19 @@ func testParseRawStringError(t *testing.T, s, expectedTail string) {
 
 	_, tail, err := parseRawString(s)
 	if err == nil {
-		t.Fatalf("expecting non-nil error")
+		t.Fatalf("expecting non-nil error on parseRawString")
 	}
 	if tail != expectedTail {
-		t.Fatalf("unexpected tail; got %q; want %q", tail, expectedTail)
+		t.Fatalf("unexpected tail on parseRawString; got %q; want %q", tail, expectedTail)
+	}
+
+	// parseRawKey results must be identical to parseRawString.
+	_, tail, err = parseRawKey(s)
+	if err == nil {
+		t.Fatalf("expecting non-nil error on parseRawKey")
+	}
+	if tail != expectedTail {
+		t.Fatalf("unexpected tail on parseRawKey; got %q; want %q", tail, expectedTail)
 	}
 }
 
@@ -135,13 +141,25 @@ func testParseRawStringSuccess(t *testing.T, s, expectedRS, expectedTail string)
 
 	rs, tail, err := parseRawString(s)
 	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
+		t.Fatalf("unexpected error on parseRawString: %s", err)
 	}
 	if rs != expectedRS {
-		t.Fatalf("unexpected raw string; got %q; want %q", rs, expectedRS)
+		t.Fatalf("unexpected string on parseRawString; got %q; want %q", rs, expectedRS)
 	}
 	if tail != expectedTail {
-		t.Fatalf("unexpected tail; got %q; want %q", tail, expectedTail)
+		t.Fatalf("unexpected tail on parseRawString; got %q; want %q", tail, expectedTail)
+	}
+
+	// parseRawKey results must be identical to parseRawString.
+	rs, tail, err = parseRawKey(s)
+	if err != nil {
+		t.Fatalf("unexpected error on parseRawKey: %s", err)
+	}
+	if rs != expectedRS {
+		t.Fatalf("unexpected string on parseRawKey; got %q; want %q", rs, expectedRS)
+	}
+	if tail != expectedTail {
+		t.Fatalf("unexpected tail on parseRawKey; got %q; want %q", tail, expectedTail)
 	}
 }
 

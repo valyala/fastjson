@@ -234,7 +234,10 @@ func parseObject(s string, c *cache) (*Value, string, error) {
 
 		// Parse key.
 		s = skipWS(s)
-		kv.k, s, err = parseRawString(s)
+		if len(s) == 0 || s[0] != '"' {
+			return nil, s, fmt.Errorf(`cannot find opening '"" for object key`)
+		}
+		kv.k, s, err = parseRawKey(s)
 		if err != nil {
 			return nil, s, fmt.Errorf("cannot parse object key: %s", err)
 		}
@@ -326,15 +329,32 @@ func unescapeStringBestEffort(s string) string {
 	return b2s(b)
 }
 
-func parseRawString(s string) (string, string, error) {
-	if len(s) == 0 || s[0] != '"' {
-		return "", s, fmt.Errorf(`missing opening '"'`)
+// parseRawKey is similar to parseRawString, but is optimized for small-sized keys.
+func parseRawKey(s string) (string, string, error) {
+	// The caller must ensure the s[0] == '"'
+	backslashes := 0
+	for i := 1; i < len(s); i++ {
+		if s[i] == '"' {
+			if backslashes%2 == 0 {
+				return s[1:i], s[i+1:], nil
+			}
+			backslashes = 0
+		} else if s[i] == '\\' {
+			backslashes++
+		} else {
+			backslashes = 0
+		}
 	}
+	return s, "", fmt.Errorf(`missing closing '"'`)
+}
+
+func parseRawString(s string) (string, string, error) {
+	// The caller must ensure the s[0] == '"'
 	s = s[1:]
 
 	n := strings.IndexByte(s, '"')
 	if n < 0 {
-		return "", "", fmt.Errorf(`missing closing '"'`)
+		return s, "", fmt.Errorf(`missing closing '"'`)
 	}
 	if n == 0 || s[n-1] != '\\' {
 		// Fast path. No escaped ".
@@ -355,7 +375,7 @@ func parseRawString(s string) (string, string, error) {
 
 		n = strings.IndexByte(s, '"')
 		if n < 0 {
-			return "", "", fmt.Errorf(`missing closing '"'`)
+			return ss, "", fmt.Errorf(`missing closing '"'`)
 		}
 		if n == 0 || s[n-1] != '\\' {
 			return ss[:len(ss)-len(s)+n], s[n+1:], nil
