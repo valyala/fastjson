@@ -447,6 +447,16 @@ func (o *Object) Len() int {
 //
 // The returned value is valid until Parse is called on the Parser returned o.
 func (o *Object) Get(key string) *Value {
+	if !o.keysUnescaped && strings.IndexByte(key, '\\') < 0 {
+		// Fast path - try searching for the key without object keys unescaping.
+		for _, kv := range o.kvs {
+			if kv.k == key {
+				return kv.v
+			}
+		}
+	}
+
+	// Slow path - unescape object keys.
 	o.unescapeKeys()
 
 	for _, kv := range o.kvs {
