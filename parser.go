@@ -164,7 +164,7 @@ func parseValue(s string, c *cache) (*Value, string, error) {
 }
 
 func parseArray(s string, c *cache) (*Value, string, error) {
-	// Skip the first char - '['
+	// The caller must ensure s[0] == '['
 	s = s[1:]
 
 	s = skipWS(s)
@@ -206,7 +206,7 @@ func parseArray(s string, c *cache) (*Value, string, error) {
 }
 
 func parseObject(s string, c *cache) (*Value, string, error) {
-	// Skip the first char - '{'
+	// The caller must ensure s[0] == '{'
 	s = s[1:]
 
 	s = skipWS(s)
