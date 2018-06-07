@@ -16,6 +16,15 @@ func BenchmarkValidate(b *testing.B) {
 	b.Run("large", func(b *testing.B) {
 		benchmarkValidate(b, largeFixture)
 	})
+	b.Run("canada", func(b *testing.B) {
+		benchmarkValidate(b, canadaFixture)
+	})
+	b.Run("citm", func(b *testing.B) {
+		benchmarkValidate(b, citmFixture)
+	})
+	b.Run("twitter", func(b *testing.B) {
+		benchmarkValidate(b, twitterFixture)
+	})
 }
 
 func benchmarkValidate(b *testing.B, s string) {
