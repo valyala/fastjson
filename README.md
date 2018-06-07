@@ -89,7 +89,7 @@ Legend:
   * `medium` - parse [medium.json](testdata/medium.json) (2.3KB).
   * `large` - parse [large.json](testdata/large.json) (28KB).
   * `canada` - parse [canada.json](testdata/canada.json) (2.2MB).
-  * `citm` - parse [citm.json](testdata/citm.json) (1.7MB).
+  * `citm` - parse [citm_catalog.json](testdata/citm_catalog.json) (1.7MB).
   * `twitter` - parse [twitter.json](testdata/twitter.json) (617KB).
 
   * `stdjson-map` - parse into a `map[string]interface{}` using `encoding/json`.
