@@ -552,6 +552,13 @@ func TestParserParse(t *testing.T) {
 			t.Fatalf("unexpected error when parsing number: %s", err)
 		}
 
+		// Incomplete object key key.
+		_, err = p.Parse(`{"foo: 123}`)
+		if err == nil {
+			t.Fatalf("expecting non-nil error when parsing invalid json")
+		}
+
+		// Incomplete string.
 		_, err = p.Parse(`"{\"foo\": 123}`)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing invalid json")
