@@ -759,7 +759,7 @@ func (v *Value) GetBool(keys ...string) bool {
 //
 // Use GetObject if you don't need error handling.
 func (v *Value) Object() (*Object, error) {
-	if v.Type() != TypeObject {
+	if v.t != TypeObject {
 		return nil, fmt.Errorf("value doesn't contain object; it contains %s", v.Type())
 	}
 	return &v.o, nil
@@ -771,7 +771,7 @@ func (v *Value) Object() (*Object, error) {
 //
 // Use GetArray if you don't need error handling.
 func (v *Value) Array() ([]*Value, error) {
-	if v.Type() != TypeArray {
+	if v.t != TypeArray {
 		return nil, fmt.Errorf("value doesn't contain array; it contains %s", v.Type())
 	}
 	return v.a, nil
@@ -811,14 +811,13 @@ func (v *Value) Int() (int, error) {
 //
 // Use GetBool if you don't need error handling.
 func (v *Value) Bool() (bool, error) {
-	switch v.Type() {
-	case TypeTrue:
+	if v.t == TypeTrue {
 		return true, nil
-	case TypeFalse:
-		return false, nil
-	default:
-		return false, fmt.Errorf("value doesn't contain bool; it contains %s", v.Type())
 	}
+	if v.t == TypeFalse {
+		return false, nil
+	}
+	return false, fmt.Errorf("value doesn't contain bool; it contains %s", v.Type())
 }
 
 var (
