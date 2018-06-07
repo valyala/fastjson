@@ -61,19 +61,19 @@ func benchmarkParseRawNumber(b *testing.B, s string) {
 	})
 }
 
-func BenchmarkObjectGetBig(b *testing.B) {
+func BenchmarkObjectGet(b *testing.B) {
 	for _, itemsCount := range []int{10, 100, 1000, 10000, 100000} {
 		b.Run(fmt.Sprintf("items_%d", itemsCount), func(b *testing.B) {
 			for _, lookupsCount := range []int{0, 1, 2, 4, 8, 16, 32, 64} {
 				b.Run(fmt.Sprintf("lookups_%d", lookupsCount), func(b *testing.B) {
-					benchmarkObjectGetBig(b, itemsCount, lookupsCount)
+					benchmarkObjectGet(b, itemsCount, lookupsCount)
 				})
 			}
 		})
 	}
 }
 
-func benchmarkObjectGetBig(b *testing.B, itemsCount, lookupsCount int) {
+func benchmarkObjectGet(b *testing.B, itemsCount, lookupsCount int) {
 	b.StopTimer()
 	var ss []string
 	for i := 0; i < itemsCount; i++ {
