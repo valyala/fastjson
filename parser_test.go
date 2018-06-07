@@ -326,12 +326,21 @@ func TestValueGet(t *testing.T) {
 	var pp ParserPool
 
 	p := pp.Get()
-	v, err := p.ParseBytes([]byte(`{"xx":33.33,"foo":[123,{"bar":["baz"],"x":"y"}]}`))
+	v, err := p.ParseBytes([]byte(`{"xx":33.33,"foo":[123,{"bar":["baz"],"x":"y"}], "": "empty-key", "empty-value": ""}`))
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
 
 	t.Run("positive", func(t *testing.T) {
+		sb := v.GetStringBytes("")
+		if string(sb) != "empty-key" {
+			t.Fatalf("unexpected value for empty key; got %q; want %q", sb, "empty-key")
+		}
+		sb = v.GetStringBytes("empty-value")
+		if string(sb) != "" {
+			t.Fatalf("unexpected non-empty value: %q", sb)
+		}
+
 		vv := v.Get("foo", "1")
 		if vv == nil {
 			t.Fatalf("cannot find the required value")
