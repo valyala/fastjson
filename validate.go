@@ -129,7 +129,7 @@ func validateObject(s string) (string, error) {
 		if len(s) == 0 || s[0] != '"' {
 			return s, fmt.Errorf(`cannot find opening '"" for object key`)
 		}
-		s, err = validateString(s[1:])
+		s, err = validateKey(s[1:])
 		if err != nil {
 			return s, fmt.Errorf("cannot parse object key: %s", err)
 		}
@@ -158,6 +158,22 @@ func validateObject(s string) (string, error) {
 		}
 		return s, fmt.Errorf("missing ',' after object value")
 	}
+}
+
+// validateKey is similar to validateString, but is optimized
+// for typical object keys, which are quite small and have no escape sequences.
+func validateKey(s string) (string, error) {
+	for i := 0; i < len(s); i++ {
+		if s[i] == '"' {
+			// Fast path.
+			return s[i+1:], nil
+		}
+		if s[i] == '\\' {
+			// Slow path.
+			return validateString(s)
+		}
+	}
+	return "", fmt.Errorf(`missing closing '"'`)
 }
 
 func validateString(s string) (string, error) {
