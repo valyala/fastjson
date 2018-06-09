@@ -3,7 +3,7 @@
 [![Go Report](https://goreportcard.com/badge/github.com/valyala/fastjson)](https://goreportcard.com/report/github.com/valyala/fastjson)
 [![codecov](https://codecov.io/gh/valyala/fastjson/branch/master/graph/badge.svg)](https://codecov.io/gh/valyala/fastjson)
 
-# fastjson - fast JSON parser for Go
+# fastjson - fast JSON parser and validator for Go
 
 
 ## Features
@@ -97,12 +97,12 @@ Legend:
     a subset of fields of the parsed JSON, using `encoding/json`.
   * `stdjson-empty-struct` - parse into an empty struct using `encoding/json`.
     This is the fastests possible solution for `encoding/json`, may be used
-    for json validation.
+    for json validation. See also benchmark results for json validation.
   * `fastjson` - parse using `fastjson` without fields access.
   * `fastjson-get` - parse using `fastjson` with fields access similar to `stdjson-struct`.
 
 ```
-$ GOMAXPROCS=1 go test github.com/valyala/fastjson -bench='(Parse|Validate)$'
+$ GOMAXPROCS=1 go test github.com/valyala/fastjson -bench='Parse$'
 goos: linux
 goarch: amd64
 pkg: github.com/valyala/fastjson
@@ -136,27 +136,28 @@ BenchmarkParse/twitter/stdjson-struct             	     300	   5288214 ns/op	 11
 BenchmarkParse/twitter/stdjson-empty-struct       	     300	   5346025 ns/op	 118.13 MB/s	     408 B/op	       6 allocs/op
 BenchmarkParse/twitter/fastjson                   	    2000	    911893 ns/op	 692.53 MB/s	    2536 B/op	       2 allocs/op
 BenchmarkParse/twitter/fastjson-get               	    2000	    913300 ns/op	 691.46 MB/s	    2536 B/op	       2 allocs/op
-BenchmarkValidate/small/stdjson                   	 2000000	       900 ns/op	 211.07 MB/s	      72 B/op	       2 allocs/op
-BenchmarkValidate/small/fastjson                  	 3000000	       454 ns/op	 418.10 MB/s	       0 B/op	       0 allocs/op
-BenchmarkValidate/medium/stdjson                  	  200000	     10174 ns/op	 228.91 MB/s	     184 B/op	       5 allocs/op
-BenchmarkValidate/medium/fastjson                 	  300000	      4163 ns/op	 559.43 MB/s	       0 B/op	       0 allocs/op
-BenchmarkValidate/large/stdjson                   	   10000	    122602 ns/op	 229.34 MB/s	     184 B/op	       5 allocs/op
-BenchmarkValidate/large/fastjson                  	   30000	     55472 ns/op	 506.88 MB/s	       0 B/op	       0 allocs/op
-BenchmarkValidate/canada/stdjson                  	     200	   8434990 ns/op	 266.87 MB/s	     184 B/op	       5 allocs/op
-BenchmarkValidate/canada/fastjson                 	     500	   3712111 ns/op	 606.41 MB/s	       0 B/op	       0 allocs/op
-BenchmarkValidate/citm/stdjson                    	     200	   6945108 ns/op	 248.69 MB/s	     184 B/op	       5 allocs/op
-BenchmarkValidate/citm/fastjson                   	    1000	   1885863 ns/op	 915.87 MB/s	       0 B/op	       0 allocs/op
-BenchmarkValidate/twitter/stdjson                 	     500	   2645673 ns/op	 238.70 MB/s	     312 B/op	       6 allocs/op
-BenchmarkValidate/twitter/fastjson                	    2000	    868111 ns/op	 727.46 MB/s	       0 B/op	       0 allocs/op
-PASS
-ok  	github.com/valyala/fastjson	76.353s
 ```
 
-As you can see, `fastsjon` outperforms `encoding/json`:
+Benchmark results for json validation:
 
-  * by up to a factor of 15x for `small`-length parsing;
-  * by up to a factor of 11x for `medium`-length and `large`-length parsing.
-
+```
+$ GOMAXPROCS=1 go test github.com/valyala/fastjson -bench='Validate$'
+goos: linux
+goarch: amd64
+pkg: github.com/valyala/fastjson
+BenchmarkValidate/small/stdjson 	 2000000	       825 ns/op	 230.08 MB/s	      72 B/op	       2 allocs/op
+BenchmarkValidate/small/fastjson         	 5000000	       311 ns/op	 610.13 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/medium/stdjson         	  200000	      9437 ns/op	 246.79 MB/s	     184 B/op	       5 allocs/op
+BenchmarkValidate/medium/fastjson        	  500000	      2847 ns/op	 817.79 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/large/stdjson          	   10000	    115661 ns/op	 243.11 MB/s	     184 B/op	       5 allocs/op
+BenchmarkValidate/large/fastjson         	   50000	     38857 ns/op	 723.62 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/canada/stdjson         	     200	   7927782 ns/op	 283.95 MB/s	     184 B/op	       5 allocs/op
+BenchmarkValidate/canada/fastjson        	     500	   3536936 ns/op	 636.44 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/citm/stdjson           	     200	   6555692 ns/op	 263.47 MB/s	     184 B/op	       5 allocs/op
+BenchmarkValidate/citm/fastjson          	    1000	   1504085 ns/op	1148.34 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/twitter/stdjson        	     500	   2513922 ns/op	 251.21 MB/s	     312 B/op	       6 allocs/op
+BenchmarkValidate/twitter/fastjson       	    2000	    746548 ns/op	 845.91 MB/s	       0 B/op	       0 allocs/op
+```
 
 ## FAQ
 
