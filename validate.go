@@ -160,51 +160,46 @@ func validateObject(s string) (string, error) {
 	}
 }
 
-func validateRawString(s string) error {
-	n := strings.IndexByte(s, '\\')
-	if n < 0 {
-		// Fast path - no escape chars.
-		return nil
-	}
-
-	// Slow path - escape chars present.
-	s = s[n+1:]
-	for len(s) > 0 {
-		ch := s[0]
-		s = s[1:]
-		switch ch {
-		case '"', '\\', '/', 'b', 'f', 'n', 'r', 't':
-			// Valid escape sequences - see http://json.org/
-			break
-		case 'u':
-			if len(s) < 4 {
-				return fmt.Errorf(`too short escape sequence: \u%s`, s)
-			}
-			xs := s[:4]
-			_, err := strconv.ParseUint(xs, 16, 16)
-			if err != nil {
-				return fmt.Errorf(`invalid escape sequence \u%s: %s`, xs, err)
-			}
-			s = s[4:]
-		default:
-			return fmt.Errorf(`unknown escape sequence \%c`, ch)
-		}
-		n = strings.IndexByte(s, '\\')
-		if n < 0 {
-			break
-		}
-		s = s[n+1:]
-	}
-	return nil
-}
-
 func validateString(s string) (string, error) {
 	rs, tail, err := parseRawString(s)
 	if err != nil {
 		return tail, err
 	}
-	err = validateRawString(rs)
-	return tail, err
+	n := strings.IndexByte(rs, '\\')
+	if n < 0 {
+		// Fast path - no escape chars.
+		return tail, nil
+	}
+
+	// Slow path - escape chars present.
+	rs = rs[n+1:]
+	for len(rs) > 0 {
+		ch := rs[0]
+		rs = rs[1:]
+		switch ch {
+		case '"', '\\', '/', 'b', 'f', 'n', 'r', 't':
+			// Valid escape sequences - see http://json.org/
+			break
+		case 'u':
+			if len(rs) < 4 {
+				return tail, fmt.Errorf(`too short escape sequence: \u%s`, rs)
+			}
+			xs := rs[:4]
+			_, err := strconv.ParseUint(xs, 16, 16)
+			if err != nil {
+				return tail, fmt.Errorf(`invalid escape sequence \u%s: %s`, xs, err)
+			}
+			rs = rs[4:]
+		default:
+			return tail, fmt.Errorf(`unknown escape sequence \%c`, ch)
+		}
+		n = strings.IndexByte(rs, '\\')
+		if n < 0 {
+			break
+		}
+		rs = rs[n+1:]
+	}
+	return tail, nil
 }
 
 func validateNumber(s string) (string, error) {
