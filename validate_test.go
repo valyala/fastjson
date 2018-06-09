@@ -37,6 +37,16 @@ func TestValidateSimple(t *testing.T) {
 	}
 }
 
+func TestValidateNumberZeroLen(t *testing.T) {
+	tail, err := validateNumber("")
+	if err == nil {
+		t.Fatalf("expecting non-nil error")
+	}
+	if tail != "" {
+		t.Fatalf("unexpected non-empty tail: %q", tail)
+	}
+}
+
 func TestValid(t *testing.T) {
 	var tests = []string{
 		"",
