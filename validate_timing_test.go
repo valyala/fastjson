@@ -41,10 +41,9 @@ func benchmarkValidateStdJSON(b *testing.B, s string) {
 	b.SetBytes(int64(len(s)))
 	bb := s2b(s)
 	b.RunParallel(func(pb *testing.PB) {
-		var m struct{}
 		for pb.Next() {
-			if err := json.Unmarshal(bb, &m); err != nil {
-				panic(fmt.Errorf("unexpected error: %s", err))
+			if !json.Valid(bb) {
+				panic("json.Valid unexpectedly returned false")
 			}
 		}
 	})
