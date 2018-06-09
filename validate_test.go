@@ -66,7 +66,7 @@ func TestValid(t *testing.T) {
 		`"\uz"`,
 		` "\`,
 		` "\z`,
-		` "f\x00o"`,
+		" \"f\\x00o\"",
 		` "foo`,
 		` "\uazaa" `,
 		`"\"\\\/\b\f\n\r\t"`,
