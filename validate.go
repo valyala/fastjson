@@ -161,6 +161,12 @@ func validateObject(s string) (string, error) {
 }
 
 func validateString(s string) (string, error) {
+	// Try fast path - a string without escape sequences.
+	if n := strings.IndexByte(s, '"'); n >= 0 && strings.IndexByte(s[:n], '\\') < 0 {
+		return s[n+1:], nil
+	}
+
+	// Slow path.
 	rs, tail, err := parseRawString(s)
 	if err != nil {
 		return tail, err
