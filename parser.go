@@ -315,19 +315,17 @@ func unescapeStringBestEffort(s string) string {
 	return b2s(b)
 }
 
-// parseRawKey is similar to parseRawString, but is optimized for small-sized keys.
+// parseRawKey is similar to parseRawString, but is optimized
+// for small-sized keys without escape sequences.
 func parseRawKey(s string) (string, string, error) {
-	backslashes := 0
 	for i := 0; i < len(s); i++ {
 		if s[i] == '"' {
-			if backslashes%2 == 0 {
-				return s[:i], s[i+1:], nil
-			}
-			backslashes = 0
-		} else if s[i] == '\\' {
-			backslashes++
-		} else {
-			backslashes = 0
+			// Fast path.
+			return s[:i], s[i+1:], nil
+		}
+		if s[i] == '\\' {
+			// Slow path.
+			return parseRawString(s)
 		}
 	}
 	return s, "", fmt.Errorf(`missing closing '"'`)
