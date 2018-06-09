@@ -182,22 +182,22 @@ func validateString(s string) (string, error) {
 		return s[n+1:], nil
 	}
 
-	// Slow path.
+	// Slow path - escape sequences are present.
 	rs, tail, err := parseRawString(s)
 	if err != nil {
 		return tail, err
 	}
-	n := strings.IndexByte(rs, '\\')
-	if n < 0 {
-		// Fast path - no escape chars.
-		return tail, nil
-	}
-
-	// Slow path - escape chars present.
-	rs = rs[n+1:]
-	for len(rs) > 0 {
-		ch := rs[0]
-		rs = rs[1:]
+	for {
+		n := strings.IndexByte(rs, '\\')
+		if n < 0 {
+			return tail, nil
+		}
+		n++
+		if n >= len(rs) {
+			return tail, fmt.Errorf("BUG: parseRawString returned invalid string with trailing backlsash: %q", rs)
+		}
+		ch := rs[n]
+		rs = rs[n+1:]
 		switch ch {
 		case '"', '\\', '/', 'b', 'f', 'n', 'r', 't':
 			// Valid escape sequences - see http://json.org/
@@ -215,13 +215,7 @@ func validateString(s string) (string, error) {
 		default:
 			return tail, fmt.Errorf(`unknown escape sequence \%c`, ch)
 		}
-		n = strings.IndexByte(rs, '\\')
-		if n < 0 {
-			break
-		}
-		rs = rs[n+1:]
 	}
-	return tail, nil
 }
 
 func validateNumber(s string) (string, error) {
