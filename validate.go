@@ -194,7 +194,7 @@ func validateString(s string) (string, error) {
 		}
 		n++
 		if n >= len(rs) {
-			return tail, fmt.Errorf("BUG: parseRawString returned invalid string with trailing backlsash: %q", rs)
+			return tail, fmt.Errorf("BUG: parseRawString returned invalid string with trailing backslash: %q", rs)
 		}
 		ch := rs[n]
 		rs = rs[n+1:]
