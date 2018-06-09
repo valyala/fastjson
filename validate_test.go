@@ -114,6 +114,7 @@ func TestValid(t *testing.T) {
 		`{"foo"f`,
 		"{}}",
 		`{"foo": 234`,
+		`{"foo\"bar": 123}`,
 
 		// array
 		`[]`,
