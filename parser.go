@@ -93,7 +93,7 @@ func skipWS(s string) string {
 
 	// Slow path.
 	for i := 0; i < len(s); i++ {
-		if s[i] > '\x20' || (s[i] != '\x20' && s[i] != '\x0D' && s[i] != '\x0A' && s[i] != '\x09') {
+		if s[i] != '\x20' && s[i] != '\x0D' && s[i] != '\x0A' && s[i] != '\x09' {
 			return s[i:]
 		}
 	}
