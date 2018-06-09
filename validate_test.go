@@ -84,6 +84,8 @@ func TestValid(t *testing.T) {
 		"1.e3",
 		"01e+6",
 		"-0.01e+0.6",
+		"123.",
+		"123.345",
 
 		// object
 		"{}",
@@ -101,6 +103,7 @@ func TestValid(t *testing.T) {
 		`{"foo",`,
 		`{"foo"f`,
 		"{}}",
+		`{"foo": 234`,
 
 		// array
 		`[]`,
@@ -111,10 +114,12 @@ func TestValid(t *testing.T) {
 		`[1,`,
 		`[1a`,
 		`[]]`,
+		`[1  `,
 
 		// boolean
 		"true",
 		"   true ",
+		"tree",
 		"false",
 		"  true f",
 		"fals",
@@ -124,6 +129,7 @@ func TestValid(t *testing.T) {
 		"null ",
 		" null ",
 		" nulll ",
+		"no",
 	}
 	for i, test := range tests {
 		in := []byte(test)
