@@ -3,6 +3,7 @@ package fastjson
 import (
 	"bytes"
 	"fmt"
+	"github.com/valyala/fastjson/fastfloat"
 	"reflect"
 	"strconv"
 	"strings"
@@ -605,11 +606,7 @@ func (v *Value) Type() Type {
 		v.s = unescapeStringBestEffort(v.s)
 		v.t = TypeString
 	} else if v.t == typeRawNumber {
-		f, err := strconv.ParseFloat(v.s, 64)
-		if err != nil {
-			f = 0
-		}
-		v.n = f
+		v.n = fastfloat.ParseBestEffort(v.s)
 		v.t = TypeNumber
 	}
 	return v.t
