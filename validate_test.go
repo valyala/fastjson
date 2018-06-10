@@ -67,6 +67,7 @@ func TestValidate(t *testing.T) {
 		` "\`,
 		` "\z`,
 		" \"f\x00o\"",
+		`"foo\qw"`, // unknown escape sequence
 		` "foo`,
 		` "\uazaa" `,
 		`"\"\\\/\b\f\n\r\t"`,
@@ -101,6 +102,7 @@ func TestValidate(t *testing.T) {
 		"{}",
 		`{"foo": 3}`,
 		"{\"f\x00oo\": 3}",
+		`{"foo\WW": 4}`, // unknown escape sequence
 		`{"foo": 3 "bar"}`,
 		` {}    `,
 		strings.Repeat(`{"f":`, 1000) + "{}" + strings.Repeat("}", 1000),
