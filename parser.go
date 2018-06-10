@@ -370,7 +370,7 @@ func parseRawNumber(s string) (string, string, error) {
 	// Find the end of the number.
 	for i := 0; i < len(s); i++ {
 		ch := s[i]
-		if (ch >= '0' && ch <= '9') || ch == '-' || ch == '.' || ch == 'e' || ch == 'E' || ch == '+' {
+		if (ch >= '0' && ch <= '9') || ch == '.' || ch == '-' || ch == 'e' || ch == 'E' || ch == '+' {
 			continue
 		}
 		if i == 0 {
