@@ -47,7 +47,7 @@ func TestValidateNumberZeroLen(t *testing.T) {
 	}
 }
 
-func TestValid(t *testing.T) {
+func TestValidate(t *testing.T) {
 	var tests = []string{
 		"",
 		"   ",
@@ -66,7 +66,7 @@ func TestValid(t *testing.T) {
 		`"\uz"`,
 		` "\`,
 		` "\z`,
-		" \"f\\x00o\"",
+		" \"f\x00o\"",
 		` "foo`,
 		` "\uazaa" `,
 		`"\"\\\/\b\f\n\r\t"`,
@@ -100,6 +100,7 @@ func TestValid(t *testing.T) {
 		// object
 		"{}",
 		`{"foo": 3}`,
+		"{\"f\x00oo\": 3}",
 		`{"foo": 3 "bar"}`,
 		` {}    `,
 		strings.Repeat(`{"f":`, 1000) + "{}" + strings.Repeat("}", 1000),

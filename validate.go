@@ -46,9 +46,15 @@ func validateValue(s string) (string, error) {
 		return tail, nil
 	}
 	if s[0] == '"' {
-		tail, err := validateString(s[1:])
+		sv, tail, err := validateString(s[1:])
 		if err != nil {
 			return tail, fmt.Errorf("cannot parse string: %s", err)
+		}
+		// Scan the string for control chars.
+		for i := 0; i < len(sv); i++ {
+			if sv[i] < 0x20 {
+				return tail, fmt.Errorf("string cannot contain control char 0x%02X", sv[i])
+			}
 		}
 		return tail, nil
 	}
@@ -129,9 +135,17 @@ func validateObject(s string) (string, error) {
 		if len(s) == 0 || s[0] != '"' {
 			return s, fmt.Errorf(`cannot find opening '"" for object key`)
 		}
-		s, err = validateKey(s[1:])
+
+		var key string
+		key, s, err = validateKey(s[1:])
 		if err != nil {
 			return s, fmt.Errorf("cannot parse object key: %s", err)
+		}
+		// Scan the key for control chars.
+		for i := 0; i < len(key); i++ {
+			if key[i] < 0x20 {
+				return s, fmt.Errorf("object key cannot contain control char 0x%02X", key[i])
+			}
 		}
 		s = skipWS(s)
 		if len(s) == 0 || s[0] != ':' {
@@ -162,39 +176,39 @@ func validateObject(s string) (string, error) {
 
 // validateKey is similar to validateString, but is optimized
 // for typical object keys, which are quite small and have no escape sequences.
-func validateKey(s string) (string, error) {
+func validateKey(s string) (string, string, error) {
 	for i := 0; i < len(s); i++ {
 		if s[i] == '"' {
-			// Fast path.
-			return s[i+1:], nil
+			// Fast path - the key doesn't contain escape sequences.
+			return s[:i], s[i+1:], nil
 		}
 		if s[i] == '\\' {
-			// Slow path.
+			// Slow path - the key contains escape sequences.
 			return validateString(s)
 		}
 	}
-	return "", fmt.Errorf(`missing closing '"'`)
+	return "", s, fmt.Errorf(`missing closing '"'`)
 }
 
-func validateString(s string) (string, error) {
+func validateString(s string) (string, string, error) {
 	// Try fast path - a string without escape sequences.
 	if n := strings.IndexByte(s, '"'); n >= 0 && strings.IndexByte(s[:n], '\\') < 0 {
-		return s[n+1:], nil
+		return s[:n], s[n+1:], nil
 	}
 
 	// Slow path - escape sequences are present.
 	rs, tail, err := parseRawString(s)
 	if err != nil {
-		return tail, err
+		return rs, tail, err
 	}
 	for {
 		n := strings.IndexByte(rs, '\\')
 		if n < 0 {
-			return tail, nil
+			return rs, tail, nil
 		}
 		n++
 		if n >= len(rs) {
-			return tail, fmt.Errorf("BUG: parseRawString returned invalid string with trailing backslash: %q", rs)
+			return rs, tail, fmt.Errorf("BUG: parseRawString returned invalid string with trailing backslash: %q", rs)
 		}
 		ch := rs[n]
 		rs = rs[n+1:]
@@ -204,16 +218,16 @@ func validateString(s string) (string, error) {
 			break
 		case 'u':
 			if len(rs) < 4 {
-				return tail, fmt.Errorf(`too short escape sequence: \u%s`, rs)
+				return rs, tail, fmt.Errorf(`too short escape sequence: \u%s`, rs)
 			}
 			xs := rs[:4]
 			_, err := strconv.ParseUint(xs, 16, 16)
 			if err != nil {
-				return tail, fmt.Errorf(`invalid escape sequence \u%s: %s`, xs, err)
+				return rs, tail, fmt.Errorf(`invalid escape sequence \u%s: %s`, xs, err)
 			}
 			rs = rs[4:]
 		default:
-			return tail, fmt.Errorf(`unknown escape sequence \%c`, ch)
+			return rs, tail, fmt.Errorf(`unknown escape sequence \%c`, ch)
 		}
 	}
 }
