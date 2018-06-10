@@ -145,18 +145,18 @@ $ GOMAXPROCS=1 go test github.com/valyala/fastjson -bench='Validate$'
 goos: linux
 goarch: amd64
 pkg: github.com/valyala/fastjson
-BenchmarkValidate/small/stdjson 	 2000000	       825 ns/op	 230.08 MB/s	      72 B/op	       2 allocs/op
-BenchmarkValidate/small/fastjson         	 5000000	       311 ns/op	 610.13 MB/s	       0 B/op	       0 allocs/op
-BenchmarkValidate/medium/stdjson         	  200000	      9437 ns/op	 246.79 MB/s	     184 B/op	       5 allocs/op
-BenchmarkValidate/medium/fastjson        	  500000	      2847 ns/op	 817.79 MB/s	       0 B/op	       0 allocs/op
-BenchmarkValidate/large/stdjson          	   10000	    115661 ns/op	 243.11 MB/s	     184 B/op	       5 allocs/op
-BenchmarkValidate/large/fastjson         	   50000	     38857 ns/op	 723.62 MB/s	       0 B/op	       0 allocs/op
-BenchmarkValidate/canada/stdjson         	     200	   7927782 ns/op	 283.95 MB/s	     184 B/op	       5 allocs/op
-BenchmarkValidate/canada/fastjson        	     500	   3536936 ns/op	 636.44 MB/s	       0 B/op	       0 allocs/op
-BenchmarkValidate/citm/stdjson           	     200	   6555692 ns/op	 263.47 MB/s	     184 B/op	       5 allocs/op
-BenchmarkValidate/citm/fastjson          	    1000	   1504085 ns/op	1148.34 MB/s	       0 B/op	       0 allocs/op
-BenchmarkValidate/twitter/stdjson        	     500	   2513922 ns/op	 251.21 MB/s	     312 B/op	       6 allocs/op
-BenchmarkValidate/twitter/fastjson       	    2000	    746548 ns/op	 845.91 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/small/stdjson 	 2000000	       869 ns/op	 218.55 MB/s	      72 B/op	       2 allocs/op
+BenchmarkValidate/small/fastjson         	 5000000	       372 ns/op	 510.41 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/medium/stdjson         	  200000	      9975 ns/op	 233.47 MB/s	     184 B/op	       5 allocs/op
+BenchmarkValidate/medium/fastjson        	  500000	      3591 ns/op	 648.44 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/large/stdjson          	   10000	    121676 ns/op	 231.09 MB/s	     184 B/op	       5 allocs/op
+BenchmarkValidate/large/fastjson         	   30000	     51442 ns/op	 546.60 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/canada/stdjson         	     200	   8385287 ns/op	 268.45 MB/s	     184 B/op	       5 allocs/op
+BenchmarkValidate/canada/fastjson        	     500	   3759142 ns/op	 598.82 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/citm/stdjson           	     200	   6892753 ns/op	 250.58 MB/s	     184 B/op	       5 allocs/op
+BenchmarkValidate/citm/fastjson          	    1000	   1656027 ns/op	1042.98 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/twitter/stdjson        	     500	   2622168 ns/op	 240.84 MB/s	     312 B/op	       6 allocs/op
+BenchmarkValidate/twitter/fastjson       	    2000	   1006021 ns/op	 627.73 MB/s	       0 B/op	       0 allocs/op
 ```
 
 ## FAQ
