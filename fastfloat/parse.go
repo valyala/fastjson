@@ -63,7 +63,7 @@ func ParseBestEffort(s string) float64 {
 			if s[i] >= '0' && s[i] <= '9' {
 				fr = fr*10 + uint64(s[i]-'0')
 				i++
-				if i > 18 {
+				if i-j > 18 {
 					// The fractional part may be out of range for uint64.
 					// Fall back to standard parsing.
 					f, _ := strconv.ParseFloat(s, 64)
