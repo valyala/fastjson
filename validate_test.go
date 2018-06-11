@@ -66,7 +66,8 @@ func TestValidate(t *testing.T) {
 		`"\uz"`,
 		` "\`,
 		` "\z`,
-		" \"f\x00o\"",
+		" \"f\x00o\"", // control char
+		"\"foo\nbar\"", // control char
 		`"foo\qw"`, // unknown escape sequence
 		` "foo`,
 		` "\uazaa" `,
@@ -118,6 +119,7 @@ func TestValidate(t *testing.T) {
 		"{}}",
 		`{"foo": 234`,
 		`{"foo\"bar": 123}`,
+		"{\n\t\"foo\"  \n\b\f: \t123}",
 
 		// array
 		`[]`,
