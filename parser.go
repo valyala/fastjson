@@ -659,7 +659,7 @@ func (v *Value) Get(keys ...string) *Value {
 // The returned object is valid until Parse is called on the Parser returned v.
 func (v *Value) GetObject(keys ...string) *Object {
 	v = v.Get(keys...)
-	if v == nil || v.Type() != TypeObject {
+	if v == nil || v.t != TypeObject {
 		return nil
 	}
 	return &v.o
@@ -674,7 +674,7 @@ func (v *Value) GetObject(keys ...string) *Object {
 // The returned array is valid until Parse is called on the Parser returned v.
 func (v *Value) GetArray(keys ...string) []*Value {
 	v = v.Get(keys...)
-	if v == nil || v.Type() != TypeArray {
+	if v == nil || v.t != TypeArray {
 		return nil
 	}
 	return v.a
@@ -728,7 +728,7 @@ func (v *Value) GetStringBytes(keys ...string) []byte {
 // false is returned for non-existing keys path or for invalid value type.
 func (v *Value) GetBool(keys ...string) bool {
 	v = v.Get(keys...)
-	if v != nil && v.Type() == TypeTrue {
+	if v != nil && v.t == TypeTrue {
 		return true
 	}
 	return false
