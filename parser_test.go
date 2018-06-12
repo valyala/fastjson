@@ -8,53 +8,53 @@ import (
 
 func TestParseRawNumber(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		testParseRawNumberSuccess(t, "0", "0", "")
-		testParseRawNumberSuccess(t, "0tail", "0", "tail")
-		testParseRawNumberSuccess(t, "123", "123", "")
-		testParseRawNumberSuccess(t, "123tail", "123", "tail")
-		testParseRawNumberSuccess(t, "-123tail", "-123", "tail")
-		testParseRawNumberSuccess(t, "-12.345tail", "-12.345", "tail")
-		testParseRawNumberSuccess(t, "-12.345e67tail", "-12.345e67", "tail")
-		testParseRawNumberSuccess(t, "-12.345E+67 tail", "-12.345E+67", " tail")
-		testParseRawNumberSuccess(t, "-12.345E-67,tail", "-12.345E-67", ",tail")
-		testParseRawNumberSuccess(t, "-1234567.8e+90tail", "-1234567.8e+90", "tail")
+		f := func(s, expectedRN, expectedTail string) {
+			t.Helper()
+
+			rn, tail, err := parseRawNumber(s)
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+			if rn != expectedRN {
+				t.Fatalf("unexpected raw number; got %q; want %q", rn, expectedRN)
+			}
+			if tail != expectedTail {
+				t.Fatalf("unexpected tail; got %q; want %q", tail, expectedTail)
+			}
+		}
+
+		f("0", "0", "")
+		f("0tail", "0", "tail")
+		f("123", "123", "")
+		f("123tail", "123", "tail")
+		f("-123tail", "-123", "tail")
+		f("-12.345tail", "-12.345", "tail")
+		f("-12.345e67tail", "-12.345e67", "tail")
+		f("-12.345E+67 tail", "-12.345E+67", " tail")
+		f("-12.345E-67,tail", "-12.345E-67", ",tail")
+		f("-1234567.8e+90tail", "-1234567.8e+90", "tail")
 	})
 
 	t.Run("error", func(t *testing.T) {
-		testParseRawNumberError(t, "xyz", "xyz")
-		testParseRawNumberError(t, " ", " ")
-		testParseRawNumberError(t, "[", "[")
-		testParseRawNumberError(t, ",", ",")
-		testParseRawNumberError(t, "{", "{")
-		testParseRawNumberError(t, "\"", "\"")
+		f := func(s, expectedTail string) {
+			t.Helper()
+
+			_, tail, err := parseRawNumber(s)
+			if err == nil {
+				t.Fatalf("expecting non-nil error")
+			}
+			if tail != expectedTail {
+				t.Fatalf("unexpected tail; got %q; want %q", tail, expectedTail)
+			}
+		}
+
+		f("xyz", "xyz")
+		f(" ", " ")
+		f("[", "[")
+		f(",", ",")
+		f("{", "{")
+		f("\"", "\"")
 	})
-}
-
-func testParseRawNumberError(t *testing.T, s, expectedTail string) {
-	t.Helper()
-
-	_, tail, err := parseRawNumber(s)
-	if err == nil {
-		t.Fatalf("expecting non-nil error")
-	}
-	if tail != expectedTail {
-		t.Fatalf("unexpected tail; got %q; want %q", tail, expectedTail)
-	}
-}
-
-func testParseRawNumberSuccess(t *testing.T, s, expectedRN, expectedTail string) {
-	t.Helper()
-
-	rn, tail, err := parseRawNumber(s)
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-	if rn != expectedRN {
-		t.Fatalf("unexpected raw number; got %q; want %q", rn, expectedRN)
-	}
-	if tail != expectedTail {
-		t.Fatalf("unexpected tail; got %q; want %q", tail, expectedTail)
-	}
 }
 
 func TestUnescapeStringBestEffort(t *testing.T) {
