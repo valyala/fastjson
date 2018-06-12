@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/valyala/fastjson/fastfloat"
-	"reflect"
 	"strconv"
 	"strings"
-	"unsafe"
 )
 
 // Parser parses JSON.
@@ -71,19 +69,6 @@ func (c *cache) getValue() *Value {
 	v := &c.vs[len(c.vs)-1]
 	v.reset()
 	return v
-}
-
-func b2s(b []byte) string {
-	return *(*string)(unsafe.Pointer(&b))
-}
-
-func s2b(s string) []byte {
-	strh := (*reflect.StringHeader)(unsafe.Pointer(&s))
-	var sh reflect.SliceHeader
-	sh.Data = strh.Data
-	sh.Len = strh.Len
-	sh.Cap = strh.Len
-	return *(*[]byte)(unsafe.Pointer(&sh))
 }
 
 func skipWS(s string) string {
