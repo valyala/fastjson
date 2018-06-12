@@ -59,19 +59,19 @@ func validateValue(s string) (string, error) {
 		return tail, nil
 	}
 	if s[0] == 't' {
-		if !strings.HasPrefix(s, "true") {
+		if len(s) < len("true") || s[:len("true")] != "true" {
 			return s, fmt.Errorf("unexpected value found: %q", s)
 		}
 		return s[len("true"):], nil
 	}
 	if s[0] == 'f' {
-		if !strings.HasPrefix(s, "false") {
+		if len(s) < len("false") || s[:len("false")] != "false" {
 			return s, fmt.Errorf("unexpected value found: %q", s)
 		}
 		return s[len("false"):], nil
 	}
 	if s[0] == 'n' {
-		if !strings.HasPrefix(s, "null") {
+		if len(s) < len("null") || s[:len("null")] != "null" {
 			return s, fmt.Errorf("unexpected value found: %q", s)
 		}
 		return s[len("null"):], nil

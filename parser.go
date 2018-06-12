@@ -136,19 +136,19 @@ func parseValue(s string, c *cache) (*Value, string, error) {
 		return v, tail, nil
 	}
 	if s[0] == 't' {
-		if !strings.HasPrefix(s, "true") {
+		if len(s) < len("true") || s[:len("true")] != "true" {
 			return nil, s, fmt.Errorf("unexpected value found: %q", s)
 		}
 		return valueTrue, s[len("true"):], nil
 	}
 	if s[0] == 'f' {
-		if !strings.HasPrefix(s, "false") {
+		if len(s) < len("false") || s[:len("false")] != "false" {
 			return nil, s, fmt.Errorf("unexpected value found: %q", s)
 		}
 		return valueFalse, s[len("false"):], nil
 	}
 	if s[0] == 'n' {
-		if !strings.HasPrefix(s, "null") {
+		if len(s) < len("null") || s[:len("null")] != "null" {
 			return nil, s, fmt.Errorf("unexpected value found: %q", s)
 		}
 		return valueNull, s[len("null"):], nil
