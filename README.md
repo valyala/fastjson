@@ -84,6 +84,22 @@ See also [examples](https://godoc.org/github.com/valyala/fastjson#pkg-examples).
     before parsing it in order to limit the maximum memory usage.
 
 
+## Performance optimization tips
+
+  * Re-use [Parser](https://godoc.org/github.com/valyala/fastjson#Parser) and [Scanner](https://godoc.org/github.com/valyala/fastjson#Scanner)
+    for parsing many JSONs. This reduces memory allocations overhead.
+    [ParserPool](https://godoc.org/github.com/valyala/fastjson#ParserPool) may be useful in this case.
+  * Prefer calling `Value.Get*` on the value returned from [Parser](https://godoc.org/github.com/valyala/fastjson#Parser)
+    instead of calling `Get*` one-liners when multiple fields
+    must be obtained from JSON, since each `Get*` one-liner re-parses
+    the input JSON again.
+  * Prefer calling once [Value.Get](https://godoc.org/github.com/valyala/fastjson#Value.Get)
+    for common prefix paths and then calling `Value.Get*` on the returned value
+    for distinct suffix paths.
+  * Prefer iterating over array returned from [Value.GetArray](https://godoc.org/github.com/valyala/fastjson#Object.Visit)
+    with a range loop instead of calling `Value.Get*` for each array item.
+
+
 ## Benchmarks
 
 Legend:
