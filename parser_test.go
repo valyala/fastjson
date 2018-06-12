@@ -90,77 +90,77 @@ func testUnescapeStringBestEffort(t *testing.T, s, expectedS string) {
 
 func TestParseRawString(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		testParseRawStringSuccess(t, `""`, "", "")
-		testParseRawStringSuccess(t, `""xx`, "", "xx")
-		testParseRawStringSuccess(t, `"foobar"`, "foobar", "")
-		testParseRawStringSuccess(t, `"foobar"baz`, "foobar", "baz")
-		testParseRawStringSuccess(t, `"\""`, `\"`, "")
-		testParseRawStringSuccess(t, `"\""tail`, `\"`, "tail")
-		testParseRawStringSuccess(t, `"\\"`, `\\`, "")
-		testParseRawStringSuccess(t, `"\\"tail`, `\\`, "tail")
-		testParseRawStringSuccess(t, `"x\\"`, `x\\`, "")
-		testParseRawStringSuccess(t, `"x\\"tail`, `x\\`, "tail")
-		testParseRawStringSuccess(t, `"x\\y"`, `x\\y`, "")
-		testParseRawStringSuccess(t, `"x\\y"tail`, `x\\y`, "tail")
-		testParseRawStringSuccess(t, `"\\\"й\n\"я"tail`, `\\\"й\n\"я`, "tail")
-		testParseRawStringSuccess(t, `"\\\\\\\\"tail`, `\\\\\\\\`, "tail")
+		f := func(s, expectedRS, expectedTail string) {
+			t.Helper()
+
+			rs, tail, err := parseRawString(s[1:])
+			if err != nil {
+				t.Fatalf("unexpected error on parseRawString: %s", err)
+			}
+			if rs != expectedRS {
+				t.Fatalf("unexpected string on parseRawString; got %q; want %q", rs, expectedRS)
+			}
+			if tail != expectedTail {
+				t.Fatalf("unexpected tail on parseRawString; got %q; want %q", tail, expectedTail)
+			}
+
+			// parseRawKey results must be identical to parseRawString.
+			rs, tail, err = parseRawKey(s[1:])
+			if err != nil {
+				t.Fatalf("unexpected error on parseRawKey: %s", err)
+			}
+			if rs != expectedRS {
+				t.Fatalf("unexpected string on parseRawKey; got %q; want %q", rs, expectedRS)
+			}
+			if tail != expectedTail {
+				t.Fatalf("unexpected tail on parseRawKey; got %q; want %q", tail, expectedTail)
+			}
+		}
+
+		f(`""`, "", "")
+		f(`""xx`, "", "xx")
+		f(`"foobar"`, "foobar", "")
+		f(`"foobar"baz`, "foobar", "baz")
+		f(`"\""`, `\"`, "")
+		f(`"\""tail`, `\"`, "tail")
+		f(`"\\"`, `\\`, "")
+		f(`"\\"tail`, `\\`, "tail")
+		f(`"x\\"`, `x\\`, "")
+		f(`"x\\"tail`, `x\\`, "tail")
+		f(`"x\\y"`, `x\\y`, "")
+		f(`"x\\y"tail`, `x\\y`, "tail")
+		f(`"\\\"й\n\"я"tail`, `\\\"й\n\"я`, "tail")
+		f(`"\\\\\\\\"tail`, `\\\\\\\\`, "tail")
 	})
 
 	t.Run("error", func(t *testing.T) {
-		testParseRawStringError(t, `"`, "")
-		testParseRawStringError(t, `"unclosed string`, "")
-		testParseRawStringError(t, `"\"`, "")
-		testParseRawStringError(t, `"\"unclosed`, "")
-		testParseRawStringError(t, `"foo\\\\\"тест\n\r\t`, "")
+		f := func(s, expectedTail string) {
+			t.Helper()
+
+			_, tail, err := parseRawString(s[1:])
+			if err == nil {
+				t.Fatalf("expecting non-nil error on parseRawString")
+			}
+			if tail != expectedTail {
+				t.Fatalf("unexpected tail on parseRawString; got %q; want %q", tail, expectedTail)
+			}
+
+			// parseRawKey results must be identical to parseRawString.
+			_, tail, err = parseRawKey(s[1:])
+			if err == nil {
+				t.Fatalf("expecting non-nil error on parseRawKey")
+			}
+			if tail != expectedTail {
+				t.Fatalf("unexpected tail on parseRawKey; got %q; want %q", tail, expectedTail)
+			}
+		}
+
+		f(`"`, "")
+		f(`"unclosed string`, "")
+		f(`"\"`, "")
+		f(`"\"unclosed`, "")
+		f(`"foo\\\\\"тест\n\r\t`, "")
 	})
-}
-
-func testParseRawStringError(t *testing.T, s, expectedTail string) {
-	t.Helper()
-
-	_, tail, err := parseRawString(s[1:])
-	if err == nil {
-		t.Fatalf("expecting non-nil error on parseRawString")
-	}
-	if tail != expectedTail {
-		t.Fatalf("unexpected tail on parseRawString; got %q; want %q", tail, expectedTail)
-	}
-
-	// parseRawKey results must be identical to parseRawString.
-	_, tail, err = parseRawKey(s[1:])
-	if err == nil {
-		t.Fatalf("expecting non-nil error on parseRawKey")
-	}
-	if tail != expectedTail {
-		t.Fatalf("unexpected tail on parseRawKey; got %q; want %q", tail, expectedTail)
-	}
-}
-
-func testParseRawStringSuccess(t *testing.T, s, expectedRS, expectedTail string) {
-	t.Helper()
-
-	rs, tail, err := parseRawString(s[1:])
-	if err != nil {
-		t.Fatalf("unexpected error on parseRawString: %s", err)
-	}
-	if rs != expectedRS {
-		t.Fatalf("unexpected string on parseRawString; got %q; want %q", rs, expectedRS)
-	}
-	if tail != expectedTail {
-		t.Fatalf("unexpected tail on parseRawString; got %q; want %q", tail, expectedTail)
-	}
-
-	// parseRawKey results must be identical to parseRawString.
-	rs, tail, err = parseRawKey(s[1:])
-	if err != nil {
-		t.Fatalf("unexpected error on parseRawKey: %s", err)
-	}
-	if rs != expectedRS {
-		t.Fatalf("unexpected string on parseRawKey; got %q; want %q", rs, expectedRS)
-	}
-	if tail != expectedTail {
-		t.Fatalf("unexpected tail on parseRawKey; got %q; want %q", tail, expectedTail)
-	}
 }
 
 func TestParserPool(t *testing.T) {
@@ -518,6 +518,7 @@ func TestParserParse(t *testing.T) {
 			}
 		}
 
+		f("free")
 		f("tree")
 		f("\x00\x10123")
 		f("1 \n\x01")
@@ -554,36 +555,22 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("incomplete-object", func(t *testing.T) {
-		_, err := p.Parse(" {  ")
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete object")
+		f := func(s string) {
+			t.Helper()
+			if _, err := p.Parse(s); err == nil {
+				t.Fatalf("expecting non-nil error when parsing incomplete object %q", s)
+			}
 		}
-		_, err = p.Parse(`{"foo"`)
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete object")
-		}
-		_, err = p.Parse(`{"foo":`)
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete object")
-		}
-		_, err = p.Parse(`{"foo":null`)
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete object")
-		}
-		_, err = p.Parse(`{"foo":null,`)
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete object")
-		}
-		_, err = p.Parse(`{"foo":null,}`)
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete object")
-		}
-		_, err = p.Parse(`{"foo":null,"bar"}`)
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete object")
-		}
-		_, err = p.Parse(`{"foo":null,"bar":"baz"}`)
-		if err != nil {
+
+		f(" {  ")
+		f(`{"foo"`)
+		f(`{"foo":`)
+		f(`{"foo":null`)
+		f(`{"foo":null,`)
+		f(`{"foo":null,}`)
+		f(`{"foo":null,"bar"}`)
+
+		if _, err := p.Parse(`{"foo":null,"bar":"baz"}`); err != nil {
 			t.Fatalf("unexpected error when parsing object: %s", err)
 		}
 	})
