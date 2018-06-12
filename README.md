@@ -115,7 +115,7 @@ Legend:
   * `stdjson-struct` - parse into a struct containing
     a subset of fields of the parsed JSON, using `encoding/json`.
   * `stdjson-empty-struct` - parse into an empty struct using `encoding/json`.
-    This is the fastests possible solution for `encoding/json`, may be used
+    This is the fastest possible solution for `encoding/json`, may be used
     for json validation. See also benchmark results for json validation.
   * `fastjson` - parse using `fastjson` without fields access.
   * `fastjson-get` - parse using `fastjson` with fields access similar to `stdjson-struct`.
