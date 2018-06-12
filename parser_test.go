@@ -576,51 +576,41 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("incomplete-array", func(t *testing.T) {
-		_, err := p.Parse("  [ ")
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete array")
+		f := func(s string) {
+			t.Helper()
+			if _, err := p.Parse(s); err == nil {
+				t.Fatalf("expecting non-nil error when parsing incomplete array %q", s)
+			}
 		}
-		_, err = p.Parse("[123")
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete array")
-		}
-		_, err = p.Parse("[123,")
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete array")
-		}
-		_, err = p.Parse("[123,]")
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete array")
-		}
-		_, err = p.Parse("[123,{}")
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete array")
-		}
-		_, err = p.Parse("[123,{},]")
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete array")
-		}
-		_, err = p.Parse("[123,{},[]]")
-		if err != nil {
+
+		f("  [ ")
+		f("[123")
+		f("[123,")
+		f("[123,]")
+		f("[123,{}")
+		f("[123,{},]")
+
+		if _, err := p.Parse("[123,{},[]]"); err != nil {
 			t.Fatalf("unexpected error when parsing array: %s", err)
 		}
 	})
 
 	t.Run("incomplete-string", func(t *testing.T) {
-		_, err := p.Parse(`  "foo`)
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete string")
+		f := func(s string) {
+			t.Helper()
+			if _, err := p.Parse(s); err == nil {
+				t.Fatalf("expecting non-nil error when parsing incomplete string %q", s)
+			}
 		}
-		_, err = p.Parse(`"foo\`)
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete string")
-		}
-		_, err = p.Parse(`"foo\"`)
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing incomplete string")
-		}
-		_, err = p.Parse(`"foo\\\""`)
-		if err != nil {
+
+		f(`  "foo`)
+		f(`"foo\`)
+		f(`"foo\"`)
+		f(`"foo\\\"`)
+		f(`"foo'`)
+		f(`"foo'bar'`)
+
+		if _, err := p.Parse(`"foo\\\""`); err != nil {
 			t.Fatalf("unexpected error when parsing string: %s", err)
 		}
 	})
