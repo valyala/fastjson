@@ -85,9 +85,6 @@ func ParseBestEffort(s string) float64 {
 			return f
 		}
 	}
-	if minus {
-		f = -f
-	}
 	if s[i] == 'e' || s[i] == 'E' {
 		// Parse exponent part.
 		i++
@@ -125,9 +122,12 @@ func ParseBestEffort(s string) float64 {
 			exp = -exp
 		}
 		f *= math.Pow10(int(exp))
+		if i >= uint(len(s)) {
+			if minus {
+				f = -f
+			}
+			return f
+		}
 	}
-	if i < uint(len(s)) {
-		return 0
-	}
-	return f
+	return 0
 }
