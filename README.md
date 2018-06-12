@@ -15,9 +15,12 @@
   * Provides simple [API](http://godoc.org/github.com/valyala/fastjson).
   * Outperforms [jsonparser](https://github.com/buger/jsonparser) and [gjson](https://github.com/tidwall/gjson)
     when accessing multiple unrelated fields, since `fastjson` parses the input JSON only once.
-  * Validates the parsed JSON unlike [gjson](https://github.com/tidwall/gjson).
+  * Validates the parsed JSON unlike [jsonparser](https://github.com/buger/jsonparser)
+    and [gjson](https://github.com/tidwall/gjson).
   * May parse array containing values with distinct types (aka non-homogenous types).
     For instance, `fastjson` easily parses the following JSON array `[123, "foo", [456], {"k": "v"}, null]`.
+  * `fastjson` preserves the original order of object items when calling
+    [Object.Visit](https://godoc.org/github.com/valyala/fastjson#Object.Visit).
 
 
 ## Known limitations
@@ -170,7 +173,6 @@ BenchmarkValidate/twitter/fastjson       	    2000	   1006021 ns/op	 627.73 MB/s
   * Q: _What is the main purpose for `fastjson`?_
     A: High-perf JSON parsing for [RTB](https://www.iab.com/wp-content/uploads/2015/05/OpenRTB_API_Specification_Version_2_3_1.pdf)
        and other [JSON-RPC](https://en.wikipedia.org/wiki/JSON-RPC) services.
-       Use [gjson](https://github.com/tidwall/gjson) if you need fetching only a few fields from the JSON.
 
   * Q: _Why fastjson doesn't provide fast marshaling (serialization)?_
     A: Because other solutions exist. I'd recommend [quicktemplate](https://github.com/valyala/quicktemplate#use-cases)

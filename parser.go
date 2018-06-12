@@ -468,7 +468,8 @@ func (o *Object) Get(key string) *Value {
 	return nil
 }
 
-// Visit calls f for each item in the o.
+// Visit calls f for each item in the o in the original order
+// of the parsed JSON.
 //
 // f cannot hold key and/or v after returning.
 func (o *Object) Visit(f func(key []byte, v *Value)) {
