@@ -66,9 +66,9 @@ func TestValidate(t *testing.T) {
 		`"\uz"`,
 		` "\`,
 		` "\z`,
-		" \"f\x00o\"", // control char
+		" \"f\x00o\"",  // control char
 		"\"foo\nbar\"", // control char
-		`"foo\qw"`, // unknown escape sequence
+		`"foo\qw"`,     // unknown escape sequence
 		` "foo`,
 		` "\uazaa" `,
 		`"\"\\\/\b\f\n\r\t"`,
