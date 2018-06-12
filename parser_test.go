@@ -511,58 +511,38 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("invalid-json", func(t *testing.T) {
-		_, err := p.Parse("foobar")
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing invalid json")
+		f := func(s string) {
+			t.Helper()
+			if _, err := p.Parse(s); err == nil {
+				t.Fatalf("expecting non-nil error when parsing invalid json %q", s)
+			}
 		}
-		_, err = p.Parse("tree")
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing invalid json")
-		}
-		_, err = p.Parse("nil")
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing invalid json")
-		}
-		_, err = p.Parse("[foo]")
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing invalid json")
-		}
-		_, err = p.Parse("{foo}")
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing invalid json")
-		}
-		_, err = p.Parse("[123 34]")
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing invalid json")
-		}
-		_, err = p.Parse(`{"foo" "bar"}`)
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing invalid json")
-		}
-		_, err = p.Parse(`{"foo":123 "bar":"baz"}`)
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing invalid json")
-		}
-		_, err = p.Parse("-2134.453eec+43")
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing invalid json")
-		}
-		_, err = p.Parse("-2134.453E+43")
-		if err != nil {
+
+		f("tree")
+		f("\x00\x10123")
+		f("1 \n\x01")
+		f("{\x00}")
+		f("[\x00]")
+		f("\"foo\"\x00")
+		f("{\"foo\"\x00:123}")
+		f("nil")
+		f("[foo]")
+		f("{foo}")
+		f("[123 34]")
+		f(`{"foo" "bar"}`)
+		f(`{"foo":123 "bar":"baz"}`)
+		f("-2134.453eec+43")
+
+		if _, err := p.Parse("-2134.453E+43"); err != nil {
 			t.Fatalf("unexpected error when parsing number: %s", err)
 		}
 
 		// Incomplete object key key.
-		_, err = p.Parse(`{"foo: 123}`)
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing invalid json")
-		}
+		f(`{"foo: 123}`)
 
 		// Incomplete string.
-		_, err = p.Parse(`"{\"foo\": 123}`)
-		if err == nil {
-			t.Fatalf("expecting non-nil error when parsing invalid json")
-		}
+		f(`"{\"foo\": 123}`)
+
 		v, err := p.Parse(`"{\"foo\": 123}"`)
 		if err != nil {
 			t.Fatalf("unexpected error when parsing json string: %s", err)

@@ -87,14 +87,17 @@ func s2b(s string) []byte {
 }
 
 func skipWS(s string) string {
-	if len(s) == 0 || s[0] > '\x20' {
+	if len(s) == 0 || s[0] > 0x20 {
 		// Fast path.
 		return s
 	}
 
 	// Slow path.
-	for i := 0; i < len(s); i++ {
-		if s[i] != '\x20' && s[i] != '\x0D' && s[i] != '\x0A' && s[i] != '\x09' {
+	if s[0] != 0x20 && s[0] != 0x09 && s[0] != 0x0D && s[0] != 0x0A {
+		return s
+	}
+	for i := 1; i < len(s); i++ {
+		if s[i] != 0x20 && s[i] != 0x09 && s[i] != 0x0D && s[i] != 0x0A {
 			return s[i:]
 		}
 	}
