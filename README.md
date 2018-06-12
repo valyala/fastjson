@@ -42,7 +42,7 @@ One-liner accessing a single field:
 	fmt.Printf("foo.0=%d\n", fastjson.GetInt(s, "foo", "0"))
 
 	// Output:
-	// foo.1=123
+	// foo.0=123
 ```
 
 Accessing multiple fields with error handling:
