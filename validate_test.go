@@ -98,6 +98,7 @@ func TestValidate(t *testing.T) {
 		"-0.01e+0.6",
 		"123.",
 		"123.345",
+		"001 ",
 
 		// object
 		"{}",
