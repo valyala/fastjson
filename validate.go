@@ -249,14 +249,14 @@ func validateNumber(s string) (string, error) {
 		}
 		i++
 	}
-	if i == 0 {
+	if i <= 0 {
 		return s, fmt.Errorf("expecting 0..9 digit, got %c", s[0])
-	}
-	if i >= len(s) {
-		return "", nil
 	}
 	if s[0] == '0' && i != 1 {
 		return s, fmt.Errorf("unexpected number starting from 0")
+	}
+	if i >= len(s) {
+		return "", nil
 	}
 	if s[i] == '.' {
 		// Validate fractional part

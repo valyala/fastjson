@@ -99,6 +99,7 @@ func TestValidate(t *testing.T) {
 		"123.",
 		"123.345",
 		"001 ",
+		"001",
 
 		// object
 		"{}",
