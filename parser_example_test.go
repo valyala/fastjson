@@ -2,9 +2,10 @@ package fastjson_test
 
 import (
 	"fmt"
-	"github.com/valyala/fastjson"
 	"log"
 	"strconv"
+
+	"github.com/valyala/fastjson"
 )
 
 func ExampleParser_Parse() {
@@ -168,4 +169,26 @@ func ExampleValue_GetStringBytes() {
 	// v[1][1] = "baz"
 	// v[1][0] = ""
 	// v.foo.bar.baz = ""
+}
+
+func ExampleValue_InDepthSearch() {
+	s := `{
+		"baz": [
+			{"foo": "bar_0"},
+			{"foo": "bar_1"}
+		]
+	}`
+	var p fastjson.Parser
+	v, err := p.Parse(s)
+	if err != nil {
+		log.Fatalf("cannot parse json: %s", err)
+	}
+	value, err := v.InDepthSearch("baz", "foo")
+	if err != nil {
+		log.Fatalf("cannot parse json: %s", err)
+	}
+	fmt.Printf("v.baz.foo = %v\n", value)
+
+	// Output:
+	// v.baz.foo = ["bar_0" "bar_1"]
 }

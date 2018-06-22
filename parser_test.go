@@ -325,6 +325,21 @@ func TestValueGetTyped(t *testing.T) {
 	}
 }
 
+func TestInDepthSearch(t *testing.T) {
+	var p Parser
+	v, err := p.Parse(`{"foo": [{"bar": "baz"},{"bar": [1, 4.2]}]}`)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	idv, err := v.InDepthSearch("foo", "bar")
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if len(idv) != 3 {
+		t.Fatalf("unexpected value; got %v; want [baz, 1, 4.2]", idv)
+	}
+}
+
 func TestVisitNil(t *testing.T) {
 	var p Parser
 	v, err := p.Parse(`{}`)

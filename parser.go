@@ -790,6 +790,50 @@ func (v *Value) Bool() (bool, error) {
 	return false, fmt.Errorf("value doesn't contain bool; it contains %s", v.Type())
 }
 
+// InDepthSearch return an Array of interface values by the given keys path
+func (v *Value) InDepthSearch(keys ...string) ([]interface{}, error) {
+	var rValues []interface{}
+	switch v.Type() {
+	case TypeArray:
+		pValue, err := v.Array()
+		if err != nil {
+			return nil, err
+		}
+		for _, uValue := range pValue {
+			nValue, err := uValue.InDepthSearch(keys...)
+			if err != nil {
+				return nil, err
+			}
+			rValues = append(rValues, nValue...)
+		}
+	case TypeObject:
+		pValue, err := v.Object()
+		if err != nil {
+			return nil, err
+		}
+		nValue, err := pValue.Get(keys[0]).InDepthSearch(keys[1:]...)
+		if err != nil {
+			return nil, err
+		}
+		rValues = append(rValues, nValue...)
+	case TypeString:
+		rValues = append(rValues, string(v.String()))
+	case TypeNumber:
+		pValue, err := v.Float64()
+		if err != nil {
+			return nil, err
+		}
+		rValues = append(rValues, float64(pValue))
+	case TypeFalse:
+		rValues = append(rValues, false)
+	case TypeTrue:
+		rValues = append(rValues, true)
+	default:
+		return nil, fmt.Errorf("Type not recognized")
+	}
+	return rValues, nil
+}
+
 var (
 	valueTrue   = &Value{t: TypeTrue}
 	valueFalse  = &Value{t: TypeFalse}
