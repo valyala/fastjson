@@ -759,8 +759,8 @@ func TestParserParse(t *testing.T) {
 			t.Fatalf("unexpected value obtained for integer; got %f; want %f", n, -12.345)
 		}
 		s := v.String()
-		if s != "-12.345000" {
-			t.Fatalf("unexpected string representation of integer; got %q; want %q", s, "-12.345000")
+		if s != "-12.345" {
+			t.Fatalf("unexpected string representation of integer; got %q; want %q", s, "-12.345")
 		}
 	})
 
@@ -868,8 +868,8 @@ func TestParserParse(t *testing.T) {
 		}
 
 		s := v.String()
-		if s != `{"foo":[1,2,3],"bar":{},"baz":123.456000}` {
-			t.Fatalf("unexpected string representation for object; got %q; want %q", s, `{"foo":[1,2,3],"bar":{},"baz":123.456000}`)
+		if s != `{"foo":[1,2,3],"bar":{},"baz":123.456}` {
+			t.Fatalf("unexpected string representation for object; got %q; want %q", s, `{"foo":[1,2,3],"bar":{},"baz":123.456}`)
 		}
 	})
 

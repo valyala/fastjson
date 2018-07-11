@@ -108,6 +108,47 @@ func benchmarkObjectGet(b *testing.B, itemsCount, lookupsCount int) {
 	})
 }
 
+func BenchmarkMarshalTo(b *testing.B) {
+	b.Run("small", func(b *testing.B) {
+		benchmarkMarshalTo(b, smallFixture)
+	})
+	b.Run("medium", func(b *testing.B) {
+		benchmarkMarshalTo(b, mediumFixture)
+	})
+	b.Run("large", func(b *testing.B) {
+		benchmarkMarshalTo(b, largeFixture)
+	})
+	b.Run("canada", func(b *testing.B) {
+		benchmarkMarshalTo(b, canadaFixture)
+	})
+	b.Run("citm", func(b *testing.B) {
+		benchmarkMarshalTo(b, citmFixture)
+	})
+	b.Run("twitter", func(b *testing.B) {
+		benchmarkMarshalTo(b, twitterFixture)
+	})
+}
+
+func benchmarkMarshalTo(b *testing.B, s string) {
+	p := benchPool.Get()
+	v, err := p.Parse(s)
+	if err != nil {
+		panic(fmt.Errorf("unexpected error: %s", err))
+	}
+
+	b.ReportAllocs()
+	b.SetBytes(int64(len(s)))
+	b.RunParallel(func(pb *testing.PB) {
+		var b []byte
+		for pb.Next() {
+			// It is ok calling v.MarshalTo from concurrent
+			// goroutines, since MarshalTo doesn't modify v.
+			b = v.MarshalTo(b[:0])
+		}
+	})
+	benchPool.Put(p)
+}
+
 func BenchmarkParse(b *testing.B) {
 	b.Run("small", func(b *testing.B) {
 		benchmarkParse(b, smallFixture)

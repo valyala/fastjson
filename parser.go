@@ -1,7 +1,6 @@
 package fastjson
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/valyala/fastjson/fastfloat"
 	"strconv"
@@ -385,24 +384,34 @@ func (o *Object) reset() {
 	o.keysUnescaped = false
 }
 
+// MarshalTo marshals o to dst and returns the result.
+func (o *Object) MarshalTo(dst []byte) []byte {
+	dst = append(dst, '{')
+	for i, kv := range o.kvs {
+		if o.keysUnescaped {
+			dst = strconv.AppendQuote(dst, kv.k)
+		} else {
+			dst = append(dst, '"')
+			dst = append(dst, kv.k...)
+			dst = append(dst, '"')
+		}
+		dst = append(dst, ':')
+		dst = kv.v.MarshalTo(dst)
+		if i != len(o.kvs)-1 {
+			dst = append(dst, ',')
+		}
+	}
+	dst = append(dst, '}')
+	return dst
+}
+
 // String returns string representation for the o.
 //
 // This function is for debugging purposes only. It isn't optimized for speed.
+// See MarshalTo instead.
 func (o *Object) String() string {
-	o.unescapeKeys()
-
-	// Use bytes.Buffer instead of strings.Builder,
-	// so it works on go 1.9 and below.
-	var bb bytes.Buffer
-	bb.WriteString("{")
-	for i, kv := range o.kvs {
-		fmt.Fprintf(&bb, "%q:%s", kv.k, kv.v)
-		if i != len(o.kvs)-1 {
-			bb.WriteString(",")
-		}
-	}
-	bb.WriteString("}")
-	return bb.String()
+	b := o.MarshalTo(nil)
+	return string(b)
 }
 
 func (o *Object) getKV() *kv {
@@ -494,45 +503,56 @@ func (v *Value) reset() {
 	v.t = TypeNull
 }
 
+// MarshalTo marshals v to dst and returns the result.
+func (v *Value) MarshalTo(dst []byte) []byte {
+	switch v.t {
+	case TypeObject:
+		return v.o.MarshalTo(dst)
+	case TypeArray:
+		dst = append(dst, '[')
+		for i, vv := range v.a {
+			dst = vv.MarshalTo(dst)
+			if i != len(v.a)-1 {
+				dst = append(dst, ',')
+			}
+		}
+		dst = append(dst, ']')
+		return dst
+	case TypeString:
+		return strconv.AppendQuote(dst, v.s)
+	case TypeNumber:
+		if float64(int(v.n)) == v.n {
+			return strconv.AppendInt(dst, int64(v.n), 10)
+		}
+		return strconv.AppendFloat(dst, v.n, 'f', -1, 64)
+	case TypeTrue:
+		return append(dst, "true"...)
+	case TypeFalse:
+		return append(dst, "false"...)
+	case TypeNull:
+		return append(dst, "null"...)
+	case typeRawString:
+		dst = append(dst, '"')
+		dst = append(dst, v.s...)
+		dst = append(dst, '"')
+		return dst
+	case typeRawNumber:
+		return append(dst, v.s...)
+	default:
+		panic(fmt.Errorf("BUG: unexpected Value type: %d", v.t))
+	}
+}
+
 // String returns string representation of the v.
 //
 // The function is for debugging purposes only. It isn't optimized for speed.
+// See MarshalTo instead.
 //
 // Don't confuse this function with StringBytes, which must be called
 // for obtaining the underlying JSON string for the v.
 func (v *Value) String() string {
-	switch v.Type() {
-	case TypeObject:
-		return v.o.String()
-	case TypeArray:
-		// Use bytes.Buffer instead of strings.Builder,
-		// so it works on go 1.9 and below.
-		var bb bytes.Buffer
-		bb.WriteString("[")
-		for i, vv := range v.a {
-			fmt.Fprintf(&bb, "%s", vv)
-			if i != len(v.a)-1 {
-				bb.WriteString(",")
-			}
-		}
-		bb.WriteString("]")
-		return bb.String()
-	case TypeString:
-		return fmt.Sprintf("%q", v.s)
-	case TypeNumber:
-		if float64(int(v.n)) == v.n {
-			return fmt.Sprintf("%d", int(v.n))
-		}
-		return fmt.Sprintf("%f", v.n)
-	case TypeTrue:
-		return "true"
-	case TypeFalse:
-		return "false"
-	case TypeNull:
-		return "null"
-	default:
-		panic(fmt.Errorf("BUG: unknown Value type: %d", v.Type()))
-	}
+	b := v.MarshalTo(nil)
+	return string(b)
 }
 
 // Type represents JSON type.
