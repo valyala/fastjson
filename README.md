@@ -17,6 +17,7 @@
     when accessing multiple unrelated fields, since `fastjson` parses the input JSON only once.
   * Validates the parsed JSON unlike [jsonparser](https://github.com/buger/jsonparser)
     and [gjson](https://github.com/tidwall/gjson).
+  * May quickly extract a part of the original JSON with `Value.Get(...).MarshalTo`.
   * May parse array containing values with distinct types (aka non-homogenous types).
     For instance, `fastjson` easily parses the following JSON array `[123, "foo", [456], {"k": "v"}, null]`.
   * `fastjson` preserves the original order of object items when calling
