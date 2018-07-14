@@ -384,7 +384,7 @@ func (o *Object) reset() {
 	o.keysUnescaped = false
 }
 
-// MarshalTo marshals o to dst and returns the result.
+// MarshalTo appends marshaled o to dst and returns the result.
 func (o *Object) MarshalTo(dst []byte) []byte {
 	dst = append(dst, '{')
 	for i, kv := range o.kvs {
@@ -503,9 +503,16 @@ func (v *Value) reset() {
 	v.t = TypeNull
 }
 
-// MarshalTo marshals v to dst and returns the result.
+// MarshalTo appends marshaled v to dst and returns the result.
 func (v *Value) MarshalTo(dst []byte) []byte {
 	switch v.t {
+	case typeRawString:
+		dst = append(dst, '"')
+		dst = append(dst, v.s...)
+		dst = append(dst, '"')
+		return dst
+	case typeRawNumber:
+		return append(dst, v.s...)
 	case TypeObject:
 		return v.o.MarshalTo(dst)
 	case TypeArray:
@@ -531,13 +538,6 @@ func (v *Value) MarshalTo(dst []byte) []byte {
 		return append(dst, "false"...)
 	case TypeNull:
 		return append(dst, "null"...)
-	case typeRawString:
-		dst = append(dst, '"')
-		dst = append(dst, v.s...)
-		dst = append(dst, '"')
-		return dst
-	case typeRawNumber:
-		return append(dst, v.s...)
 	default:
 		panic(fmt.Errorf("BUG: unexpected Value type: %d", v.t))
 	}
