@@ -1,0 +1,9 @@
+package: github.com/xichen2020/fastjson
+import:
+- package: github.com/valyala/fastjson
+  subpackages:
+  - fastfloat
+testImport:
+- package: github.com/stretchr/testify
+  subpackages:
+  - require
