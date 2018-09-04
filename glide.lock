@@ -1,0 +1,21 @@
+hash: b9d063dfdb1af43ca3e09efb2d3620722f82e9be239782e486b1d1359983d74f
+updated: 2018-09-04T09:21:07.328594-04:00
+imports:
+- name: github.com/valyala/fastjson
+  version: 37952265e1c05c1765a0b8d01efbde0b5b4e3913
+  subpackages:
+  - fastfloat
+testImports:
+- name: github.com/davecgh/go-spew
+  version: d8f796af33cc11cb798c1aaeb27a4ebc5099927d
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  subpackages:
+  - difflib
+- name: github.com/stretchr/testify
+  version: f35b8ab0b5a2cef36673838d662e249dd9c94686
+  subpackages:
+  - assert
+  - require

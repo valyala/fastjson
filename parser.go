@@ -2,9 +2,10 @@ package fastjson
 
 import (
 	"fmt"
-	"github.com/valyala/fastjson/fastfloat"
 	"strconv"
 	"strings"
+
+	"github.com/valyala/fastjson/fastfloat"
 )
 
 // Parser parses JSON.
@@ -88,9 +89,15 @@ func skipWS(s string) string {
 	return ""
 }
 
-type kv struct {
+// KV is a key value pair.
+type KV struct {
 	k string
 	v *Value
+}
+
+// NewKV creates a new key value pair.
+func NewKV(k string, v *Value) KV {
+	return KV{k: k, v: v}
 }
 
 func parseValue(s string, c *cache) (*Value, string, error) {
@@ -375,8 +382,13 @@ func parseRawNumber(s string) (string, string, error) {
 // Object cannot be used from concurrent goroutines.
 // Use per-goroutine parsers or ParserPool instead.
 type Object struct {
-	kvs           []kv
+	kvs           []KV
 	keysUnescaped bool
+}
+
+// NewObject creates a new object.
+func NewObject(kvs []KV) Object {
+	return Object{kvs: kvs}
 }
 
 func (o *Object) reset() {
@@ -414,11 +426,11 @@ func (o *Object) String() string {
 	return string(b)
 }
 
-func (o *Object) getKV() *kv {
+func (o *Object) getKV() *KV {
 	if cap(o.kvs) > len(o.kvs) {
 		o.kvs = o.kvs[:len(o.kvs)+1]
 	} else {
-		o.kvs = append(o.kvs, kv{})
+		o.kvs = append(o.kvs, KV{})
 	}
 	return &o.kvs[len(o.kvs)-1]
 }
@@ -481,6 +493,31 @@ func (o *Object) Visit(f func(key []byte, v *Value)) {
 	}
 }
 
+// set sets the value for the given key in the o, creating a new key
+// value pair if the key doesn't exist.
+func (o *Object) set(k string, v *Value) {
+	for i := range o.kvs {
+		if k == o.kvs[i].k {
+			o.kvs[i].v = v
+			return
+		}
+	}
+
+	// Slow path.
+	k = unescapeStringBestEffort(k)
+	o.unescapeKeys()
+
+	for i := range o.kvs {
+		if k == o.kvs[i].k {
+			o.kvs[i].v = v
+			return
+		}
+	}
+
+	// No key found, add it.
+	o.kvs = append(o.kvs, NewKV(k, v))
+}
+
 // Value represents any JSON value.
 //
 // Call Type in order to determine the actual type of the JSON value.
@@ -494,6 +531,27 @@ type Value struct {
 	n float64
 	t Type
 }
+
+// NewObjectValue creates a new object value.
+func NewObjectValue(o Object) *Value { return &Value{o: o, t: TypeObject} }
+
+// NewArrayValue creates a new array value.
+func NewArrayValue(a []*Value) *Value { return &Value{a: a, t: TypeArray} }
+
+// NewStringValue creates a new string value.
+func NewStringValue(s string) *Value { return &Value{s: s, t: TypeString} }
+
+// NewNumberValue creates a new number value.
+func NewNumberValue(n float64) *Value { return &Value{n: n, t: TypeNumber} }
+
+// NewTrueValue creates a new boolean true value.
+func NewTrueValue() *Value { return valueTrue }
+
+// NewFalseValue creates a new boolean false value.
+func NewFalseValue() *Value { return valueFalse }
+
+// NewNullValue creates a new null value.
+func NewNullValue() *Value { return valueNull }
 
 func (v *Value) reset() {
 	v.o.reset()
@@ -656,6 +714,71 @@ func (v *Value) Get(keys ...string) *Value {
 			return nil
 		}
 	}
+	return v
+}
+
+// Set sets the value by the given keys path. Array indexes may be represented
+// as decimal numbers in keys.
+//
+// * If the key exists, the current value is replaced with the new value.
+// * If the key doesn't exist,
+//   * If the current value is an object value, a new object value associated
+//     with the given key is created and inserted into the object value.
+//   * Otherwise, nil is returned.
+func (v *Value) Set(keys []string, value *Value) *Value {
+	if v == nil || value == nil || len(keys) == 0 {
+		return nil
+	}
+	if len(keys) == 1 {
+		return v.setNoRecurse(keys[0], value)
+	}
+	target := v.Get(keys[0])
+	if target == nil && v.t == TypeObject {
+		// Create new values if the current value is an object.
+		// TODO: pool these values.
+		target = &Value{t: TypeObject}
+	}
+	// Key not found, and the current value is not an object.
+	if target == nil {
+		return nil
+	}
+	retval := target.Set(keys[1:], value)
+	return v.setNoRecurse(keys[0], retval)
+}
+
+func (v *Value) setNoRecurse(key string, value *Value) *Value {
+	if v == nil || value == nil {
+		return nil
+	}
+	if v.t == TypeObject {
+		return v.setInObject(key, value)
+	}
+	if v.t == TypeArray {
+		return v.setInArray(key, value)
+	}
+	return nil
+}
+
+func (v *Value) setInObject(key string, value *Value) *Value {
+	// Make a copy of the globally shared empty object.
+	// TODO: pool these values.
+	if v == emptyObject {
+		v = &Value{t: TypeObject}
+	}
+	v.o.set(key, value)
+	return v
+}
+
+func (v *Value) setInArray(key string, value *Value) *Value {
+	// Can't set an entry in an empty array.
+	if v == emptyArray {
+		return nil
+	}
+	n, err := strconv.Atoi(key)
+	if err != nil || n < 0 || n >= len(v.a) {
+		return nil
+	}
+	v.a[n] = value
 	return v
 }
 

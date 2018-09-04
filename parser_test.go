@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseRawNumber(t *testing.T) {
@@ -810,7 +812,7 @@ func TestParserParse(t *testing.T) {
 
 	t.Run("object-one-element", func(t *testing.T) {
 		v, err := p.Parse(`  {
-	"foo"   : "bar"  }	 `)
+  "foo"   : "bar"  }	 `)
 		if err != nil {
 			t.Fatalf("cannot parse object: %s", err)
 		}
@@ -1015,6 +1017,108 @@ func TestParserParse(t *testing.T) {
 			t.Fatalf("unexpected string representation for object; got\n%q; want\n%q", ss, s)
 		}
 
+	})
+}
+
+func TestParserSet(t *testing.T) {
+	data := `{
+    "person": {
+      "name": {
+        "first": "Leonid",
+        "last": "Bugaev",
+        "fullName": "Leonid Bugaev"
+      },
+      "github": {
+        "handle": "buger",
+        "followers": 109
+      },
+      "avatars": [
+        { "url": "https://avatars1.githubusercontent.com/u/14009?v=3&s=460", "type": "thumbnail" }
+      ],
+      "baz": {},
+      "cat": [],
+      "dawn": [3,5,8]
+    },
+    "company": {
+      "name": "Acme"
+    },
+    "foo": {},
+    "bar": []
+  }`
+
+	var p Parser
+
+	t.Run("set-existing-key-top-level", func(t *testing.T) {
+		v, err := p.Parse(data)
+		require.NoError(t, err)
+		require.NotNil(t, v.Set([]string{"company"}, NewTrueValue()))
+		ret := v.Get("company")
+		val, err := ret.Bool()
+		require.NoError(t, err)
+		require.Equal(t, true, val)
+	})
+
+	t.Run("set-new-key-top-level", func(t *testing.T) {
+		v, err := p.Parse(data)
+		require.NoError(t, err)
+
+		expected := map[string]string{
+			"host":   "localhost",
+			"zone":   "testzone",
+			"region": "us-east-1",
+		}
+		kvs := make([]KV, 0, len(expected))
+		for k, v := range expected {
+			kvs = append(kvs, NewKV(k, NewStringValue(v)))
+		}
+		obj := NewObject(kvs)
+		require.NotNil(t, v.Set([]string{"agent"}, NewObjectValue(obj)))
+
+		ret := v.Get("agent")
+		val, err := ret.Object()
+		require.NoError(t, err)
+		require.Equal(t, len(expected), val.Len())
+		val.Visit(func(k []byte, v *Value) {
+			expectedStr, exists := expected[string(k)]
+			require.True(t, exists)
+			actualBytes, err := v.StringBytes()
+			require.NoError(t, err)
+			require.Equal(t, expectedStr, string(actualBytes))
+		})
+	})
+
+	t.Run("set-multi-level-new-key", func(t *testing.T) {
+		v, err := p.Parse(data)
+		require.NoError(t, err)
+
+		require.NotNil(t, v.Set([]string{"a", "b", "c", "d"}, NewTrueValue()))
+		ret := v.Get("a", "b", "c", "d")
+		boolVal, err := ret.Bool()
+		require.NoError(t, err)
+		require.Equal(t, true, boolVal)
+	})
+
+	t.Run("set-empty-object", func(t *testing.T) {
+		v, err := p.Parse(data)
+		require.NoError(t, err)
+
+		require.NotNil(t, v.Set([]string{"foo", "bar"}, NewStringValue("testEmptyObject")))
+		ret := v.Get("foo", "bar")
+		strVal, err := ret.StringBytes()
+		require.NoError(t, err)
+		require.Equal(t, "testEmptyObject", string(strVal))
+
+		// Verify the other empty object is unchanged.
+		ret = v.Get("person", "baz")
+		objVal, err := ret.Object()
+		require.NoError(t, err)
+		require.Equal(t, 0, objVal.Len())
+	})
+
+	t.Run("set-fail", func(t *testing.T) {
+		v, err := p.Parse(data)
+		require.NoError(t, err)
+		require.Nil(t, v.Set([]string{"person", "dawn", "10"}, NewTrueValue()))
 	})
 }
 
