@@ -730,6 +730,14 @@ func (v *Value) GetStringBytes(keys ...string) []byte {
 	return s2b(v.s)
 }
 
+func (v *Value) GetString(keys ...string) string {
+	v = v.Get(keys...)
+	if v == nil || v.Type() != TypeString {
+		return nil
+	}
+	return v.s
+}
+
 // GetBool returns bool value by the given keys path.
 //
 // Array indexes may be represented as decimal numbers in keys.
