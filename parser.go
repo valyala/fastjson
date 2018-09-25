@@ -732,9 +732,6 @@ func (v *Value) GetStringBytes(keys ...string) []byte {
 
 func (v *Value) GetString(keys ...string) string {
 	v = v.Get(keys...)
-	if v == nil || v.Type() != TypeString {
-		return nil
-	}
 	return v.s
 }
 
