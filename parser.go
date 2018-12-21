@@ -147,7 +147,7 @@ func parseValue(s string, c *cache) (*Value, string, error) {
 		return nil, tail, fmt.Errorf("cannot parse number: %s", err)
 	}
 	v := c.getValue()
-	v.t = typeRawNumber
+	v.t = TypeNumber
 	v.s = ns
 	return v, tail, nil
 }
@@ -512,7 +512,6 @@ type Value struct {
 	o Object
 	a []*Value
 	s string
-	n float64
 	t Type
 }
 
@@ -520,7 +519,6 @@ func (v *Value) reset() {
 	v.o.reset()
 	v.a = v.a[:0]
 	v.s = ""
-	v.n = 0
 	v.t = TypeNull
 }
 
@@ -532,8 +530,6 @@ func (v *Value) MarshalTo(dst []byte) []byte {
 		dst = append(dst, v.s...)
 		dst = append(dst, '"')
 		return dst
-	case typeRawNumber:
-		return append(dst, v.s...)
 	case TypeObject:
 		return v.o.MarshalTo(dst)
 	case TypeArray:
@@ -549,10 +545,7 @@ func (v *Value) MarshalTo(dst []byte) []byte {
 	case TypeString:
 		return strconv.AppendQuote(dst, v.s)
 	case TypeNumber:
-		if float64(int(v.n)) == v.n {
-			return strconv.AppendInt(dst, int64(v.n), 10)
-		}
-		return strconv.AppendFloat(dst, v.n, 'f', -1, 64)
+		return append(dst, v.s...)
 	case TypeTrue:
 		return append(dst, "true"...)
 	case TypeFalse:
@@ -602,7 +595,6 @@ const (
 	TypeFalse Type = 6
 
 	typeRawString Type = 7
-	typeRawNumber Type = 8
 )
 
 // String returns string representation of t.
@@ -623,8 +615,8 @@ func (t Type) String() string {
 	case TypeNull:
 		return "null"
 
-	// typeRawString and typeRawNumber are skipped intentionally,
-	// since they shouldn't be visible to user.
+	// typeRawString is skipped intentionally,
+	// since it shouldn't be visible to user.
 	default:
 		panic(fmt.Errorf("BUG: unknown Value type: %d", t))
 	}
@@ -635,9 +627,6 @@ func (v *Value) Type() Type {
 	if v.t == typeRawString {
 		v.s = unescapeStringBestEffort(v.s)
 		v.t = TypeString
-	} else if v.t == typeRawNumber {
-		v.n = fastfloat.ParseBestEffort(v.s)
-		v.t = TypeNumber
 	}
 	return v.t
 }
@@ -720,7 +709,7 @@ func (v *Value) GetFloat64(keys ...string) float64 {
 	if v == nil || v.Type() != TypeNumber {
 		return 0
 	}
-	return v.n
+	return fastfloat.ParseBestEffort(v.s)
 }
 
 // GetInt returns int value by the given keys path.
@@ -733,7 +722,25 @@ func (v *Value) GetInt(keys ...string) int {
 	if v == nil || v.Type() != TypeNumber {
 		return 0
 	}
-	return int(v.n)
+	n := fastfloat.ParseInt64BestEffort(v.s)
+	nn := int(n)
+	if int64(nn) != n {
+		return 0
+	}
+	return nn
+}
+
+// GetInt64 returns int64 value by the given keys path.
+//
+// Array indexes may be represented as decimal numbers in keys.
+//
+// 0 is returned for non-existing keys path or for invalid value type.
+func (v *Value) GetInt64(keys ...string) int64 {
+	v = v.Get(keys...)
+	if v == nil || v.Type() != TypeNumber {
+		return 0
+	}
+	return fastfloat.ParseInt64BestEffort(v.s)
 }
 
 // GetStringBytes returns string value by the given keys path.
@@ -807,15 +814,43 @@ func (v *Value) Float64() (float64, error) {
 	if v.Type() != TypeNumber {
 		return 0, fmt.Errorf("value doesn't contain number; it contains %s", v.Type())
 	}
-	return v.n, nil
+	f := fastfloat.ParseBestEffort(v.s)
+	if f == 0 && v.s != "0" {
+		return 0, fmt.Errorf("cannot parse float64 %q", v.s)
+	}
+	return f, nil
 }
 
 // Int returns the underlying JSON int for the v.
 //
 // Use GetInt if you don't need error handling.
 func (v *Value) Int() (int, error) {
-	f, err := v.Float64()
-	return int(f), err
+	if v.Type() != TypeNumber {
+		return 0, fmt.Errorf("value doesn't contain number; it contains %s", v.Type())
+	}
+	n := fastfloat.ParseInt64BestEffort(v.s)
+	if n == 0 && v.s != "0" {
+		return 0, fmt.Errorf("cannot parse int %q", v.s)
+	}
+	nn := int(n)
+	if int64(nn) != n {
+		return 0, fmt.Errorf("number %q doesn't fit int", v.s)
+	}
+	return nn, nil
+}
+
+// Int64 returns the underlying JSON int for the v.
+//
+// Use GetInt64 if you don't need error handling.
+func (v *Value) Int64() (int64, error) {
+	if v.Type() != TypeNumber {
+		return 0, fmt.Errorf("value doesn't contain number; it contains %s", v.Type())
+	}
+	n := fastfloat.ParseInt64BestEffort(v.s)
+	if n == 0 && v.s != "0" {
+		return 0, fmt.Errorf("cannot parse int64 %q", v.s)
+	}
+	return n, nil
 }
 
 // Bool returns the underlying JSON bool for the v.

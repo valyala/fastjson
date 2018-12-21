@@ -482,8 +482,8 @@ func TestParserParse(t *testing.T) {
 
 		// Make sure invalid int isn't parsed.
 		n, err := v.Int()
-		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+		if err == nil {
+			t.Fatalf("expecting non-nil error")
 		}
 		if n != 0 {
 			t.Fatalf("unexpected int; got %d; want %d", n, 0)
@@ -741,6 +741,28 @@ func TestParserParse(t *testing.T) {
 		s := v.String()
 		if s != "12345" {
 			t.Fatalf("unexpected string representation of integer; got %q; want %q", s, "12345")
+		}
+	})
+
+	t.Run("int64", func(t *testing.T) {
+		v, err := p.Parse("-8838840643388017390")
+		if err != nil {
+			t.Fatalf("cannot parse int64: %s", err)
+		}
+		tp := v.Type()
+		if tp != TypeNumber || tp.String() != "number" {
+			t.Fatalf("unexpected type obtained for int64: %#v", v)
+		}
+		n, err := v.Int64()
+		if err != nil {
+			t.Fatalf("cannot obtain int64: %s", err)
+		}
+		if n != -8838840643388017390 {
+			t.Fatalf("unexpected value obtained for int64; got %d; want %d", n, -8838840643388017390)
+		}
+		s := v.String()
+		if s != "-8838840643388017390" {
+			t.Fatalf("unexpected string representation of int64; got %q; want %q", s, "-8838840643388017390")
 		}
 	})
 
