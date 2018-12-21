@@ -66,6 +66,7 @@ func TestUnescapeStringBestEffort(t *testing.T) {
 		testUnescapeStringBestEffort(t, `\\\"абв`, `\"абв`)
 		testUnescapeStringBestEffort(t, `йцук\n\"\\Y`, "йцук\n\"\\Y")
 		testUnescapeStringBestEffort(t, `q\u1234we`, "q\u1234we")
+		testUnescapeStringBestEffort(t, `п\ud83e\udd2dи`, "п🤭и")
 	})
 
 	t.Run("error", func(t *testing.T) {
@@ -73,6 +74,7 @@ func TestUnescapeStringBestEffort(t *testing.T) {
 		testUnescapeStringBestEffort(t, `foo\qwe`, `foo\qwe`)
 		testUnescapeStringBestEffort(t, `\"x\uyz\"`, `"x\uyz"`)
 		testUnescapeStringBestEffort(t, `\u12\"пролw`, `\u12"пролw`)
+		testUnescapeStringBestEffort(t, `п\ud83eи`, "п\\ud83eи")
 	})
 }
 

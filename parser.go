@@ -5,6 +5,7 @@ import (
 	"github.com/valyala/fastjson/fastfloat"
 	"strconv"
 	"strings"
+	"unicode/utf16"
 )
 
 // Parser parses JSON.
@@ -276,18 +277,38 @@ func unescapeStringBestEffort(s string) string {
 		case 'u':
 			if len(s) < 4 {
 				// Too short escape sequence. Just store it unchanged.
-				b = append(b, '\\', ch)
+				b = append(b, "\\u"...)
 				break
 			}
 			xs := s[:4]
 			x, err := strconv.ParseUint(xs, 16, 16)
 			if err != nil {
 				// Invalid escape sequence. Just store it unchanged.
-				b = append(b, '\\', ch)
+				b = append(b, "\\u"...)
 				break
 			}
-			b = append(b, string(rune(x))...)
 			s = s[4:]
+			if !utf16.IsSurrogate(rune(x)) {
+				b = append(b, string(rune(x))...)
+				break
+			}
+
+			// Surrogate.
+			// See https://en.wikipedia.org/wiki/Universal_Character_Set_characters#Surrogates
+			if len(s) < 6 || s[0] != '\\' || s[1] != 'u' {
+				b = append(b, "\\u"...)
+				b = append(b, xs...)
+				break
+			}
+			x1, err := strconv.ParseUint(s[2:6], 16, 16)
+			if err != nil {
+				b = append(b, "\\u"...)
+				b = append(b, xs...)
+				break
+			}
+			r := utf16.DecodeRune(rune(x), rune(x1))
+			b = append(b, string(r)...)
+			s = s[6:]
 		default:
 			// Unknown escape sequence. Just store it unchanged.
 			b = append(b, '\\', ch)
