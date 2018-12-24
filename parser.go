@@ -815,9 +815,6 @@ func (v *Value) Float64() (float64, error) {
 		return 0, fmt.Errorf("value doesn't contain number; it contains %s", v.Type())
 	}
 	f := fastfloat.ParseBestEffort(v.s)
-	if f == 0 && v.s != "0" {
-		return 0, fmt.Errorf("cannot parse float64 %q", v.s)
-	}
 	return f, nil
 }
 

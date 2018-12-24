@@ -245,7 +245,10 @@ func TestValueInvalidTypeConversion(t *testing.T) {
 func TestValueGetTyped(t *testing.T) {
 	var p Parser
 
-	v, err := p.Parse(`{"foo": 123, "bar": "433", "baz": true, "obj":{}, "arr":[1,2,3]}`)
+	v, err := p.Parse(`{"foo": 123, "bar": "433", "baz": true, "obj":{}, "arr":[1,2,3],
+		"zero_float1": 0.00,
+		"zero_float2": -0e123
+	}`)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -324,6 +327,24 @@ func TestValueGetTyped(t *testing.T) {
 	bv = v.GetBool("bar")
 	if bv {
 		t.Fatalf("unexpected value; got %v; want %v", bv, false)
+	}
+
+	zv := v.Get("zero_float1")
+	zf, err := zv.Float64()
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if zf != 0 {
+		t.Fatalf("unexpected zero_float1 value: %f. Expecting 0", zf)
+	}
+
+	zv = v.Get("zero_float2")
+	zf, err = zv.Float64()
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if zf != 0 {
+		t.Fatalf("unexpected zero_float1 value: %f. Expecting 0", zf)
 	}
 }
 
