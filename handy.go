@@ -128,3 +128,19 @@ func Exists(data []byte, keys ...string) bool {
 	handyPool.Put(p)
 	return ok
 }
+
+// Parse parses json string s.
+//
+// The function is slower than the Parser.Parse for re-used Parser.
+func Parse(s string) (*Value, error) {
+	var p Parser
+	return p.Parse(s)
+}
+
+// ParseBytes parses b containing json.
+//
+// The function is slower than the Parser.ParseBytes for re-used Parser.
+func ParseBytes(b []byte) (*Value, error) {
+	var p Parser
+	return p.ParseBytes(b)
+}

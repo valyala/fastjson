@@ -232,3 +232,25 @@ func TestExists(t *testing.T) {
 		t.Fatalf("Exists returned true on invalid json")
 	}
 }
+
+func TestParse(t *testing.T) {
+	v, err := Parse(`{"foo": "bar"}`)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	str := v.String()
+	if str != `{"foo":"bar"}` {
+		t.Fatalf("unexpected value parsed: %q; want %q", str, `{"foo":"bar"}`)
+	}
+}
+
+func TestParseBytes(t *testing.T) {
+	v, err := ParseBytes([]byte(`{"foo": "bar"}`))
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	str := v.String()
+	if str != `{"foo":"bar"}` {
+		t.Fatalf("unexpected value parsed: %q; want %q", str, `{"foo":"bar"}`)
+	}
+}
