@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestParseRawNumber(t *testing.T) {
@@ -1096,4 +1097,47 @@ func TestParseBigObject(t *testing.T) {
 	if sb != nil {
 		t.Fatalf("unexpected non-nil value for non-existing-key: %q", sb)
 	}
+}
+
+func TestParseGetConcurrent(t *testing.T) {
+	concurrency := 10
+	ch := make(chan error, concurrency)
+	s := `{"foo": "bar", "empty_obj": {}}`
+	for i := 0; i < concurrency; i++ {
+		go func() {
+			ch <- testParseGetSerial(s)
+		}()
+	}
+	for i := 0; i < concurrency; i++ {
+		select {
+		case err := <-ch:
+			if err != nil {
+				t.Fatalf("unexpected error during concurrent test: %s", err)
+			}
+		case <-time.After(time.Second):
+			t.Fatalf("timeout")
+		}
+	}
+}
+
+func testParseGetSerial(s string) error {
+	var p Parser
+	for i := 0; i < 100; i++ {
+		v, err := p.Parse(s)
+		if err != nil {
+			return fmt.Errorf("cannot parse %q: %s", s, err)
+		}
+		sb := v.GetStringBytes("foo")
+		if string(sb) != "bar" {
+			return fmt.Errorf("unexpected value for key=%q; got %q; want %q", "foo", sb, "bar")
+		}
+		vv := v.Get("empty_obj", "non-existing-key")
+		if vv != nil {
+			return fmt.Errorf("unexpected non-nil value got: %s", vv)
+		}
+		if !emptyObject.o.keysUnescaped {
+			return fmt.Errorf("keysUnescaped must be true on emptyObject")
+		}
+	}
+	return nil
 }
