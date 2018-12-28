@@ -432,7 +432,9 @@ func (o *Object) MarshalTo(dst []byte) []byte {
 // See MarshalTo instead.
 func (o *Object) String() string {
 	b := o.MarshalTo(nil)
-	return string(b)
+	// It is safe converting b to string without allocation, since b is no longer
+	// reachable after this line.
+	return b2s(b)
 }
 
 func (o *Object) getKV() *kv {
@@ -566,7 +568,9 @@ func (v *Value) MarshalTo(dst []byte) []byte {
 // for obtaining the underlying JSON string for the v.
 func (v *Value) String() string {
 	b := v.MarshalTo(nil)
-	return string(b)
+	// It is safe converting b to string without allocation, since b is no longer
+	// reachable after this line.
+	return b2s(b)
 }
 
 // Type represents JSON type.
