@@ -254,3 +254,17 @@ func TestParseBytes(t *testing.T) {
 		t.Fatalf("unexpected value parsed: %q; want %q", str, `{"foo":"bar"}`)
 	}
 }
+
+func TestMustParse(t *testing.T) {
+	s := `{"foo":"bar"}`
+	v := MustParse(s)
+	str := v.String()
+	if str != s {
+		t.Fatalf("unexpected value parsed; %q; want %q", str, s)
+	}
+
+	v = MustParseBytes([]byte(s))
+	if str != s {
+		t.Fatalf("unexpected value parsed; %q; want %q", str, s)
+	}
+}

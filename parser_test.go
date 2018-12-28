@@ -1135,9 +1135,6 @@ func testParseGetSerial(s string) error {
 		if vv != nil {
 			return fmt.Errorf("unexpected non-nil value got: %s", vv)
 		}
-		if !emptyObject.o.keysUnescaped {
-			return fmt.Errorf("keysUnescaped must be true on emptyObject")
-		}
 	}
 	return nil
 }

@@ -159,7 +159,9 @@ func parseArray(s string, c *cache) (*Value, string, error) {
 	}
 
 	if s[0] == ']' {
-		return emptyArray, s[1:], nil
+		v := c.getValue()
+		v.t = TypeArray
+		return v, s[1:], nil
 	}
 
 	a := c.getValue()
@@ -198,7 +200,9 @@ func parseObject(s string, c *cache) (*Value, string, error) {
 	}
 
 	if s[0] == '}' {
-		return emptyObject, s[1:], nil
+		v := c.getValue()
+		v.t = TypeObject
+		return v, s[1:], nil
 	}
 
 	o := c.getValue()
@@ -868,16 +872,7 @@ func (v *Value) Bool() (bool, error) {
 }
 
 var (
-	valueTrue   = &Value{t: TypeTrue}
-	valueFalse  = &Value{t: TypeFalse}
-	valueNull   = &Value{t: TypeNull}
-	emptyObject = &Value{
-		t: TypeObject,
-		o: Object{
-			// This prevents from race conditions during concurrent
-			// calls to emptyObject.o methods.
-			keysUnescaped: true,
-		},
-	}
-	emptyArray = &Value{t: TypeArray}
+	valueTrue  = &Value{t: TypeTrue}
+	valueFalse = &Value{t: TypeFalse}
+	valueNull  = &Value{t: TypeNull}
 )

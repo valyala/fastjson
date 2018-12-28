@@ -137,10 +137,34 @@ func Parse(s string) (*Value, error) {
 	return p.Parse(s)
 }
 
+// MustParse parses json string s.
+//
+// The function panics if s cannot be parsed.
+// The function is slower than the Parser.Parse for re-used Parser.
+func MustParse(s string) *Value {
+	v, err := Parse(s)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
 // ParseBytes parses b containing json.
 //
 // The function is slower than the Parser.ParseBytes for re-used Parser.
 func ParseBytes(b []byte) (*Value, error) {
 	var p Parser
 	return p.ParseBytes(b)
+}
+
+// MustParseBytes parses b containing json.
+//
+// The function banics if b cannot be parsed.
+// The function is slower than the Parser.ParseBytes for re-used Parser.
+func MustParseBytes(b []byte) *Value {
+	v, err := ParseBytes(b)
+	if err != nil {
+		panic(err)
+	}
+	return v
 }
