@@ -293,6 +293,10 @@ func TestValueGetTyped(t *testing.T) {
 	if n != 123 {
 		t.Fatalf("unexpected value; got %d; want %d", n, 123)
 	}
+	un := v.GetUint("foo")
+	if un != 123 {
+		t.Fatalf("unexpected value; got %d; want %d", un, 123)
+	}
 	n = v.GetInt("bar")
 	if n != 0 {
 		t.Fatalf("unexpected non-zero value; got %d", n)
@@ -785,6 +789,28 @@ func TestParserParse(t *testing.T) {
 		s := v.String()
 		if s != "-8838840643388017390" {
 			t.Fatalf("unexpected string representation of int64; got %q; want %q", s, "-8838840643388017390")
+		}
+	})
+
+	t.Run("uint64", func(t *testing.T) {
+		v, err := p.Parse("18446744073709551615")
+		if err != nil {
+			t.Fatalf("cannot parse uint64: %s", err)
+		}
+		tp := v.Type()
+		if tp != TypeNumber || tp.String() != "number" {
+			t.Fatalf("unexpected type obtained for uint64: %#v", v)
+		}
+		n, err := v.Uint64()
+		if err != nil {
+			t.Fatalf("cannot obtain uint64: %s", err)
+		}
+		if n != 18446744073709551615 {
+			t.Fatalf("unexpected value obtained for uint64; got %d; want %d", n, uint64(18446744073709551615))
+		}
+		s := v.String()
+		if s != "18446744073709551615" {
+			t.Fatalf("unexpected string representation of uint64; got %q; want %q", s, "18446744073709551615")
 		}
 	})
 

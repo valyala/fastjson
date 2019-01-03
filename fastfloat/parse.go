@@ -5,6 +5,45 @@ import (
 	"strconv"
 )
 
+// ParseUint64BestEffort parses uint64 number s.
+//
+// It is equivalent to strconv.ParseUint(s, 10, 64), but is faster.
+//
+// 0 is returned if the number cannot be parsed.
+func ParseUint64BestEffort(s string) uint64 {
+	if len(s) == 0 {
+		return 0
+	}
+	i := uint(0)
+	d := uint64(0)
+	j := i
+	for i < uint(len(s)) {
+		if s[i] >= '0' && s[i] <= '9' {
+			d = d*10 + uint64(s[i]-'0')
+			i++
+			if i > 18 {
+				// The integer part may be out of range for uint64.
+				// Fall back to slow parsing.
+				dd, err := strconv.ParseUint(s, 10, 64)
+				if err != nil {
+					return 0
+				}
+				return dd
+			}
+			continue
+		}
+		break
+	}
+	if i <= j {
+		return 0
+	}
+	if i < uint(len(s)) {
+		// Unparsed tail left.
+		return 0
+	}
+	return d
+}
+
 // ParseInt64BestEffort parses int64 number s.
 //
 // It is equivalent to strconv.ParseInt(s, 10, 64), but is faster.
@@ -30,7 +69,7 @@ func ParseInt64BestEffort(s string) int64 {
 			d = d*10 + int64(s[i]-'0')
 			i++
 			if i > 18 {
-				// The integer part may be out of range for uint64.
+				// The integer part may be out of range for int64.
 				// Fall back to slow parsing.
 				dd, err := strconv.ParseInt(s, 10, 64)
 				if err != nil {

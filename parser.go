@@ -738,6 +738,24 @@ func (v *Value) GetInt(keys ...string) int {
 	return nn
 }
 
+// GetUint returns uint value by the given keys path.
+//
+// Array indexes may be represented as decimal numbers in keys.
+//
+// 0 is returned for non-existing keys path or for invalid value type.
+func (v *Value) GetUint(keys ...string) uint {
+	v = v.Get(keys...)
+	if v == nil || v.Type() != TypeNumber {
+		return 0
+	}
+	n := fastfloat.ParseUint64BestEffort(v.s)
+	nn := uint(n)
+	if uint64(nn) != n {
+		return 0
+	}
+	return nn
+}
+
 // GetInt64 returns int64 value by the given keys path.
 //
 // Array indexes may be represented as decimal numbers in keys.
@@ -749,6 +767,19 @@ func (v *Value) GetInt64(keys ...string) int64 {
 		return 0
 	}
 	return fastfloat.ParseInt64BestEffort(v.s)
+}
+
+// GetUint64 returns uint64 value by the given keys path.
+//
+// Array indexes may be represented as decimal numbers in keys.
+//
+// 0 is returned for non-existing keys path or for invalid value type.
+func (v *Value) GetUint64(keys ...string) uint64 {
+	v = v.Get(keys...)
+	if v == nil || v.Type() != TypeNumber {
+		return 0
+	}
+	return fastfloat.ParseUint64BestEffort(v.s)
 }
 
 // GetStringBytes returns string value by the given keys path.
@@ -844,7 +875,25 @@ func (v *Value) Int() (int, error) {
 	return nn, nil
 }
 
-// Int64 returns the underlying JSON int for the v.
+// Uint returns the underlying JSON uint for the v.
+//
+// Use GetInt if you don't need error handling.
+func (v *Value) Uint() (uint, error) {
+	if v.Type() != TypeNumber {
+		return 0, fmt.Errorf("value doesn't contain number; it contains %s", v.Type())
+	}
+	n := fastfloat.ParseUint64BestEffort(v.s)
+	if n == 0 && v.s != "0" {
+		return 0, fmt.Errorf("cannot parse uint %q", v.s)
+	}
+	nn := uint(n)
+	if uint64(nn) != n {
+		return 0, fmt.Errorf("number %q doesn't fit uint", v.s)
+	}
+	return nn, nil
+}
+
+// Int64 returns the underlying JSON int64 for the v.
 //
 // Use GetInt64 if you don't need error handling.
 func (v *Value) Int64() (int64, error) {
@@ -854,6 +903,20 @@ func (v *Value) Int64() (int64, error) {
 	n := fastfloat.ParseInt64BestEffort(v.s)
 	if n == 0 && v.s != "0" {
 		return 0, fmt.Errorf("cannot parse int64 %q", v.s)
+	}
+	return n, nil
+}
+
+// Uint64 returns the underlying JSON uint64 for the v.
+//
+// Use GetInt64 if you don't need error handling.
+func (v *Value) Uint64() (uint64, error) {
+	if v.Type() != TypeNumber {
+		return 0, fmt.Errorf("value doesn't contain number; it contains %s", v.Type())
+	}
+	n := fastfloat.ParseUint64BestEffort(v.s)
+	if n == 0 && v.s != "0" {
+		return 0, fmt.Errorf("cannot parse uint64 %q", v.s)
 	}
 	return n, nil
 }

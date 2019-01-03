@@ -5,6 +5,40 @@ import (
 	"testing"
 )
 
+func TestParseUint64BestEffort(t *testing.T) {
+	f := func(s string, expectedNum uint64) {
+		t.Helper()
+
+		num := ParseUint64BestEffort(s)
+		if num != expectedNum {
+			t.Fatalf("unexpected umber parsed from %q; got %v; want %v", s, num, expectedNum)
+		}
+	}
+
+	// Invalid first char
+	f("", 0)
+	f("   ", 0)
+	f("foo", 0)
+	f("-", 0)
+	f("-foo", 0)
+	f("-123", 0)
+
+	// Invalid suffix
+	f("1foo", 0)
+	f("13223 ", 0)
+	f("1-2", 0)
+
+	// Int
+	f("1", 1)
+	f("123", 123)
+	f("1234567890", 1234567890)
+	f("9223372036854775807", 9223372036854775807)
+	f("18446744073709551615", 18446744073709551615)
+
+	// Too big int
+	f("18446744073709551616", 0)
+}
+
 func TestParseInt64BestEffort(t *testing.T) {
 	f := func(s string, expectedNum int64) {
 		t.Helper()
@@ -28,8 +62,11 @@ func TestParseInt64BestEffort(t *testing.T) {
 	f("1-2", 0)
 
 	// Int
+	f("0", 0)
+	f("-0", 0)
 	f("1", 1)
 	f("123", 123)
+	f("-123", -123)
 	f("1234567890", 1234567890)
 	f("9223372036854775807", 9223372036854775807)
 	f("-9223372036854775807", -9223372036854775807)
