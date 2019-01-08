@@ -325,6 +325,14 @@ func TestValueGetTyped(t *testing.T) {
 	if sb != nil {
 		t.Fatalf("unexpected value; got %q; want %q", sb, []byte(nil))
 	}
+	ss := v.GetString("bar")
+	if ss != "433" {
+		t.Fatalf("unexpected value; got %q; want %q", ss, "443")
+	}
+	ss = v.GetString("foo")
+	if ss != "" {
+		t.Fatalf("unexpected value; got %q; want \"\"", ss)
+	}
 	bv := v.GetBool("baz")
 	if !bv {
 		t.Fatalf("unexpected value; got %v; want %v", bv, true)

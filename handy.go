@@ -17,8 +17,7 @@ func GetString(data []byte, keys ...string) string {
 		handyPool.Put(p)
 		return ""
 	}
-	sb := v.GetStringBytes(keys...)
-	str := string(sb)
+	str := v.GetString(keys...)
 	handyPool.Put(p)
 	return str
 }
