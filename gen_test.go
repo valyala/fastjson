@@ -18,6 +18,7 @@ func TestCreateObjectParser(t *testing.T) {
 			p.NewInt(42),
 			p.NewBool(false),
 		}),
+		"null": p.NewNull(),
 	})
 	s := v.MarshalTo(nil)
 	var val interface{}
@@ -35,6 +36,7 @@ func TestCreateObjectParser(t *testing.T) {
 			float64(42),
 			false,
 		},
+		"null": nil,
 	}
 	if !reflect.DeepEqual(val, expectedVal) {
 		t.Fatal("JSON result does not match expected result")
@@ -52,6 +54,7 @@ func TestCreateObject(t *testing.T) {
 			NewInt(42),
 			NewBool(false),
 		}),
+		"null": NewNull(),
 	})
 	s := v.MarshalTo(nil)
 	var val interface{}
@@ -69,6 +72,7 @@ func TestCreateObject(t *testing.T) {
 			float64(42),
 			false,
 		},
+		"null": nil,
 	}
 	if !reflect.DeepEqual(val, expectedVal) {
 		t.Fatal("JSON result does not match expected result")
