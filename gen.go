@@ -101,7 +101,7 @@ func (p *Parser) NewInt(v int) *Value {
 	o := p.c.getValue()
 	o.reset()
 	o.t = TypeNumber
-	o.s = string(v)
+	o.s = strconv.FormatInt(int64(v), 10)
 	return o
 }
 
@@ -111,7 +111,7 @@ func (p *Parser) NewInt(v int) *Value {
 func NewInt(v int) *Value {
 	o := new(Value)
 	o.t = TypeNumber
-	o.s = string(v)
+	o.s = strconv.FormatInt(int64(v), 10)
 	return o
 }
 
