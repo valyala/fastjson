@@ -15,7 +15,6 @@ func (p *Parser) Reset() {
 // The returned value is valid until the next call to Parse* or Reset.
 func (p *Parser) NewObject(m map[string]*Value) *Value {
 	o := p.c.getValue()
-	o.reset()
 	o.t = TypeObject
 	for k, v := range m {
 		kv := o.o.getKV()
@@ -44,7 +43,6 @@ func NewObject(m map[string]*Value) *Value {
 // The returned value is valid until the next call to Parse* or Reset.
 func (p *Parser) NewBool(b bool) *Value {
 	v := p.c.getValue()
-	v.reset()
 	if b {
 		v.t = TypeTrue
 	} else {
@@ -72,7 +70,6 @@ func NewBool(b bool) *Value {
 // The returned value is valid until the next call to Parse* or Reset.
 func (p *Parser) NewArray(a []*Value) *Value {
 	o := p.c.getValue()
-	o.reset()
 	o.t = TypeArray
 	o.a = a
 	return o
@@ -94,7 +91,6 @@ func NewArray(a []*Value) *Value {
 // The returned value is valid until the next call to Parse* or Reset.
 func (p *Parser) NewString(s string) *Value {
 	o := p.c.getValue()
-	o.reset()
 	o.t = TypeString
 	o.s = s
 	return o
@@ -113,7 +109,6 @@ func NewString(s string) *Value {
 // NewInt returns a new Value with the parameter as its initial content.
 func (p *Parser) NewInt(v int) *Value {
 	o := p.c.getValue()
-	o.reset()
 	o.t = TypeNumber
 	o.s = strconv.FormatInt(int64(v), 10)
 	return o
@@ -134,7 +129,6 @@ func NewInt(v int) *Value {
 // The returned value is valid until the next call to Parse* or Reset.
 func (p *Parser) NewFloat64(v float64) *Value {
 	o := p.c.getValue()
-	o.reset()
 	o.t = TypeNumber
 	o.s = strconv.FormatFloat(v, 'G', -1, 64)
 	return o
@@ -155,7 +149,6 @@ func NewFloat64(v float64) *Value {
 // The returned value is valid until the next call to Parse* or Reset.
 func (p *Parser) NewNull() *Value {
 	o := p.c.getValue()
-	o.reset()
 	o.t = TypeNull
 	return o
 }
