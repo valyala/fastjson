@@ -171,7 +171,7 @@ func ParseBestEffort(s string) float64 {
 		if i <= j {
 			return 0
 		}
-		f += float64(fr) * math.Pow10(-int(i-j))
+		f += float64(fr) / math.Pow10(int(i-j))
 		if i >= uint(len(s)) {
 			// Fast path - parsed fractional number.
 			if minus {
