@@ -4,7 +4,15 @@ import (
 	"strconv"
 )
 
+// Resets the parser and clears all the values, making them invalid.
+// Call before calling parser.New* methods to avoid memory leak.
+func (p *Parser) Reset() {
+	p.c.reset()
+}
+
 // NewObject returns a new Value with the parameter as its initial content.
+//
+// The returned value is valid until the next call to Parse* or Reset.
 func (p *Parser) NewObject(m map[string]*Value) *Value {
 	o := p.c.getValue()
 	o.reset()
@@ -32,6 +40,8 @@ func NewObject(m map[string]*Value) *Value {
 }
 
 // NewBool returns a new Value with the parameter as its initial content.
+//
+// The returned value is valid until the next call to Parse* or Reset.
 func (p *Parser) NewBool(b bool) *Value {
 	v := p.c.getValue()
 	v.reset()
@@ -58,6 +68,8 @@ func NewBool(b bool) *Value {
 
 // NewArray returns a new Value with the parameter as its initial content.
 // The parameter is then owned by returned Value and must not be re-used.
+//
+// The returned value is valid until the next call to Parse* or Reset.
 func (p *Parser) NewArray(a []*Value) *Value {
 	o := p.c.getValue()
 	o.reset()
@@ -78,6 +90,8 @@ func NewArray(a []*Value) *Value {
 }
 
 // NewString returns a new Value with the parameter as its initial content.
+//
+// The returned value is valid until the next call to Parse* or Reset.
 func (p *Parser) NewString(s string) *Value {
 	o := p.c.getValue()
 	o.reset()
@@ -116,6 +130,8 @@ func NewInt(v int) *Value {
 }
 
 // NewFloat64 returns a new Value with the parameter as its initial content.
+//
+// The returned value is valid until the next call to Parse* or Reset.
 func (p *Parser) NewFloat64(v float64) *Value {
 	o := p.c.getValue()
 	o.reset()
@@ -135,6 +151,8 @@ func NewFloat64(v float64) *Value {
 }
 
 // NewNull returns a new Value with null.
+//
+// The returned value is valid until the next call to Parse* or Reset.
 func (p *Parser) NewNull() *Value {
 	o := p.c.getValue()
 	o.reset()

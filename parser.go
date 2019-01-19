@@ -24,7 +24,7 @@ type Parser struct {
 
 // Parse parses s containing JSON.
 //
-// The returned value is valid until the next call to Parse*.
+// The returned value is valid until the next call to Parse* or Reset.
 //
 // Use Scanner if a stream of JSON values must be parsed.
 func (p *Parser) Parse(s string) (*Value, error) {
@@ -45,7 +45,7 @@ func (p *Parser) Parse(s string) (*Value, error) {
 
 // ParseBytes parses b containing JSON.
 //
-// The returned Value is valid until the next call to Parse*.
+// The returned Value is valid until the next call to Parse* or Reset.
 //
 // Use Scanner if a stream of JSON values must be parsed.
 func (p *Parser) ParseBytes(b []byte) (*Value, error) {
