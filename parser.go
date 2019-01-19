@@ -64,7 +64,11 @@ func (c *cache) getValue() *Value {
 	if cap(c.vs) > len(c.vs) {
 		c.vs = c.vs[:len(c.vs)+1]
 	} else {
-		c.vs = append(c.vs, Value{})
+		if len(c.vs) == 0 {
+			c.vs = make([]Value, 4)
+		} else {
+			c.vs = make([]Value, 1, len(c.vs) * 2)
+		}
 	}
 	v := &c.vs[len(c.vs)-1]
 	v.reset()
