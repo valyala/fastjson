@@ -76,9 +76,11 @@ func skipWS(s string) string {
 		// Fast path.
 		return s
 	}
+	return skipWSSlow(s)
+}
 
-	// Slow path.
-	if s[0] != 0x20 && s[0] != 0x09 && s[0] != 0x0D && s[0] != 0x0A {
+func skipWSSlow(s string) string {
+	if len(s) == 0 || s[0] != 0x20 && s[0] != 0x09 && s[0] != 0x0D && s[0] != 0x0A {
 		return s
 	}
 	for i := 1; i < len(s); i++ {
