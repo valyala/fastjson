@@ -80,11 +80,11 @@ func skipWS(s string) string {
 }
 
 func skipWSSlow(s string) string {
-	if len(s) == 0 || s[0] != 0x20 && s[0] != 0x09 && s[0] != 0x0D && s[0] != 0x0A {
+	if len(s) == 0 || s[0] != 0x20 && s[0] != 0x0A && s[0] != 0x09 && s[0] != 0x0D {
 		return s
 	}
 	for i := 1; i < len(s); i++ {
-		if s[i] != 0x20 && s[i] != 0x09 && s[i] != 0x0D && s[i] != 0x0A {
+		if s[i] != 0x20 && s[i] != 0x0A && s[i] != 0x09 && s[i] != 0x0D {
 			return s[i:]
 		}
 	}
