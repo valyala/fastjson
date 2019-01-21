@@ -31,7 +31,7 @@
   * Requies extra care to work with - references to certain objects recursively
     returned by [Parser](https://godoc.org/github.com/valyala/fastjson#Parser)
     must be released before the next call to [Parse](https://godoc.org/github.com/valyala/fastjson#Parser.Parse).
-    Otherwise the program may work improperly.
+    Otherwise the program may work improperly. The same applies to objects returned by [Arena](https://godoc.org/github.com/valyala/fastjson#Arena).
     Adhere recommendations from [docs](https://godoc.org/github.com/valyala/fastjson).
   * Cannot parse JSON from `io.Reader`. There is [Scanner](https://godoc.org/github.com/valyala/fastjson#Scanner)
     for parsing stream of JSON values from a string.
@@ -198,7 +198,8 @@ BenchmarkValidate/twitter/fastjson       	    2000	   1003013 ns/op	 629.62 MB/s
        and other [JSON-RPC](https://en.wikipedia.org/wiki/JSON-RPC) services.
 
   * Q: _Why fastjson doesn't provide fast marshaling (serialization)?_
-    A: Because other solutions exist. I'd recommend [quicktemplate](https://github.com/valyala/quicktemplate#use-cases)
+    A: Actually it provides some sort of marshaling - see [Value.MarshalTo](https://godoc.org/github.com/valyala/fastjson#Value.MarshalTo).
+       But I'd recommend using [quicktemplate](https://github.com/valyala/quicktemplate#use-cases)
        for high-performance JSON marshaling :)
 
   * Q: _`fastjson` crashes my program!_

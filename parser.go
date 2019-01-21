@@ -252,6 +252,31 @@ func parseObject(s string, c *cache) (*Value, string, error) {
 	}
 }
 
+func escapeString(dst []byte, s string) []byte {
+	if !hasSpecialChars(s) {
+		// Fast path - nothing to escape.
+		dst = append(dst, '"')
+		dst = append(dst, s...)
+		dst = append(dst, '"')
+		return dst
+	}
+
+	// Slow path.
+	return strconv.AppendQuote(dst, s)
+}
+
+func hasSpecialChars(s string) bool {
+	if strings.IndexByte(s, '"') >= 0 || strings.IndexByte(s, '\\') >= 0 {
+		return true
+	}
+	for i := 0; i < len(s); i++ {
+		if s[i] < 0x20 {
+			return true
+		}
+	}
+	return false
+}
+
 func unescapeStringBestEffort(s string) string {
 	n := strings.IndexByte(s, '\\')
 	if n < 0 {
@@ -419,7 +444,7 @@ func (o *Object) MarshalTo(dst []byte) []byte {
 	dst = append(dst, '{')
 	for i, kv := range o.kvs {
 		if o.keysUnescaped {
-			dst = strconv.AppendQuote(dst, kv.k)
+			dst = escapeString(dst, kv.k)
 		} else {
 			dst = append(dst, '"')
 			dst = append(dst, kv.k...)
@@ -547,7 +572,7 @@ func (v *Value) MarshalTo(dst []byte) []byte {
 		dst = append(dst, ']')
 		return dst
 	case TypeString:
-		return strconv.AppendQuote(dst, v.s)
+		return escapeString(dst, v.s)
 	case TypeNumber:
 		return append(dst, v.s...)
 	case TypeTrue:
