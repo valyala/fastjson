@@ -105,7 +105,7 @@ See also [examples](https://godoc.org/github.com/valyala/fastjson#pkg-examples).
 
 ## Benchmarks
 
-Go 1.11 has been used for benchmarking.
+Go 1.12 has been used for benchmarking.
 
 Legend:
 
@@ -130,36 +130,37 @@ $ GOMAXPROCS=1 go test github.com/valyala/fastjson -bench='Parse$'
 goos: linux
 goarch: amd64
 pkg: github.com/valyala/fastjson
-BenchmarkParse/small/stdjson-map         	  200000	      7192 ns/op	  26.41 MB/s	     960 B/op	      51 allocs/op
-BenchmarkParse/small/stdjson-struct      	  300000	      3737 ns/op	  50.83 MB/s	     224 B/op	       4 allocs/op
-BenchmarkParse/small/stdjson-empty-struct         	  500000	      2600 ns/op	  73.06 MB/s	     168 B/op	       2 allocs/op
-BenchmarkParse/small/fastjson                     	 5000000	       388 ns/op	 489.13 MB/s	       0 B/op	       0 allocs/op
-BenchmarkParse/small/fastjson-get                 	 2000000	       646 ns/op	 294.06 MB/s	       0 B/op	       0 allocs/op
-BenchmarkParse/medium/stdjson-map                 	   30000	     41063 ns/op	  56.72 MB/s	   10197 B/op	     208 allocs/op
-BenchmarkParse/medium/stdjson-struct              	   30000	     48311 ns/op	  48.21 MB/s	    9174 B/op	     258 allocs/op
-BenchmarkParse/medium/stdjson-empty-struct        	  100000	     21862 ns/op	 106.53 MB/s	     280 B/op	       5 allocs/op
-BenchmarkParse/medium/fastjson                    	  500000	      3345 ns/op	 696.14 MB/s	       0 B/op	       0 allocs/op
-BenchmarkParse/medium/fastjson-get                	  500000	      3466 ns/op	 671.90 MB/s	       0 B/op	       0 allocs/op
-BenchmarkParse/large/stdjson-map                  	    2000	    612924 ns/op	  45.88 MB/s	  210708 B/op	    2785 allocs/op
-BenchmarkParse/large/stdjson-struct               	    5000	    286674 ns/op	  98.08 MB/s	   15616 B/op	     353 allocs/op
-BenchmarkParse/large/stdjson-empty-struct         	    5000	    256255 ns/op	 109.73 MB/s	     280 B/op	       5 allocs/op
-BenchmarkParse/large/fastjson                     	   30000	     45108 ns/op	 623.34 MB/s	       9 B/op	       0 allocs/op
-BenchmarkParse/large/fastjson-get                 	   30000	     45246 ns/op	 621.45 MB/s	       9 B/op	       0 allocs/op
-BenchmarkParse/canada/stdjson-map                 	      20	  68012405 ns/op	  33.10 MB/s	12260502 B/op	  392539 allocs/op
-BenchmarkParse/canada/stdjson-struct              	      20	  68169831 ns/op	  33.02 MB/s	12260122 B/op	  392534 allocs/op
-BenchmarkParse/canada/stdjson-empty-struct        	     100	  17780456 ns/op	 126.60 MB/s	     280 B/op	       5 allocs/op
-BenchmarkParse/canada/fastjson                    	     200	   5205172 ns/op	 432.47 MB/s	  382354 B/op	     571 allocs/op
-BenchmarkParse/canada/fastjson-get                	     200	   5234266 ns/op	 430.06 MB/s	  382354 B/op	     571 allocs/op
-BenchmarkParse/citm/stdjson-map                   	      50	  28011849 ns/op	  61.66 MB/s	 5214001 B/op	   95402 allocs/op
-BenchmarkParse/citm/stdjson-struct                	     100	  14615515 ns/op	 118.18 MB/s	    1989 B/op	      75 allocs/op
-BenchmarkParse/citm/stdjson-empty-struct          	     100	  14602927 ns/op	 118.28 MB/s	     280 B/op	       5 allocs/op
-BenchmarkParse/citm/fastjson                      	    1000	   1972784 ns/op	 875.52 MB/s	   14652 B/op	      30 allocs/op
-BenchmarkParse/citm/fastjson-get                  	    1000	   1971890 ns/op	 875.91 MB/s	   14652 B/op	      30 allocs/op
-BenchmarkParse/twitter/stdjson-map                	     100	  11367144 ns/op	  55.56 MB/s	 2188391 B/op	   31267 allocs/op
-BenchmarkParse/twitter/stdjson-struct             	     300	   5556788 ns/op	 113.65 MB/s	     408 B/op	       6 allocs/op
-BenchmarkParse/twitter/stdjson-empty-struct       	     300	   5526507 ns/op	 114.27 MB/s	     408 B/op	       6 allocs/op
-BenchmarkParse/twitter/fastjson                   	    2000	    782514 ns/op	 807.03 MB/s	    2540 B/op	       2 allocs/op
-BenchmarkParse/twitter/fastjson-get               	    2000	    786814 ns/op	 802.62 MB/s	    2540 B/op	       2 allocs/op
+
+BenchmarkParse/small/stdjson-map         	  200000	      7332 ns/op	  25.91 MB/s	     960 B/op	      51 allocs/op
+BenchmarkParse/small/stdjson-struct      	  500000	      3464 ns/op	  54.84 MB/s	     224 B/op	       4 allocs/op
+BenchmarkParse/small/stdjson-empty-struct         	  500000	      2257 ns/op	  84.18 MB/s	     168 B/op	       2 allocs/op
+BenchmarkParse/small/fastjson                     	 5000000	       355 ns/op	 534.32 MB/s	       0 B/op	       0 allocs/op
+BenchmarkParse/small/fastjson-get                 	 2000000	       609 ns/op	 311.97 MB/s	       0 B/op	       0 allocs/op
+BenchmarkParse/medium/stdjson-map                 	   30000	     40338 ns/op	  57.74 MB/s	   10194 B/op	     208 allocs/op
+BenchmarkParse/medium/stdjson-struct              	   30000	     47781 ns/op	  48.74 MB/s	    9174 B/op	     258 allocs/op
+BenchmarkParse/medium/stdjson-empty-struct        	  100000	     21803 ns/op	 106.82 MB/s	     280 B/op	       5 allocs/op
+BenchmarkParse/medium/fastjson                    	  500000	      3188 ns/op	 730.40 MB/s	       0 B/op	       0 allocs/op
+BenchmarkParse/medium/fastjson-get                	  500000	      3330 ns/op	 699.30 MB/s	       0 B/op	       0 allocs/op
+BenchmarkParse/large/stdjson-map                  	    2000	    610964 ns/op	  46.02 MB/s	  210745 B/op	    2785 allocs/op
+BenchmarkParse/large/stdjson-struct               	    5000	    302862 ns/op	  92.84 MB/s	   15616 B/op	     353 allocs/op
+BenchmarkParse/large/stdjson-empty-struct         	    5000	    265531 ns/op	 105.89 MB/s	     280 B/op	       5 allocs/op
+BenchmarkParse/large/fastjson                     	   50000	     36336 ns/op	 773.82 MB/s	       5 B/op	       0 allocs/op
+BenchmarkParse/large/fastjson-get                 	   50000	     36985 ns/op	 760.25 MB/s	       5 B/op	       0 allocs/op
+BenchmarkParse/canada/stdjson-map                 	      20	  68431044 ns/op	  32.90 MB/s	12260502 B/op	  392539 allocs/op
+BenchmarkParse/canada/stdjson-struct              	      20	  67692287 ns/op	  33.25 MB/s	12260123 B/op	  392534 allocs/op
+BenchmarkParse/canada/stdjson-empty-struct        	     100	  17794464 ns/op	 126.50 MB/s	     280 B/op	       5 allocs/op
+BenchmarkParse/canada/fastjson                    	     300	   4419442 ns/op	 509.35 MB/s	  254902 B/op	     381 allocs/op
+BenchmarkParse/canada/fastjson-get                	     300	   4497739 ns/op	 500.49 MB/s	  254902 B/op	     381 allocs/op
+BenchmarkParse/citm/stdjson-map                   	      50	  28053158 ns/op	  61.57 MB/s	 5214008 B/op	   95402 allocs/op
+BenchmarkParse/citm/stdjson-struct                	     100	  15032612 ns/op	 114.90 MB/s	    1989 B/op	      75 allocs/op
+BenchmarkParse/citm/stdjson-empty-struct          	     100	  15158059 ns/op	 113.95 MB/s	     280 B/op	       5 allocs/op
+BenchmarkParse/citm/fastjson                      	     500	   2272595 ns/op	 760.01 MB/s	   35257 B/op	      61 allocs/op
+BenchmarkParse/citm/fastjson-get                  	     500	   2268729 ns/op	 761.31 MB/s	   35257 B/op	      61 allocs/op
+BenchmarkParse/twitter/stdjson-map                	     100	  11528915 ns/op	  54.78 MB/s	 2187651 B/op	   31265 allocs/op
+BenchmarkParse/twitter/stdjson-struct             	     300	   5752052 ns/op	 109.79 MB/s	     408 B/op	       6 allocs/op
+BenchmarkParse/twitter/stdjson-empty-struct       	     300	   5703244 ns/op	 110.73 MB/s	     408 B/op	       6 allocs/op
+BenchmarkParse/twitter/fastjson                   	    2000	    778047 ns/op	 811.66 MB/s	    2541 B/op	       2 allocs/op
+BenchmarkParse/twitter/fastjson-get               	    2000	    761256 ns/op	 829.57 MB/s	    2541 B/op	       2 allocs/op
 ```
 
 Benchmark results for json validation:
@@ -169,18 +170,19 @@ $ GOMAXPROCS=1 go test github.com/valyala/fastjson -bench='Validate$'
 goos: linux
 goarch: amd64
 pkg: github.com/valyala/fastjson
-BenchmarkValidate/small/stdjson 	 2000000	       930 ns/op	 204.24 MB/s	      72 B/op	       2 allocs/op
-BenchmarkValidate/small/fastjson         	 3000000	       402 ns/op	 472.43 MB/s	       0 B/op	       0 allocs/op
-BenchmarkValidate/medium/stdjson         	  200000	     10356 ns/op	 224.88 MB/s	     184 B/op	       5 allocs/op
-BenchmarkValidate/medium/fastjson        	  300000	      4005 ns/op	 581.40 MB/s	       0 B/op	       0 allocs/op
-BenchmarkValidate/large/stdjson          	   10000	    125185 ns/op	 224.61 MB/s	     184 B/op	       5 allocs/op
-BenchmarkValidate/large/fastjson         	   30000	     54981 ns/op	 511.41 MB/s	       0 B/op	       0 allocs/op
-BenchmarkValidate/canada/stdjson         	     200	   8494224 ns/op	 265.01 MB/s	     184 B/op	       5 allocs/op
-BenchmarkValidate/canada/fastjson        	     500	   3883159 ns/op	 579.70 MB/s	       0 B/op	       0 allocs/op
-BenchmarkValidate/citm/stdjson           	     200	   7086020 ns/op	 243.75 MB/s	     184 B/op	       5 allocs/op
-BenchmarkValidate/citm/fastjson          	    1000	   1828194 ns/op	 944.76 MB/s	       0 B/op	       0 allocs/op
-BenchmarkValidate/twitter/stdjson        	     500	   2718753 ns/op	 232.28 MB/s	     312 B/op	       6 allocs/op
-BenchmarkValidate/twitter/fastjson       	    2000	   1081693 ns/op	 583.82 MB/s	       0 B/op	       0 allocs/op
+
+BenchmarkValidate/small/stdjson 	 2000000	       942 ns/op	 201.52 MB/s	      72 B/op	       2 allocs/op
+BenchmarkValidate/small/fastjson         	 5000000	       387 ns/op	 490.43 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/medium/stdjson         	  200000	     10789 ns/op	 215.86 MB/s	     184 B/op	       5 allocs/op
+BenchmarkValidate/medium/fastjson        	  500000	      3756 ns/op	 620.06 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/large/stdjson          	   10000	    132733 ns/op	 211.84 MB/s	     184 B/op	       5 allocs/op
+BenchmarkValidate/large/fastjson         	   30000	     46206 ns/op	 608.53 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/canada/stdjson         	     200	   8484538 ns/op	 265.31 MB/s	     184 B/op	       5 allocs/op
+BenchmarkValidate/canada/fastjson        	     500	   3026784 ns/op	 743.71 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/citm/stdjson           	     200	   7244352 ns/op	 238.42 MB/s	     184 B/op	       5 allocs/op
+BenchmarkValidate/citm/fastjson          	    1000	   2070293 ns/op	 834.28 MB/s	       0 B/op	       0 allocs/op
+BenchmarkValidate/twitter/stdjson        	     500	   2851195 ns/op	 221.49 MB/s	     312 B/op	       6 allocs/op
+BenchmarkValidate/twitter/fastjson       	    2000	   1003013 ns/op	 629.62 MB/s	       0 B/op	       0 allocs/op
 ```
 
 ## FAQ
