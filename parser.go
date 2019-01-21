@@ -66,9 +66,8 @@ func (c *cache) getValue() *Value {
 	} else {
 		c.vs = append(c.vs, Value{})
 	}
-	v := &c.vs[len(c.vs)-1]
-	v.reset()
-	return v
+	// Do not reset the value, since the caller must properly init it.
+	return &c.vs[len(c.vs)-1]
 }
 
 func skipWS(s string) string {
@@ -163,11 +162,13 @@ func parseArray(s string, c *cache) (*Value, string, error) {
 	if s[0] == ']' {
 		v := c.getValue()
 		v.t = TypeArray
+		v.a = v.a[:0]
 		return v, s[1:], nil
 	}
 
 	a := c.getValue()
 	a.t = TypeArray
+	a.a = a.a[:0]
 	for {
 		var v *Value
 		var err error
@@ -204,11 +205,13 @@ func parseObject(s string, c *cache) (*Value, string, error) {
 	if s[0] == '}' {
 		v := c.getValue()
 		v.t = TypeObject
+		v.o.reset()
 		return v, s[1:], nil
 	}
 
 	o := c.getValue()
 	o.t = TypeObject
+	o.o.reset()
 	for {
 		var err error
 		kv := o.o.getKV()
@@ -521,13 +524,6 @@ type Value struct {
 	a []*Value
 	s string
 	t Type
-}
-
-func (v *Value) reset() {
-	v.o.reset()
-	v.a = v.a[:0]
-	v.s = ""
-	v.t = TypeNull
 }
 
 // MarshalTo appends marshaled v to dst and returns the result.
