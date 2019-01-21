@@ -88,13 +88,23 @@ func (v *Value) Set(key string, value *Value) {
 		return
 	}
 	if v.t == TypeArray {
-		n, err := strconv.Atoi(key)
-		if err != nil || n < 0 {
+		idx, err := strconv.Atoi(key)
+		if err != nil || idx < 0 {
 			return
 		}
-		for n >= len(v.a) {
-			v.a = append(v.a, valueNull)
-		}
-		v.a[n] = value
+		v.SetArrayItem(idx, value)
 	}
+}
+
+// SetArrayItem sets the value in the array v at idx position.
+//
+// The value must be unchanged during v lifetime.
+func (v *Value) SetArrayItem(idx int, value *Value) {
+	if v == nil || v.t != TypeArray {
+		return
+	}
+	for idx >= len(v.a) {
+		v.a = append(v.a, valueNull)
+	}
+	v.a[idx] = value
 }
