@@ -18,8 +18,36 @@ type Parser struct {
 	// b contains working copy of the string to be parsed.
 	b []byte
 
-	// c is a cache for json values.
-	c cache
+    kv []kv
+    val []Value
+    kvStack []kv
+    valStack []Value
+}
+
+func (p *Parser) getValue(c int) (v []Value) {
+    for cap(p.val) - len(p.val) < c {
+        if len(p.val) == 0 {
+            p.val = make([]Value, 0, 4)
+        } else {
+            p.val = make([]Value, 0, len(p.val) * 2)
+        }
+    }
+    v = p.val[len(p.val):len(p.val)+c]
+    p.val = p.val[:len(p.val)+c]
+    return
+}
+
+func (p *Parser) getKV(c int) (v []kv) {
+    for cap(p.kv) - len(p.kv) < c {
+        if len(p.kv) == 0 {
+            p.kv = make([]kv, 0, 4)
+        } else {
+            p.kv = make([]kv, 0, len(p.kv) * 2)
+        }
+    }
+    v = p.kv[len(p.kv):len(p.kv)+c]
+    p.kv = p.kv[:len(p.kv)+c]
+    return
 }
 
 // Parse parses s containing JSON.
@@ -29,10 +57,10 @@ type Parser struct {
 // Use Scanner if a stream of JSON values must be parsed.
 func (p *Parser) Parse(s string) (*Value, error) {
 	s = skipWS(s)
-	p.b = append(p.b[:0], s...)
-	p.c.reset()
+    *p = Parser{}
+    p.b = []byte(s)
 
-	v, tail, err := parseValue(b2s(p.b), &p.c)
+	v, tail, err := p.parseValue(b2s(p.b))
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse JSON: %s; unparsed tail: %q", err, tail)
 	}
@@ -64,10 +92,16 @@ func (c *cache) getValue() *Value {
 	if cap(c.vs) > len(c.vs) {
 		c.vs = c.vs[:len(c.vs)+1]
 	} else {
+        if len(c.vs) == 0 {
+            c.vs = make([]Value, 4)
+        } else {
+            c.vs = make([]Value, len(c.vs) * 2)
+        }
 		c.vs = append(c.vs, Value{})
 	}
-	// Do not reset the value, since the caller must properly init it.
-	return &c.vs[len(c.vs)-1]
+	v := &c.vs[len(c.vs)-1]
+    *v = Value{}
+	return v
 }
 
 func skipWS(s string) string {
@@ -95,20 +129,20 @@ type kv struct {
 	v *Value
 }
 
-func parseValue(s string, c *cache) (*Value, string, error) {
+func (p *Parser) parseValue(s string) (*Value, string, error) {
 	if len(s) == 0 {
 		return nil, s, fmt.Errorf("cannot parse empty string")
 	}
 
 	if s[0] == '{' {
-		v, tail, err := parseObject(s[1:], c)
+		v, tail, err := p.parseObject(s[1:])
 		if err != nil {
 			return nil, tail, fmt.Errorf("cannot parse object: %s", err)
 		}
 		return v, tail, nil
 	}
 	if s[0] == '[' {
-		v, tail, err := parseArray(s[1:], c)
+		v, tail, err := p.parseArray(s[1:])
 		if err != nil {
 			return nil, tail, fmt.Errorf("cannot parse array: %s", err)
 		}
@@ -119,7 +153,7 @@ func parseValue(s string, c *cache) (*Value, string, error) {
 		if err != nil {
 			return nil, tail, fmt.Errorf("cannot parse string: %s", err)
 		}
-		v := c.getValue()
+		v := &p.getValue(1)[0]
 		v.t = typeRawString
 		v.s = ss
 		return v, tail, nil
@@ -147,34 +181,32 @@ func parseValue(s string, c *cache) (*Value, string, error) {
 	if err != nil {
 		return nil, tail, fmt.Errorf("cannot parse number: %s", err)
 	}
-	v := c.getValue()
+	v := &p.getValue(1)[0]
 	v.t = TypeNumber
 	v.s = ns
 	return v, tail, nil
 }
 
-func parseArray(s string, c *cache) (*Value, string, error) {
+func (p *Parser) parseArray(s string) (*Value, string, error) {
 	s = skipWS(s)
 	if len(s) == 0 {
 		return nil, s, fmt.Errorf("missing ']'")
 	}
 
 	if s[0] == ']' {
-		v := c.getValue()
+		v := &p.getValue(1)[0]
 		v.t = TypeArray
-		v.a = v.a[:0]
 		return v, s[1:], nil
 	}
 
-	a := c.getValue()
+	a := &p.getValue(1)[0]
 	a.t = TypeArray
-	a.a = a.a[:0]
 	for {
 		var v *Value
 		var err error
 
 		s = skipWS(s)
-		v, s, err = parseValue(s, c)
+		v, s, err = p.parseValue(s)
 		if err != nil {
 			return nil, s, fmt.Errorf("cannot parse array value: %s", err)
 		}
@@ -196,22 +228,20 @@ func parseArray(s string, c *cache) (*Value, string, error) {
 	}
 }
 
-func parseObject(s string, c *cache) (*Value, string, error) {
+func (p *Parser) parseObject(s string) (*Value, string, error) {
 	s = skipWS(s)
 	if len(s) == 0 {
 		return nil, s, fmt.Errorf("missing '}'")
 	}
 
 	if s[0] == '}' {
-		v := c.getValue()
+		v := &p.getValue(1)[0]
 		v.t = TypeObject
-		v.o.reset()
 		return v, s[1:], nil
 	}
 
-	o := c.getValue()
+	o := &p.getValue(1)[0]
 	o.t = TypeObject
-	o.o.reset()
 	for {
 		var err error
 		kv := o.o.getKV()
@@ -233,7 +263,7 @@ func parseObject(s string, c *cache) (*Value, string, error) {
 
 		// Parse value
 		s = skipWS(s)
-		kv.v, s, err = parseValue(s, c)
+		kv.v, s, err = p.parseValue(s)
 		if err != nil {
 			return nil, s, fmt.Errorf("cannot parse object value: %s", err)
 		}

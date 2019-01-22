@@ -25,7 +25,7 @@ type Arena struct {
 // Values previously allocated by a cannot be used after the Reset call.
 func (a *Arena) Reset() {
 	a.b = a.b[:0]
-	a.c.reset()
+	a.c = cache{}
 }
 
 // NewObject returns new empty object value.
