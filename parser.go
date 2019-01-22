@@ -18,36 +18,50 @@ type Parser struct {
 	// b contains working copy of the string to be parsed.
 	b []byte
 
-    kv []kv
-    val []Value
-    kvStack []kv
-    valStack []Value
+	kv       []kv
+	val      []Value
+	arr      []*Value
+	kvStack  []kv
+	arrStack []*Value
 }
 
 func (p *Parser) getValue(c int) (v []Value) {
-    for cap(p.val) - len(p.val) < c {
-        if len(p.val) == 0 {
-            p.val = make([]Value, 0, 4)
-        } else {
-            p.val = make([]Value, 0, len(p.val) * 2)
-        }
-    }
-    v = p.val[len(p.val):len(p.val)+c]
-    p.val = p.val[:len(p.val)+c]
-    return
+	for cap(p.val)-len(p.val) < c {
+		if cap(p.val) == 0 {
+			p.val = make([]Value, 0, 4)
+		} else {
+			p.val = make([]Value, 0, cap(p.val)*2)
+		}
+	}
+	v = p.val[len(p.val) : len(p.val)+c]
+	p.val = p.val[:len(p.val)+c]
+	return
 }
 
 func (p *Parser) getKV(c int) (v []kv) {
-    for cap(p.kv) - len(p.kv) < c {
-        if len(p.kv) == 0 {
-            p.kv = make([]kv, 0, 4)
-        } else {
-            p.kv = make([]kv, 0, len(p.kv) * 2)
-        }
-    }
-    v = p.kv[len(p.kv):len(p.kv)+c]
-    p.kv = p.kv[:len(p.kv)+c]
-    return
+	for cap(p.kv)-len(p.kv) < c {
+		if cap(p.kv) == 0 {
+			p.kv = make([]kv, 0, 4)
+		} else {
+			p.kv = make([]kv, 0, cap(p.kv)*2)
+		}
+	}
+	v = p.kv[len(p.kv) : len(p.kv)+c]
+	p.kv = p.kv[:len(p.kv)+c]
+	return
+}
+
+func (p *Parser) getArray(c int) (v []*Value) {
+	for cap(p.arr)-len(p.arr) < c {
+		if cap(p.arr) == 0 {
+			p.arr = make([]*Value, 0, 4)
+		} else {
+			p.arr = make([]*Value, 0, cap(p.arr)*2)
+		}
+	}
+	v = p.arr[len(p.arr) : len(p.arr)+c]
+	p.arr = p.arr[:len(p.arr)+c]
+	return
 }
 
 // Parse parses s containing JSON.
@@ -57,8 +71,8 @@ func (p *Parser) getKV(c int) (v []kv) {
 // Use Scanner if a stream of JSON values must be parsed.
 func (p *Parser) Parse(s string) (*Value, error) {
 	s = skipWS(s)
-    *p = Parser{}
-    p.b = []byte(s)
+	*p = Parser{}
+	p.b = []byte(s)
 
 	v, tail, err := p.parseValue(b2s(p.b))
 	if err != nil {
@@ -92,15 +106,15 @@ func (c *cache) getValue() *Value {
 	if cap(c.vs) > len(c.vs) {
 		c.vs = c.vs[:len(c.vs)+1]
 	} else {
-        if len(c.vs) == 0 {
-            c.vs = make([]Value, 4)
-        } else {
-            c.vs = make([]Value, len(c.vs) * 2)
-        }
+		if len(c.vs) == 0 {
+			c.vs = make([]Value, 4)
+		} else {
+			c.vs = make([]Value, len(c.vs)*2)
+		}
 		c.vs = append(c.vs, Value{})
 	}
 	v := &c.vs[len(c.vs)-1]
-    *v = Value{}
+	*v = Value{}
 	return v
 }
 
@@ -200,7 +214,8 @@ func (p *Parser) parseArray(s string) (*Value, string, error) {
 	}
 
 	a := &p.getValue(1)[0]
-	a.t = TypeArray
+	a.t = typeFreshArray
+	i := len(p.arrStack)
 	for {
 		var v *Value
 		var err error
@@ -210,7 +225,7 @@ func (p *Parser) parseArray(s string) (*Value, string, error) {
 		if err != nil {
 			return nil, s, fmt.Errorf("cannot parse array value: %s", err)
 		}
-		a.a = append(a.a, v)
+		p.arrStack = append(p.arrStack, v)
 
 		s = skipWS(s)
 		if len(s) == 0 {
@@ -222,6 +237,9 @@ func (p *Parser) parseArray(s string) (*Value, string, error) {
 		}
 		if s[0] == ']' {
 			s = s[1:]
+			a.a = p.getArray(len(p.arrStack) - i)
+			copy(a.a, p.arrStack[i:])
+			p.arrStack = p.arrStack[:i]
 			return a, s, nil
 		}
 		return nil, s, fmt.Errorf("missing ',' after array value")
@@ -241,10 +259,11 @@ func (p *Parser) parseObject(s string) (*Value, string, error) {
 	}
 
 	o := &p.getValue(1)[0]
-	o.t = TypeObject
+	o.t = typeFreshObject
+	i := len(p.kvStack)
 	for {
 		var err error
-		kv := o.o.getKV()
+		var kv kv
 
 		// Parse key.
 		s = skipWS(s)
@@ -267,6 +286,7 @@ func (p *Parser) parseObject(s string) (*Value, string, error) {
 		if err != nil {
 			return nil, s, fmt.Errorf("cannot parse object value: %s", err)
 		}
+		p.kvStack = append(p.kvStack, kv)
 		s = skipWS(s)
 		if len(s) == 0 {
 			return nil, s, fmt.Errorf("unexpected end of object")
@@ -276,6 +296,9 @@ func (p *Parser) parseObject(s string) (*Value, string, error) {
 			continue
 		}
 		if s[0] == '}' {
+			o.o.kvs = p.getKV(len(p.kvStack) - i)
+			copy(o.o.kvs, p.kvStack[i:])
+			p.kvStack = p.kvStack[:i]
 			return o, s[1:], nil
 		}
 		return nil, s, fmt.Errorf("missing ',' after object value")
@@ -501,15 +524,6 @@ func (o *Object) String() string {
 	return b2s(b)
 }
 
-func (o *Object) getKV() *kv {
-	if cap(o.kvs) > len(o.kvs) {
-		o.kvs = o.kvs[:len(o.kvs)+1]
-	} else {
-		o.kvs = append(o.kvs, kv{})
-	}
-	return &o.kvs[len(o.kvs)-1]
-}
-
 func (o *Object) unescapeKeys() {
 	if o.keysUnescaped {
 		return
@@ -590,8 +604,12 @@ func (v *Value) MarshalTo(dst []byte) []byte {
 		dst = append(dst, '"')
 		return dst
 	case TypeObject:
+		fallthrough
+	case typeFreshObject:
 		return v.o.MarshalTo(dst)
 	case TypeArray:
+		fallthrough
+	case typeFreshArray:
 		dst = append(dst, '[')
 		for i, vv := range v.a {
 			dst = vv.MarshalTo(dst)
@@ -656,6 +674,10 @@ const (
 	TypeFalse Type = 6
 
 	typeRawString Type = 7
+
+	// Fresh objects are objects allocated on the parser, and they must not be append()'ed.
+	typeFreshObject Type = 8
+	typeFreshArray  Type = 9
 )
 
 // String returns string representation of t.
@@ -676,7 +698,7 @@ func (t Type) String() string {
 	case TypeNull:
 		return "null"
 
-	// typeRawString is skipped intentionally,
+	// typeRawString, typeFreshObject and typeFreshArray are skipped intentionally,
 	// since it shouldn't be visible to user.
 	default:
 		panic(fmt.Errorf("BUG: unknown Value type: %d", t))
@@ -688,6 +710,12 @@ func (v *Value) Type() Type {
 	if v.t == typeRawString {
 		v.s = unescapeStringBestEffort(v.s)
 		v.t = TypeString
+	}
+	if v.t == typeFreshObject {
+		return TypeObject
+	}
+	if v.t == typeFreshArray {
+		return TypeArray
 	}
 	return v.t
 }
@@ -712,12 +740,12 @@ func (v *Value) Get(keys ...string) *Value {
 		return nil
 	}
 	for _, key := range keys {
-		if v.t == TypeObject {
+		if v.t == TypeObject || v.t == typeFreshObject {
 			v = v.o.Get(key)
 			if v == nil {
 				return nil
 			}
-		} else if v.t == TypeArray {
+		} else if v.t == TypeArray || v.t == typeFreshArray {
 			n, err := strconv.Atoi(key)
 			if err != nil || n < 0 || n >= len(v.a) {
 				return nil
@@ -739,7 +767,14 @@ func (v *Value) Get(keys ...string) *Value {
 // The returned object is valid until Parse is called on the Parser returned v.
 func (v *Value) GetObject(keys ...string) *Object {
 	v = v.Get(keys...)
-	if v == nil || v.t != TypeObject {
+	if v == nil {
+		return nil
+	}
+	if v.t == typeFreshObject {
+		v.o.kvs = append([]kv{}, v.o.kvs...)
+		v.t = TypeObject
+	}
+	if v.t != TypeObject {
 		return nil
 	}
 	return &v.o
@@ -754,7 +789,14 @@ func (v *Value) GetObject(keys ...string) *Object {
 // The returned array is valid until Parse is called on the Parser returned v.
 func (v *Value) GetArray(keys ...string) []*Value {
 	v = v.Get(keys...)
-	if v == nil || v.t != TypeArray {
+	if v == nil {
+		return nil
+	}
+	if v.t == typeFreshArray {
+		v.a = append([]*Value{}, v.a...)
+		v.t = TypeArray
+	}
+	if v.t != TypeArray {
 		return nil
 	}
 	return v.a
@@ -869,6 +911,10 @@ func (v *Value) GetBool(keys ...string) bool {
 //
 // Use GetObject if you don't need error handling.
 func (v *Value) Object() (*Object, error) {
+	if v.t == typeFreshObject {
+		v.o.kvs = append([]kv{}, v.o.kvs...)
+		v.t = TypeObject
+	}
 	if v.t != TypeObject {
 		return nil, fmt.Errorf("value doesn't contain object; it contains %s", v.Type())
 	}
@@ -881,6 +927,10 @@ func (v *Value) Object() (*Object, error) {
 //
 // Use GetArray if you don't need error handling.
 func (v *Value) Array() ([]*Value, error) {
+	if v.t == typeFreshArray {
+		v.a = append([]*Value{}, v.a...)
+		v.t = TypeArray
+	}
 	if v.t != TypeArray {
 		return nil, fmt.Errorf("value doesn't contain array; it contains %s", v.Type())
 	}

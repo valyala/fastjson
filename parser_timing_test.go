@@ -211,7 +211,7 @@ func benchmarkFastJSONParse(b *testing.B, s string) {
 	b.SetBytes(int64(len(s)))
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-		    p := new(Parser)
+			p := new(Parser)
 			v, err := p.Parse(s)
 			if err != nil {
 				panic(fmt.Errorf("unexpected error: %s", err))
