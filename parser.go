@@ -71,7 +71,11 @@ func (p *Parser) getArray(c int) (v []*Value) {
 // Use Scanner if a stream of JSON values must be parsed.
 func (p *Parser) Parse(s string) (*Value, error) {
 	s = skipWS(s)
-	*p = Parser{}
+    p.arr = p.arr[:0]
+    p.kv = p.kv[:0]
+    p.val = p.val[:0]
+    p.kvStack = p.kvStack[:0]
+    p.arrStack = p.arrStack[:0]
 	p.b = []byte(s)
 
 	v, tail, err := p.parseValue(b2s(p.b))
@@ -210,6 +214,7 @@ func (p *Parser) parseArray(s string) (*Value, string, error) {
 	if s[0] == ']' {
 		v := &p.getValue(1)[0]
 		v.t = TypeArray
+        v.a = nil
 		return v, s[1:], nil
 	}
 
@@ -255,6 +260,7 @@ func (p *Parser) parseObject(s string) (*Value, string, error) {
 	if s[0] == '}' {
 		v := &p.getValue(1)[0]
 		v.t = TypeObject
+        v.o.kvs = nil
 		return v, s[1:], nil
 	}
 
