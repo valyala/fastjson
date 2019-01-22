@@ -90,7 +90,7 @@ func benchmarkObjectGet(b *testing.B, itemsCount, lookupsCount int) {
 	b.SetBytes(int64(len(s)))
 
 	b.RunParallel(func(pb *testing.PB) {
-		p := benchPool.Get()
+		p := new(Parser)
 		for pb.Next() {
 			v, err := p.Parse(s)
 			if err != nil {
@@ -104,7 +104,6 @@ func benchmarkObjectGet(b *testing.B, itemsCount, lookupsCount int) {
 				}
 			}
 		}
-		benchPool.Put(p)
 	})
 }
 
@@ -130,7 +129,7 @@ func BenchmarkMarshalTo(b *testing.B) {
 }
 
 func benchmarkMarshalTo(b *testing.B, s string) {
-	p := benchPool.Get()
+	p := new(Parser)
 	v, err := p.Parse(s)
 	if err != nil {
 		panic(fmt.Errorf("unexpected error: %s", err))
@@ -146,7 +145,6 @@ func benchmarkMarshalTo(b *testing.B, s string) {
 			b = v.MarshalTo(b[:0])
 		}
 	})
-	benchPool.Put(p)
 }
 
 func BenchmarkParse(b *testing.B) {
@@ -212,8 +210,8 @@ func benchmarkFastJSONParse(b *testing.B, s string) {
 	b.ReportAllocs()
 	b.SetBytes(int64(len(s)))
 	b.RunParallel(func(pb *testing.PB) {
-		p := benchPool.Get()
 		for pb.Next() {
+		    p := new(Parser)
 			v, err := p.Parse(s)
 			if err != nil {
 				panic(fmt.Errorf("unexpected error: %s", err))
@@ -222,7 +220,6 @@ func benchmarkFastJSONParse(b *testing.B, s string) {
 				panic(fmt.Errorf("unexpected value type; got %s; want %s", v.Type(), TypeObject))
 			}
 		}
-		benchPool.Put(p)
 	})
 }
 
@@ -230,10 +227,9 @@ func benchmarkFastJSONParseGet(b *testing.B, s string) {
 	b.ReportAllocs()
 	b.SetBytes(int64(len(s)))
 	b.RunParallel(func(pb *testing.PB) {
-		p := benchPool.Get()
 		var n int
 		for pb.Next() {
-			v, err := p.Parse(s)
+			v, err := new(Parser).Parse(s)
 			if err != nil {
 				panic(fmt.Errorf("unexpected error: %s", err))
 			}
@@ -260,11 +256,8 @@ func benchmarkFastJSONParseGet(b *testing.B, s string) {
 				n++
 			}
 		}
-		benchPool.Put(p)
 	})
 }
-
-var benchPool ParserPool
 
 func benchmarkStdJSONParseMap(b *testing.B, s string) {
 	b.ReportAllocs()
