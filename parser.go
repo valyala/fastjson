@@ -34,11 +34,11 @@ func (p *Parser) Parse(s string) (*Value, error) {
 
 	v, tail, err := parseValue(b2s(p.b), &p.c)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse JSON: %s; unparsed tail: %q", err, tail)
+		return nil, fmt.Errorf("cannot parse JSON: %s; unparsed tail: %q", err, startEndString(tail))
 	}
 	tail = skipWS(tail)
 	if len(tail) > 0 {
-		return nil, fmt.Errorf("unexpected tail: %q", tail)
+		return nil, fmt.Errorf("unexpected tail: %q", startEndString(tail))
 	}
 	return v, nil
 }

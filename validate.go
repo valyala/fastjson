@@ -12,11 +12,11 @@ func Validate(s string) error {
 
 	tail, err := validateValue(s)
 	if err != nil {
-		return fmt.Errorf("cannot parse JSON: %s; unparsed tail: %q", err, tail)
+		return fmt.Errorf("cannot parse JSON: %s; unparsed tail: %q", err, startEndString(tail))
 	}
 	tail = skipWS(tail)
 	if len(tail) > 0 {
-		return fmt.Errorf("unexpected tail: %q", tail)
+		return fmt.Errorf("unexpected tail: %q", startEndString(tail))
 	}
 	return nil
 }
