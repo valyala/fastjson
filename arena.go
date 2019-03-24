@@ -100,6 +100,18 @@ func (a *Arena) NewNumberInt(n int) *Value {
 	return v
 }
 
+// NewNumberInt64 returns new number value containing n.
+//
+// The returned number is valid until Reset is called on a.
+func (a *Arena) NewNumberInt64(n int64) *Value {
+	v := a.c.getValue()
+	v.t = TypeNumber
+	bLen := len(a.b)
+	a.b = strconv.AppendInt(a.b, n, 10)
+	v.s = b2s(a.b[bLen:])
+	return v
+}
+
 // NewNumberString returns new number value containing s.
 //
 // The returned number is valid until Reset is called on a.
