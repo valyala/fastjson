@@ -54,6 +54,9 @@ func testArena(a *Arena) error {
 	o.Set("true", a.NewTrue())
 	ni := a.NewNumberInt(123)
 	o.Set("ni", ni)
+	o.Set("ni64", a.NewNumberInt64(int64(8823)))
+	o.Set("nui32", a.NewNumberUint32(uint32(712445)))
+	o.Set("nui64", a.NewNumberUint64(uint64(9123)))
 	o.Set("nf", a.NewNumberFloat64(1.23))
 	o.Set("ns", a.NewNumberString("34.43"))
 	s := a.NewString("foo")
@@ -69,7 +72,7 @@ func testArena(a *Arena) error {
 	o.Set("obj", obj)
 
 	str := o.String()
-	strExpected := `{"nil1":null,"nil2":null,"false":false,"true":true,"ni":123,"nf":1.23,"ns":34.43,"str1":"foo","str2":"xx","a":["foo",123],"obj":{"s":"foo"}}`
+	strExpected := `{"nil1":null,"nil2":null,"false":false,"true":true,"ni":123,"ni64":8823,"nui32":712445,"nui64":9123,"nf":1.23,"ns":34.43,"str1":"foo","str2":"xx","a":["foo",123],"obj":{"s":"foo"}}`
 	if str != strExpected {
 		return fmt.Errorf("unexpected json\ngot\n%s\nwant\n%s", str, strExpected)
 	}
