@@ -52,12 +52,48 @@ func (p *Parser) ParseBytes(b []byte) (*Value, error) {
 	return p.Parse(b2s(b))
 }
 
+type kvSlice []kv
+
+func (kvs *kvSlice) getKV() *kv {
+	x := *kvs
+	if cap(x) > len(x) {
+		x = x[:len(x)+1]
+	} else {
+		x = append(x, kv{})
+	}
+	*kvs = x
+	return &x[len(x)-1]
+}
+
 type cache struct {
+	// vs holds all the Value objects created by getValue.
+	//
+	// These objects may be re-used after cache.reset is called.
 	vs []Value
+
+	// a holds all the values for all the arrays obtained from the cache.
+	//
+	// a reduces memory overhead for JSONs with many randomly-sized arrays.
+	a []*Value
+
+	// aPool is a pool of temporary arrays before they are merged into a.
+	aPool [][]*Value
+
+	// kvs holds all the (key, value) pairs for all the objects obtained from the cache.
+	//
+	// kvs reduces memory overhead for JSONs with many randomly-sized objects.
+	kvs kvSlice
+
+	// kvsPool is a pool of temporary kvs before they are merged into kvs.
+	kvsPool []kvSlice
 }
 
 func (c *cache) reset() {
 	c.vs = c.vs[:0]
+	c.a = c.a[:0]
+	c.kvs = c.kvs[:0]
+
+	// There is no need in clearing aPool and kvsPool.
 }
 
 func (c *cache) getValue() *Value {
@@ -68,6 +104,34 @@ func (c *cache) getValue() *Value {
 	}
 	// Do not reset the value, since the caller must properly init it.
 	return &c.vs[len(c.vs)-1]
+}
+
+func (c *cache) getTmpArray() []*Value {
+	if len(c.aPool) == 0 {
+		return make([]*Value, 0, 8)
+	}
+	a := c.aPool[len(c.aPool)-1]
+	c.aPool = c.aPool[:len(c.aPool)-1]
+	return a
+}
+
+func (c *cache) putTmpArray(a []*Value) {
+	a = a[:0]
+	c.aPool = append(c.aPool, a)
+}
+
+func (c *cache) getTmpKVSlice() kvSlice {
+	if len(c.kvsPool) == 0 {
+		return make([]kv, 0, 8)
+	}
+	kvs := c.kvsPool[len(c.kvsPool)-1]
+	c.kvsPool = c.kvsPool[:len(c.kvsPool)-1]
+	return kvs
+}
+
+func (c *cache) putTmpKVSlice(kvs kvSlice) {
+	kvs = kvs[:0]
+	c.kvsPool = append(c.kvsPool, kvs)
 }
 
 func skipWS(s string) string {
@@ -160,15 +224,15 @@ func parseArray(s string, c *cache) (*Value, string, error) {
 	}
 
 	if s[0] == ']' {
-		v := c.getValue()
-		v.t = TypeArray
-		v.a = v.a[:0]
-		return v, s[1:], nil
+		a := c.getValue()
+		a.t = TypeArray
+		a.a = nil
+		return a, s[1:], nil
 	}
 
 	a := c.getValue()
 	a.t = TypeArray
-	a.a = a.a[:0]
+	ta := c.getTmpArray()
 	for {
 		var v *Value
 		var err error
@@ -178,7 +242,7 @@ func parseArray(s string, c *cache) (*Value, string, error) {
 		if err != nil {
 			return nil, s, fmt.Errorf("cannot parse array value: %s", err)
 		}
-		a.a = append(a.a, v)
+		ta = append(ta, v)
 
 		s = skipWS(s)
 		if len(s) == 0 {
@@ -189,8 +253,10 @@ func parseArray(s string, c *cache) (*Value, string, error) {
 			continue
 		}
 		if s[0] == ']' {
-			s = s[1:]
-			return a, s, nil
+			c.a = append(c.a, ta...)
+			a.a = c.a[len(c.a)-len(ta) : len(c.a) : len(c.a)]
+			c.putTmpArray(ta)
+			return a, s[1:], nil
 		}
 		return nil, s, fmt.Errorf("missing ',' after array value")
 	}
@@ -203,18 +269,19 @@ func parseObject(s string, c *cache) (*Value, string, error) {
 	}
 
 	if s[0] == '}' {
-		v := c.getValue()
-		v.t = TypeObject
-		v.o.reset()
-		return v, s[1:], nil
+		o := c.getValue()
+		o.t = TypeObject
+		o.o.reset()
+		return o, s[1:], nil
 	}
 
 	o := c.getValue()
 	o.t = TypeObject
 	o.o.reset()
+	tkvs := c.getTmpKVSlice()
 	for {
 		var err error
-		kv := o.o.getKV()
+		kv := tkvs.getKV()
 
 		// Parse key.
 		s = skipWS(s)
@@ -246,6 +313,9 @@ func parseObject(s string, c *cache) (*Value, string, error) {
 			continue
 		}
 		if s[0] == '}' {
+			c.kvs = append(c.kvs, tkvs...)
+			o.o.kvs = c.kvs[len(c.kvs)-len(tkvs) : len(c.kvs) : len(c.kvs)]
+			c.putTmpKVSlice(tkvs)
 			return o, s[1:], nil
 		}
 		return nil, s, fmt.Errorf("missing ',' after object value")
@@ -430,13 +500,17 @@ func parseRawNumber(s string) (string, string, error) {
 // Object cannot be used from concurrent goroutines.
 // Use per-goroutine parsers or ParserPool instead.
 type Object struct {
-	kvs           []kv
+	kvs           kvSlice
 	keysUnescaped bool
 }
 
 func (o *Object) reset() {
-	o.kvs = o.kvs[:0]
+	o.kvs = nil
 	o.keysUnescaped = false
+}
+
+func (o *Object) getKV() *kv {
+	return o.kvs.getKV()
 }
 
 // MarshalTo appends marshaled o to dst and returns the result.
@@ -469,15 +543,6 @@ func (o *Object) String() string {
 	// It is safe converting b to string without allocation, since b is no longer
 	// reachable after this line.
 	return b2s(b)
-}
-
-func (o *Object) getKV() *kv {
-	if cap(o.kvs) > len(o.kvs) {
-		o.kvs = o.kvs[:len(o.kvs)+1]
-	} else {
-		o.kvs = append(o.kvs, kv{})
-	}
-	return &o.kvs[len(o.kvs)-1]
 }
 
 func (o *Object) unescapeKeys() {
