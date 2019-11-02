@@ -28,6 +28,10 @@ func TestParserPoolRecycled(t *testing.T) {
 	if news != 4 {
 		t.Fatalf("Expected exactly 4 calls to Put (not %d)", news)
 	}
+	ppr = NewParserPoolRecycled(10)
+	if ppr.maxReuse != 10 {
+		t.Fatalf("Expected maxReuse to be 10 (not %d)", ppr.maxReuse)
+	}
 }
 
 func TestScannerPoolRecycled(t *testing.T) {
@@ -48,6 +52,10 @@ func TestScannerPoolRecycled(t *testing.T) {
 	if news != 4 {
 		t.Fatalf("Expected exactly 4 calls to Put (not %d)", news)
 	}
+	spr = NewScannerPoolRecycled(10)
+	if spr.maxReuse != 10 {
+		t.Fatalf("Expected maxReuse to be 10 (not %d)", spr.maxReuse)
+	}
 }
 
 func BenchmarkParserPoolRecycled(b *testing.B) {
@@ -63,9 +71,10 @@ func benchmarkParserPoolRecycled(b *testing.B, maxReuse int) {
 	ppr := NewParserPoolRecycled(maxReuse)
 	var v *Value
 	for i := b.N; i > 0; i-- {
-		var json = []byte(fmt.Sprintf(`{"%d":"test"}`, i))
+		var json = fmt.Sprintf(`{"%d":"test"}`, i)
 		pr := ppr.Get()
-		v, _ = pr.ParseBytes(json)
+		v, _ = pr.Parse(json)
+		v, _ = pr.ParseBytes([]byte(json))
 		ppr.Put(pr)
 	}
 	_ = v
@@ -84,9 +93,10 @@ func benchmarkScannerPoolRecycled(b *testing.B, maxReuse int) {
 	spr := NewScannerPoolRecycled(maxReuse)
 	var v *Value
 	for i := b.N; i > 0; i-- {
-		var json = []byte(fmt.Sprintf(`{"%d":"test","foo":"bar}`, rand.Int()))
+		var json = fmt.Sprintf(`{"%d":"test","foo":"bar}`, rand.Int())
 		sr := spr.Get()
-		sr.InitBytes(json)
+		sr.Init(json)
+		sr.InitBytes([]byte(json))
 		v = sr.Value()
 		spr.Put(sr)
 	}
