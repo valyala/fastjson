@@ -1,5 +1,7 @@
 // +build !race
+
 // The behavior of sync.Pool is not deterministic under race mode
+
 package fastjson
 
 import (
