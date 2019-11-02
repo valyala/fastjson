@@ -4,16 +4,17 @@ import (
 	"sync"
 )
 
-// ParserPoolRecycled enables JSON Parser pooling for semi-structured JSON
-//
-// MaxReuse can be set to prevent a parser from being returned to the pool after a certain number of uses
-//
-// Without this protection, reusing a parser for unstructured JSON indefinitely may cause significant memory growth
+// ParserPoolRecycled may be used for pooling Parsers for structurally dissimilar JSON.
 type ParserPoolRecycled struct {
-	sync.Pool
+	pool sync.Pool
 	maxReuse int
 }
 
+// NewParserPoolRecycled enables JSON Parser pooling for semi-structured JSON
+//
+// MaxReuse prevents a parser from being returned to the pool after MaxReuse
+// number of uses. This prevents parser reuse from causing unbounded memory
+// growth for structurally dissimilar JSON. 1,000 is probably a good number.
 func NewParserPoolRecycled(maxReuse int) *ParserPoolRecycled {
 	return &ParserPoolRecycled{
 		sync.Pool{New: func() interface{} { return new(ParserRecyclable) }},
@@ -21,15 +22,26 @@ func NewParserPoolRecycled(maxReuse int) *ParserPoolRecycled {
 	}
 }
 
-func (p *ParserPoolRecycled) Get() *ParserRecyclable {
-	return p.Pool.Get().(*ParserRecyclable)
+// Get returns a ParserRecyclable from ppr.
+//
+// The ParserRecyclable must be Put to ppr after use.
+func (ppr *ParserPoolRecycled) Get() *ParserRecyclable {
+	v := ppr.pool.Get()
+	if v == nil {
+		return &ParserRecyclable{}
+	}
+	return v.(*ParserRecyclable)
 }
 
-func (p *ParserPoolRecycled) Put(cs *ParserRecyclable) {
-	if cs.n > p.maxReuse {
+// Put returns pr to ppr.
+//
+// pr and objects recursively returned from pr cannot be used after pr
+// is put into ppr.
+func (ppr *ParserPoolRecycled) Put(pr *ParserRecyclable) {
+	if pr.n > ppr.maxReuse {
 		return
 	}
-	p.Pool.Put(cs)
+	ppr.pool.Put(pr)
 }
 
 // ParserRecyclable adds a counter to a Parser for use with ParserPoolRecycled
@@ -38,26 +50,29 @@ type ParserRecyclable struct {
 	n int
 }
 
-func (p *ParserRecyclable) Parse(s string) (*Value, error) {
-	p.n++
-	return p.Parser.Parse(s)
+// Parse is a wrapper for Parser.Parse that also counts the number of calls.
+func (pr *ParserRecyclable) Parse(s string) (*Value, error) {
+	pr.n++
+	return pr.Parser.Parse(s)
 }
 
-func (p *ParserRecyclable) ParseBytes(b []byte) (*Value, error) {
-	p.n++
-	return p.Parser.ParseBytes(b)
+// ParseBytes is a wrapper for Parser.ParseBytes that also counts the number of calls.
+func (pr *ParserRecyclable) ParseBytes(b []byte) (*Value, error) {
+	pr.n++
+	return pr.Parser.ParseBytes(b)
 }
 
-// ScannerPoolRecycled enables JSON Scanner pooling for semi-structured JSON
-//
-// MaxReuse can be set to prevent a scanner from being returned to the pool after a certain number of uses
-//
-// Without this protection, reusing a scanner for unstructured JSON indefinitely may cause significant memory growth
+// ScannerPoolRecycled may be used for pooling Scanners for structurally dissimilar JSON.
 type ScannerPoolRecycled struct {
-	sync.Pool
+	pool sync.Pool
 	maxReuse int
 }
 
+// NewScannerPoolRecycled enables JSON Scanner pooling for semi-structured JSON
+//
+// MaxReuse prevents a scanner from being returned to the pool after MaxReuse
+// number of uses. This prevents scanner reuse from causing unbounded memory
+// growth for structurally dissimilar JSON. 1,000 is probably a good number.
 func NewScannerPoolRecycled(maxReuse int) *ScannerPoolRecycled {
 	return &ScannerPoolRecycled{
 		sync.Pool{New: func() interface{} { return new(ScannerRecyclable) }},
@@ -65,15 +80,27 @@ func NewScannerPoolRecycled(maxReuse int) *ScannerPoolRecycled {
 	}
 }
 
-func (p *ScannerPoolRecycled) Get() *ScannerRecyclable {
-	return p.Pool.Get().(*ScannerRecyclable)
+// Get returns a ScannerRecyclable from spr.
+//
+// The ScannerRecyclable must be Put to spr after use.
+func (spr *ScannerPoolRecycled) Get() *ScannerRecyclable {
+	v := spr.pool.Get()
+	if v == nil {
+		return &ScannerRecyclable{}
+	}
+	return v.(*ScannerRecyclable)
 }
 
-func (p *ScannerPoolRecycled) Put(cs *ScannerRecyclable) {
-	if cs.n > p.maxReuse {
+
+// Put returns sr to spr.
+//
+// sr and objects recursively returned from sr cannot be used after sr
+// is put into spr.
+func (spr *ScannerPoolRecycled) Put(sr *ScannerRecyclable) {
+	if sr.n > spr.maxReuse {
 		return
 	}
-	p.Pool.Put(cs)
+	spr.pool.Put(sr)
 }
 
 // ScannerRecyclable adds a counter to a Scanner for use with ScannerPoolRecycled
@@ -82,12 +109,14 @@ type ScannerRecyclable struct {
 	n int
 }
 
-func (p *ScannerRecyclable) Init(s string) {
-	p.n++
-	p.Scanner.Init(s)
+// Init is a wrapper for Scanner.Init that also counts the number of calls.
+func (sr *ScannerRecyclable) Init(s string) {
+	sr.n++
+	sr.Scanner.Init(s)
 }
 
-func (p *ScannerRecyclable) InitBytes(b []byte) {
-	p.n++
-	p.Scanner.InitBytes(b)
+// InitBytes is a wrapper for Scanner.InitBytes that also counts the number of calls.
+func (sr *ScannerRecyclable) InitBytes(b []byte) {
+	sr.n++
+	sr.Scanner.InitBytes(b)
 }

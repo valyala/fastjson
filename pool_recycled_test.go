@@ -2,16 +2,13 @@ package fastjson
 
 import (
 	"fmt"
-	"sync"
 	"testing"
+	"math/rand"
 )
 
 func TestParserPoolRecycled(t *testing.T) {
 	var news int
-	ppr := ParserPoolRecycled{
-		sync.Pool{New: func() interface{} { news++; return new(ParserRecyclable) }},
-		100,
-	}
+	ppr := NewParserPoolRecycled(100)
 	for i := 333; i > 0; i-- {
 		v := ppr.Get()
 		ppr.Put(v)
@@ -23,10 +20,7 @@ func TestParserPoolRecycled(t *testing.T) {
 
 func TestScannerPoolRecycled(t *testing.T) {
 	var news int
-	spr := ScannerPoolRecycled{
-		sync.Pool{New: func() interface{} { news++; return new(ScannerRecyclable) }},
-		100,
-	}
+	spr := NewScannerPoolRecycled(100)
 	for i := 333; i > 0; i-- {
 		v := spr.Get()
 		spr.Put(v)
@@ -37,7 +31,7 @@ func TestScannerPoolRecycled(t *testing.T) {
 }
 
 func BenchmarkParserPoolRecycled(b *testing.B) {
-	for _, n := range []int{0, 100, 10000, 1000000} {
+	for _, n := range []int{0, 10, 1000} {
 		b.Run(fmt.Sprintf("maxreuse_%d", n), func(b *testing.B) {
 			benchmarkParserPoolRecycled(b, n)
 		})
@@ -46,19 +40,19 @@ func BenchmarkParserPoolRecycled(b *testing.B) {
 
 func benchmarkParserPoolRecycled(b *testing.B, maxReuse int) {
 	b.ReportAllocs()
-	spr := NewParserPoolRecycled(maxReuse)
-	var v interface{}
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			v = spr.Get()
-			spr.Put(v.(*ParserRecyclable))
-		}
-	})
+	ppr := NewParserPoolRecycled(maxReuse)
+	var v *Value
+	for i := b.N; i > 0; i-- {
+		var json = []byte(fmt.Sprintf(`{"%d":"test"}`, i))
+		pr := ppr.Get()
+		v, _ = pr.ParseBytes(json)
+		ppr.Put(pr)
+	}
 	_ = v
 }
 
 func BenchmarkScannerPoolRecycled(b *testing.B) {
-	for _, n := range []int{0, 100, 10000, 1000000} {
+	for _, n := range []int{0, 10, 1000} {
 		b.Run(fmt.Sprintf("maxreuse_%d", n), func(b *testing.B) {
 			benchmarkScannerPoolRecycled(b, n)
 		})
@@ -68,12 +62,13 @@ func BenchmarkScannerPoolRecycled(b *testing.B) {
 func benchmarkScannerPoolRecycled(b *testing.B, maxReuse int) {
 	b.ReportAllocs()
 	spr := NewScannerPoolRecycled(maxReuse)
-	var v interface{}
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			v = spr.Get()
-			spr.Put(v.(*ScannerRecyclable))
-		}
-	})
+	var v *Value
+	for i := b.N; i > 0; i-- {
+		var json = []byte(fmt.Sprintf(`{"%d":"test","foo":"bar}`, rand.Int()))
+		sr := spr.Get()
+		sr.InitBytes(json)
+		v = sr.Value()
+		spr.Put(sr)
+	}
 	_ = v
 }
