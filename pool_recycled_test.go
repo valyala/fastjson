@@ -18,20 +18,25 @@ func TestParserPoolRecycled(t *testing.T) {
 		100,
 	}
 	var v *Value
+	var v2 *Value
 	for i := 333; i > 0; i-- {
-		var json = []byte(fmt.Sprintf(`{"%d":"test"}`, i))
+		var json = fmt.Sprintf(`{"%d":"test"}`, i)
 		pr := ppr.Get()
-		v, _ = pr.ParseBytes(json)
+		v, _ = pr.Parse(json)
+		v2, _ = pr.ParseBytes([]byte(json))
 		ppr.Put(pr)
 	}
-	_ = v
-	if news != 4 {
-		t.Fatalf("Expected exactly 4 calls to Put (not %d)", news)
+	if news != 7 {
+		t.Fatalf("Expected exactly 7 calls to Put (not %d)", news)
 	}
 	ppr = NewParserPoolRecycled(10)
 	if ppr.maxReuse != 10 {
 		t.Fatalf("Expected maxReuse to be 10 (not %d)", ppr.maxReuse)
 	}
+	pr := ppr.Get()
+	_ = pr
+	_ = v
+	_ = v2
 }
 
 func TestScannerPoolRecycled(t *testing.T) {
@@ -41,21 +46,27 @@ func TestScannerPoolRecycled(t *testing.T) {
 		100,
 	}
 	var v *Value
+	var v2 *Value
 	for i := 333; i > 0; i-- {
-		var json = []byte(fmt.Sprintf(`{"%d":"test"}`, i))
+		var json = fmt.Sprintf(`{"%d":"test"}`, i)
 		sr := spr.Get()
-		sr.InitBytes(json)
+		sr.Init(json)
 		v = sr.Value()
+		sr.InitBytes([]byte(json))
+		v2 = sr.Value()
 		spr.Put(sr)
 	}
-	_ = v
-	if news != 4 {
-		t.Fatalf("Expected exactly 4 calls to Put (not %d)", news)
+	if news != 7 {
+		t.Fatalf("Expected exactly 7 calls to Put (not %d)", news)
 	}
 	spr = NewScannerPoolRecycled(10)
 	if spr.maxReuse != 10 {
 		t.Fatalf("Expected maxReuse to be 10 (not %d)", spr.maxReuse)
 	}
+	sr := spr.Get()
+	_ = sr
+	_ = v
+	_ = v2
 }
 
 func BenchmarkParserPoolRecycled(b *testing.B) {
@@ -73,7 +84,6 @@ func benchmarkParserPoolRecycled(b *testing.B, maxReuse int) {
 	for i := b.N; i > 0; i-- {
 		var json = fmt.Sprintf(`{"%d":"test"}`, i)
 		pr := ppr.Get()
-		v, _ = pr.Parse(json)
 		v, _ = pr.ParseBytes([]byte(json))
 		ppr.Put(pr)
 	}
@@ -95,7 +105,6 @@ func benchmarkScannerPoolRecycled(b *testing.B, maxReuse int) {
 	for i := b.N; i > 0; i-- {
 		var json = fmt.Sprintf(`{"%d":"test","foo":"bar}`, rand.Int())
 		sr := spr.Get()
-		sr.Init(json)
 		sr.InitBytes([]byte(json))
 		v = sr.Value()
 		spr.Put(sr)

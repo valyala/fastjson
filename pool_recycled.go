@@ -17,7 +17,7 @@ type ParserPoolRecycled struct {
 // growth for structurally dissimilar JSON. 1,000 is probably a good number.
 func NewParserPoolRecycled(maxReuse int) *ParserPoolRecycled {
 	return &ParserPoolRecycled{
-		sync.Pool{New: func() interface{} { return new(ParserRecyclable) }},
+		sync.Pool{},
 		maxReuse,
 	}
 }
@@ -75,7 +75,7 @@ type ScannerPoolRecycled struct {
 // growth for structurally dissimilar JSON. 1,000 is probably a good number.
 func NewScannerPoolRecycled(maxReuse int) *ScannerPoolRecycled {
 	return &ScannerPoolRecycled{
-		sync.Pool{New: func() interface{} { return new(ScannerRecyclable) }},
+		sync.Pool{},
 		maxReuse,
 	}
 }
