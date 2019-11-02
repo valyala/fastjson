@@ -4,28 +4,44 @@ import (
 	"fmt"
 	"testing"
 	"math/rand"
+	"sync"
 )
 
 func TestParserPoolRecycled(t *testing.T) {
 	var news int
-	ppr := NewParserPoolRecycled(100)
-	for i := 333; i > 0; i-- {
-		v := ppr.Get()
-		ppr.Put(v)
+	ppr := &ParserPoolRecycled{
+		sync.Pool{New: func() interface{} { news++; return new(ParserRecyclable) }},
+		100,
 	}
-	if news > 4 {
+	var v *Value
+	for i := 333; i > 0; i-- {
+		var json = []byte(fmt.Sprintf(`{"%d":"test"}`, i))
+		pr := ppr.Get()
+		v, _ = pr.ParseBytes(json)
+		ppr.Put(pr)
+	}
+	_ = v
+	if news != 4 {
 		t.Fatalf("Expected exactly 4 calls to Put (not %d)", news)
 	}
 }
 
 func TestScannerPoolRecycled(t *testing.T) {
 	var news int
-	spr := NewScannerPoolRecycled(100)
-	for i := 333; i > 0; i-- {
-		v := spr.Get()
-		spr.Put(v)
+	spr := &ScannerPoolRecycled{
+		sync.Pool{New: func() interface{} { news++; return new(ScannerRecyclable) }},
+		100,
 	}
-	if news > 4 {
+	var v *Value
+	for i := 333; i > 0; i-- {
+		var json = []byte(fmt.Sprintf(`{"%d":"test"}`, i))
+		sr := spr.Get()
+		sr.InitBytes(json)
+		v = sr.Value()
+		spr.Put(sr)
+	}
+	_ = v
+	if news != 4 {
 		t.Fatalf("Expected exactly 4 calls to Put (not %d)", news)
 	}
 }
