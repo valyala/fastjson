@@ -218,19 +218,19 @@ func TestValueInvalidTypeConversion(t *testing.T) {
 	}
 	_, err = a[2].Int64()
 	if err == nil {
-		t.Fatalf("expecting non-nil error when trying to obtain int from string")
+		t.Fatalf("expecting non-nil error when trying to obtain int64 from string")
 	}
 	_, err = a[2].Uint()
 	if err == nil {
-		t.Fatalf("expecting non-nil error when trying to obtain int from string")
+		t.Fatalf("expecting non-nil error when trying to obtain uint from string")
 	}
 	_, err = a[2].Uint64()
 	if err == nil {
-		t.Fatalf("expecting non-nil error when trying to obtain int from string")
+		t.Fatalf("expecting non-nil error when trying to obtain uint64 from string")
 	}
 	_, err = a[2].Float64()
 	if err == nil {
-		t.Fatalf("expecting non-nil error when trying to obtain int from string")
+		t.Fatalf("expecting non-nil error when trying to obtain float64 from string")
 	}
 
 	// number
@@ -844,22 +844,22 @@ func TestParserParse(t *testing.T) {
 	t.Run("uint", func(t *testing.T) {
 		v, err := p.Parse("18446744073709551615")
 		if err != nil {
-			t.Fatalf("cannot parse uint64: %s", err)
+			t.Fatalf("cannot parse uint: %s", err)
 		}
 		tp := v.Type()
 		if tp != TypeNumber || tp.String() != "number" {
-			t.Fatalf("unexpected type obtained for uint64: %#v", v)
+			t.Fatalf("unexpected type obtained for uint: %#v", v)
 		}
 		n, err := v.Uint()
 		if err != nil {
 			t.Fatalf("cannot obtain uint64: %s", err)
 		}
 		if n != 18446744073709551615 {
-			t.Fatalf("unexpected value obtained for uint64; got %d; want %d", n, uint64(18446744073709551615))
+			t.Fatalf("unexpected value obtained for uint; got %d; want %d", n, uint64(18446744073709551615))
 		}
 		s := v.String()
 		if s != "18446744073709551615" {
-			t.Fatalf("unexpected string representation of uint64; got %q; want %q", s, "18446744073709551615")
+			t.Fatalf("unexpected string representation of uint; got %q; want %q", s, "18446744073709551615")
 		}
 	})
 
