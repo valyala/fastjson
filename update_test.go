@@ -6,11 +6,15 @@ import (
 
 func TestObjectDelSet(t *testing.T) {
 	var p Parser
+	var o *Object
+
+	o.Del("xx")
+
 	v, err := p.Parse(`{"fo\no": "bar", "x": [1,2,3]}`)
 	if err != nil {
 		t.Fatalf("unexpected error during parse: %s", err)
 	}
-	o, err := v.Object()
+	o, err = v.Object()
 	if err != nil {
 		t.Fatalf("cannot obtain object: %s", err)
 	}
@@ -42,6 +46,11 @@ func TestObjectDelSet(t *testing.T) {
 	if str != strExpected {
 		t.Fatalf("unexpected string representation for o: got %q; want %q", str, strExpected)
 	}
+
+	// Set and Del function as no-op on nil value
+	o = nil
+	o.Del("x")
+	o.Set("x", MustParse(`[3]`))
 }
 
 func TestValueDelSet(t *testing.T) {
@@ -77,9 +86,18 @@ func TestValueDelSet(t *testing.T) {
 	vNew = MustParse(`[3]`)
 	va.Set("3", vNew)
 
+	// Add invalid array index to the array
+	va.Set("invalid", MustParse(`"nonsense"`))
+
 	str := v.String()
 	strExpected := `{"x":["foobar",3,null,[3]]}`
 	if str != strExpected {
 		t.Fatalf("unexpected string representation for o: got %q; want %q", str, strExpected)
 	}
+
+	// Set and Del function as no-op on nil value
+	v = nil
+	v.Del("x")
+	v.Set("x", MustParse(`[]`))
+	v.SetArrayItem(1, MustParse(`[]`))
 }
