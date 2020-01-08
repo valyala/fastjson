@@ -81,7 +81,11 @@ func TestParseBestEffort(t *testing.T) {
 		t.Helper()
 
 		num := ParseBestEffort(s)
-		if num != expectedNum {
+		if math.IsNaN(expectedNum) {
+			if !math.IsNaN(num) {
+				t.Fatalf("unexpected number parsed from %q; got %v; want %v", s, num, expectedNum)
+			}
+		} else if num != expectedNum {
 			t.Fatalf("unexpected number parsed from %q; got %v; want %v", s, num, expectedNum)
 		}
 	}
@@ -170,4 +174,12 @@ func TestParseBestEffort(t *testing.T) {
 	// Fractional + exponent part
 	f("0.123e4", 0.123e4)
 	f("-123.456E-10", -123.456E-10)
+
+	// inf and nan
+	f("inf", math.Inf(1))
+	f("-Inf", math.Inf(-1))
+	f("INF", math.Inf(1))
+	f("nan", math.NaN())
+	f("naN", math.NaN())
+	f("NaN", math.NaN())
 }
