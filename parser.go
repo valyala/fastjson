@@ -138,6 +138,13 @@ func parseValue(s string, c *cache) (*Value, string, error) {
 	}
 	if s[0] == 'n' {
 		if len(s) < len("null") || s[:len("null")] != "null" {
+			// Try parsing NaN
+			if len(s) >= 3 && strings.EqualFold(s[:3], "nan") {
+				v := c.getValue()
+				v.t = TypeNumber
+				v.s = s[:3]
+				return v, s[3:], nil
+			}
 			return nil, s, fmt.Errorf("unexpected value found: %q", s)
 		}
 		return valueNull, s[len("null"):], nil

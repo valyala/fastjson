@@ -274,7 +274,8 @@ func TestValueGetTyped(t *testing.T) {
 		"zero_float1": 0.00,
 		"zero_float2": -0e123,
 		"inf_float": Inf,
-		"minus_inf_float": -Inf
+		"minus_inf_float": -Inf,
+		"nan": nan
 	}`)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
@@ -414,6 +415,15 @@ func TestValueGetTyped(t *testing.T) {
 	}
 	if !math.IsInf(ninff, -1) {
 		t.Fatalf("unexpected inf_float value: %f. Expecting %f", ninff, math.Inf(-11))
+	}
+
+	nanv := v.Get("nan")
+	nanf, err := nanv.Float64()
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if !math.IsNaN(nanf) {
+		t.Fatalf("unexpected nan value: %f. Expecting %f", nanf, math.NaN())
 	}
 }
 
