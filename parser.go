@@ -415,7 +415,13 @@ func parseRawNumber(s string) (string, string, error) {
 		if (ch >= '0' && ch <= '9') || ch == '.' || ch == '-' || ch == 'e' || ch == 'E' || ch == '+' {
 			continue
 		}
-		if i == 0 {
+		if i == 0 || i == 1 && (s[0] == '-' || s[0] == '+') {
+			if len(s[i:]) >= 3 {
+				xs := s[i : i+3]
+				if strings.EqualFold(xs, "inf") || strings.EqualFold(xs, "nan") {
+					return s[:i+3], s[i+3:], nil
+				}
+			}
 			return "", s, fmt.Errorf("unexpected char: %q", s[:1])
 		}
 		ns := s[:i]

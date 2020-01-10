@@ -2,6 +2,7 @@ package fastjson
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -34,6 +35,12 @@ func TestParseRawNumber(t *testing.T) {
 		f("-12.345E+67 tail", "-12.345E+67", " tail")
 		f("-12.345E-67,tail", "-12.345E-67", ",tail")
 		f("-1234567.8e+90tail", "-1234567.8e+90", "tail")
+		f("NaN", "NaN", "")
+		f("nantail", "nan", "tail")
+		f("inf", "inf", "")
+		f("Inftail", "Inf", "tail")
+		f("-INF", "-INF", "")
+		f("-Inftail", "-Inf", "tail")
 	})
 
 	t.Run("error", func(t *testing.T) {
@@ -265,7 +272,9 @@ func TestValueGetTyped(t *testing.T) {
 
 	v, err := p.Parse(`{"foo": 123, "bar": "433", "baz": true, "obj":{}, "arr":[1,2,3],
 		"zero_float1": 0.00,
-		"zero_float2": -0e123
+		"zero_float2": -0e123,
+		"inf_float": Inf,
+		"minus_inf_float": -Inf
 	}`)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
@@ -387,6 +396,24 @@ func TestValueGetTyped(t *testing.T) {
 	}
 	if zf != 0 {
 		t.Fatalf("unexpected zero_float1 value: %f. Expecting 0", zf)
+	}
+
+	infv := v.Get("inf_float")
+	inff, err := infv.Float64()
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if !math.IsInf(inff, 1) {
+		t.Fatalf("unexpected inf_float value: %f. Expecting %f", inff, math.Inf(1))
+	}
+
+	ninfv := v.Get("minus_inf_float")
+	ninff, err := ninfv.Float64()
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if !math.IsInf(ninff, -1) {
+		t.Fatalf("unexpected inf_float value: %f. Expecting %f", ninff, math.Inf(-11))
 	}
 }
 
@@ -536,7 +563,7 @@ func TestParserParse(t *testing.T) {
 			t.Fatalf("unexpected string; got %q; want %q", sb, "foo")
 		}
 
-		v, err = p.Parse(`"fo`+"\x19"+`\u"`)
+		v, err = p.Parse(`"fo` + "\x19" + `\u"`)
 		if err != nil {
 			t.Fatalf("unexpected error when parsing string")
 		}

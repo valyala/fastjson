@@ -268,11 +268,11 @@ func TestMustParse(t *testing.T) {
 		t.Fatalf("unexpected value parsed; %q; want %q", str, s)
 	}
 
-	if !causesPanic(func(){v = MustParse(`[`)}) {
+	if !causesPanic(func() { v = MustParse(`[`) }) {
 		t.Fatalf("expected MustParse to panic")
 	}
 
-	if !causesPanic(func(){v = MustParseBytes([]byte(`[`))}) {
+	if !causesPanic(func() { v = MustParseBytes([]byte(`[`)) }) {
 		t.Fatalf("expected MustParse to panic")
 	}
 }
