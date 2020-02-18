@@ -16,7 +16,7 @@ func BenchmarkParseInt64BestEffort(b *testing.B) {
 }
 
 func BenchmarkParseBestEffort(b *testing.B) {
-	for _, s := range []string{"0", "12", "12345", "1234567890", "1234.45678", "1234e45", "12.34e-34"} {
+	for _, s := range []string{"0", "12", "12345", "1234567890", "1234.45678", "1234e45", "12.34e-34", "12345.123456789012", "12345.1234567890123"} {
 		b.Run(s, func(b *testing.B) {
 			benchmarkParseBestEffort(b, s)
 		})
