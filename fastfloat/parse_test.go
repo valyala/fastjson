@@ -2,6 +2,8 @@ package fastfloat
 
 import (
 	"math"
+	"math/rand"
+	"strconv"
 	"testing"
 )
 
@@ -188,4 +190,20 @@ func TestParseBestEffort(t *testing.T) {
 	f("nan", math.NaN())
 	f("naN", math.NaN())
 	f("NaN", math.NaN())
+}
+
+func TestParseBestEffortFuzz(t *testing.T) {
+	r := rand.New(rand.NewSource(0))
+	for i := 0; i < 100000; i++ {
+		f := r.Float64()
+		s := strconv.FormatFloat(f, 'g', -1, 64)
+		numExpected, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			t.Fatalf("unexpected error when parsing %q: %s", s, err)
+		}
+		num := ParseBestEffort(s)
+		if num != numExpected {
+			t.Fatalf("unexpected number parsed from %q; got %g; want %g", s, num, numExpected)
+		}
+	}
 }

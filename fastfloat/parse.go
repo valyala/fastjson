@@ -96,8 +96,10 @@ func ParseInt64BestEffort(s string) int64 {
 }
 
 // Exact powers of 10.
+//
+// This works faster than math.Pow10, since it avoids additional multiplication.
 var float64pow10 = [...]float64{
-	1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18,
+	1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16,
 }
 
 // ParseBestEffort parses floating-point number s.
@@ -169,8 +171,8 @@ func ParseBestEffort(s string) float64 {
 			if s[i] >= '0' && s[i] <= '9' {
 				d = d*10 + uint64(s[i]-'0')
 				i++
-				if i-j > 18 {
-					// The mantissa may be out of range.  Fall back to standard parsing.
+				if i-j >= uint(len(float64pow10)) {
+					// The mantissa is out of range. Fall back to standard parsing.
 					f, err := strconv.ParseFloat(s, 64)
 					if err != nil && !math.IsInf(f, 0) {
 						return 0
@@ -185,7 +187,7 @@ func ParseBestEffort(s string) float64 {
 			return 0
 		}
 		// Convert the entire mantissa to a float at once to avoid rounding errors.
-		f = float64(d) / float64pow10[int(i-k)]
+		f = float64(d) / float64pow10[i-k]
 		if i >= uint(len(s)) {
 			// Fast path - parsed fractional number.
 			if minus {
