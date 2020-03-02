@@ -372,6 +372,14 @@ func TestValueGetTyped(t *testing.T) {
 	if sb != nil {
 		t.Fatalf("unexpected value; got %q; want %q", sb, []byte(nil))
 	}
+	s := v.GetString("bar")
+	if s != "433" {
+		t.Fatalf("unexpected value; got %q; want %q", s, "443")
+	}
+	s = v.GetString("foo")
+	if s != "" {
+		t.Fatalf("unexpected value; got %q; want \"\"", s)
+	}
 	bv := v.GetBool("baz")
 	if !bv {
 		t.Fatalf("unexpected value; got %v; want %v", bv, true)
@@ -460,6 +468,14 @@ func TestValueGet(t *testing.T) {
 		if string(sb) != "" {
 			t.Fatalf("unexpected non-empty value: %q", sb)
 		}
+		s := v.GetString("")
+		if s != "empty-key" {
+			t.Fatalf("unexpected value for empty key; got %q; want %q", s, "empty-key")
+		}
+		s = v.GetString("empty-value")
+		if s != "" {
+			t.Fatalf("unexpected non-empty value: %q", s)
+		}
 
 		vv := v.Get("foo", "1")
 		if vv == nil {
@@ -544,6 +560,10 @@ func TestParserParse(t *testing.T) {
 		sb := v.GetStringBytes("\\\"\u1234x")
 		if string(sb) != `\fЗУ\\` {
 			t.Fatalf("unexpected string; got %q; want %q", sb, `\fЗУ\\`)
+		}
+		s := v.GetString("\\\"\u1234x")
+		if s != `\fЗУ\\` {
+			t.Fatalf("unexpected string; got %q; want %q", s, `\fЗУ\\`)
 		}
 	})
 
@@ -665,6 +685,10 @@ func TestParserParse(t *testing.T) {
 		sb := v.GetStringBytes()
 		if string(sb) != `{"foo": 123}` {
 			t.Fatalf("unexpected string value; got %q; want %q", sb, `{"foo": 123}`)
+		}
+		s := v.GetString()
+		if s != `{"foo": 123}` {
+			t.Fatalf("unexpected string value; got %q; want %q", s, `{"foo": 123}`)
 		}
 	})
 
