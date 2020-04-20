@@ -178,10 +178,14 @@ func TestParseBestEffort(t *testing.T) {
 	f("-123e-400", 0)
 	f("123e456", math.Inf(1))   // too big exponent
 	f("-123e456", math.Inf(-1)) // too big exponent
+	f("1e4", 1e4)
+	f("-1E-10", -1e-10)
 
 	// Fractional + exponent part
 	f("0.123e4", 0.123e4)
 	f("-123.456E-10", -123.456e-10)
+	f("1.e4", 1.e4)
+	f("-1.E-10", -1.e-10)
 
 	// inf and nan
 	f("inf", math.Inf(1))
