@@ -36,9 +36,17 @@ func (v *Value) Del(key string) {
 	if v == nil {
 		return
 	}
+	if v.t == typeFreshObject {
+		v.o.kvs = append([]kv{}, v.o.kvs...)
+		v.t = TypeObject
+	}
 	if v.t == TypeObject {
 		v.o.Del(key)
 		return
+	}
+	if v.t == typeFreshArray {
+		v.a = append([]*Value{}, v.a...)
+		v.t = TypeArray
 	}
 	if v.t == TypeArray {
 		n, err := strconv.Atoi(key)
@@ -71,7 +79,8 @@ func (o *Object) Set(key string, value *Value) {
 	}
 
 	// Add new entry.
-	kv := o.getKV()
+	o.kvs = append(o.kvs, kv{})
+	kv := &o.kvs[len(o.kvs)-1]
 	kv.k = key
 	kv.v = value
 }
@@ -83,9 +92,17 @@ func (v *Value) Set(key string, value *Value) {
 	if v == nil {
 		return
 	}
+	if v.t == typeFreshObject {
+		v.o.kvs = append([]kv{}, v.o.kvs...)
+		v.t = TypeObject
+	}
 	if v.t == TypeObject {
 		v.o.Set(key, value)
 		return
+	}
+	if v.t == typeFreshArray {
+		v.a = append([]*Value{}, v.a...)
+		v.t = TypeArray
 	}
 	if v.t == TypeArray {
 		idx, err := strconv.Atoi(key)
@@ -100,6 +117,10 @@ func (v *Value) Set(key string, value *Value) {
 //
 // The value must be unchanged during v lifetime.
 func (v *Value) SetArrayItem(idx int, value *Value) {
+	if v.t == typeFreshArray {
+		v.a = append([]*Value{}, v.a...)
+		v.t = TypeArray
+	}
 	if v == nil || v.t != TypeArray {
 		return
 	}
