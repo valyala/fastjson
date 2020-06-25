@@ -180,7 +180,18 @@ var (
 	canadaFixture  = getFromFile("testdata/canada.json")
 	citmFixture    = getFromFile("testdata/citm_catalog.json")
 	twitterFixture = getFromFile("testdata/twitter.json")
+
+	fuzz = getFromFile("testdata/fuzz.json")
 )
+
+func TestParseFuzz(t *testing.T) {
+	var p Parser
+	v, err := p.Parse(fuzz)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	t.Fatalf("unexpected v=%s", v)
+}
 
 func getFromFile(filename string) string {
 	data, err := ioutil.ReadFile(filename)
