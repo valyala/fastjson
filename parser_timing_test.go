@@ -180,8 +180,6 @@ var (
 	canadaFixture  = getFromFile("testdata/canada.json")
 	citmFixture    = getFromFile("testdata/citm_catalog.json")
 	twitterFixture = getFromFile("testdata/twitter.json")
-
-	fuzz = getFromFile("testdata/fuzz.json")
 )
 
 func TestParseFuzz(t *testing.T) {
