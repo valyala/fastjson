@@ -190,8 +190,10 @@ func TestParseBestEffort(t *testing.T) {
 	// inf and nan
 	f("inf", math.Inf(1))
 	f("-Inf", math.Inf(-1))
+	f("+iNf", math.Inf(1))
 	f("INF", math.Inf(1))
 	f("nan", math.NaN())
+	f("-nan", math.NaN())
 	f("naN", math.NaN())
 	f("NaN", math.NaN())
 }
