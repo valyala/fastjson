@@ -387,7 +387,9 @@ func Parse(s string) (float64, error) {
 		if strings.HasPrefix(ss, "+") {
 			ss = ss[1:]
 		}
-		if strings.EqualFold(ss, "inf") {
+		// "infinity" is needed for OpenMetrics support.
+		// See https://github.com/OpenObservability/OpenMetrics/blob/master/OpenMetrics.md
+		if strings.EqualFold(ss, "inf") || strings.EqualFold(ss, "infinity") {
 			if minus {
 				return -inf, nil
 			}
