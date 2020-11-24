@@ -237,7 +237,9 @@ func ParseBestEffort(s string) float64 {
 		if strings.HasPrefix(s, "+") {
 			s = s[1:]
 		}
-		if strings.EqualFold(s, "inf") {
+		// "infinity" is needed for OpenMetrics support.
+		// See https://github.com/OpenObservability/OpenMetrics/blob/master/OpenMetrics.md
+		if strings.EqualFold(s, "inf") || strings.EqualFold(s, "infinity") {
 			if minus {
 				return -inf
 			}
