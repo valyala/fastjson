@@ -869,8 +869,8 @@ func TestParserParse(t *testing.T) {
 		if err != nil {
 			t.Fatalf("cannot obtain int64: %s", err)
 		}
-		if n != -8838840643388017390 {
-			t.Fatalf("unexpected value obtained for int64; got %d; want %d", n, -8838840643388017390)
+		if n != int64(-8838840643388017390) {
+			t.Fatalf("unexpected value obtained for int64; got %d; want %d", n, int64(-8838840643388017390))
 		}
 		s := v.String()
 		if s != "-8838840643388017390" {
@@ -887,11 +887,11 @@ func TestParserParse(t *testing.T) {
 		if tp != TypeNumber || tp.String() != "number" {
 			t.Fatalf("unexpected type obtained for uint: %#v", v)
 		}
-		n, err := v.Uint()
+		n, err := v.Uint64()
 		if err != nil {
 			t.Fatalf("cannot obtain uint64: %s", err)
 		}
-		if n != 18446744073709551615 {
+		if n != uint64(18446744073709551615) {
 			t.Fatalf("unexpected value obtained for uint; got %d; want %d", n, uint64(18446744073709551615))
 		}
 		s := v.String()
