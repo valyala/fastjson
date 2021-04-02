@@ -28,7 +28,7 @@
 
 ## Known limitations
 
-  * Requies extra care to work with - references to certain objects recursively
+  * Requires extra care to work with - references to certain objects recursively
     returned by [Parser](https://godoc.org/github.com/valyala/fastjson#Parser)
     must be released before the next call to [Parse](https://godoc.org/github.com/valyala/fastjson#Parser.Parse).
     Otherwise the program may work improperly. The same applies to objects returned by [Arena](https://godoc.org/github.com/valyala/fastjson#Arena).
