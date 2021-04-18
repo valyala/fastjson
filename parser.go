@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"log"
 	"strconv"
 	"strings"
 	"unicode/utf16"
@@ -738,6 +739,7 @@ func (v *Value) Get(keys ...string) *Value {
 func (v *Value) GetObject(keys ...string) *Object {
 	v = v.Get(keys...)
 	if v == nil || v.t != TypeObject {
+		log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return nil
 	}
 	return &v.o
@@ -759,6 +761,7 @@ func (v *Value) GetFastObject(key string) *Object {
 func (v *Value) GetArray(keys ...string) []*Value {
 	v = v.Get(keys...)
 	if v == nil || v.t != TypeArray {
+		log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return nil
 	}
 	return v.a
@@ -778,6 +781,7 @@ func (v *Value) GetFastArray(key string) []*Value {
 func (v *Value) GetFloat64(keys ...string) float64 {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeNumber {
+		log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return 0
 	}
 	return fastfloat.ParseBestEffort(v.s)
@@ -797,6 +801,7 @@ func (v *Value) GetFastFloat64(key string) float64 {
 func (v *Value) GetInt(keys ...string) int {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeNumber {
+		log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return 0
 	}
 	n := fastfloat.ParseInt64BestEffort(v.s)
@@ -821,6 +826,7 @@ func (v *Value) GetFastInt(key string) int {
 func (v *Value) GetUint(keys ...string) uint {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeNumber {
+		log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return 0
 	}
 	n := fastfloat.ParseUint64BestEffort(v.s)
@@ -845,6 +851,7 @@ func (v *Value) GetFastUint(key string) uint {
 func (v *Value) GetInt64(keys ...string) int64 {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeNumber {
+		log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return 0
 	}
 	return fastfloat.ParseInt64BestEffort(v.s)
@@ -864,6 +871,7 @@ func (v *Value) GetFastInt64(key string) int64 {
 func (v *Value) GetUint64(keys ...string) uint64 {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeNumber {
+		log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return 0
 	}
 	return fastfloat.ParseUint64BestEffort(v.s)
@@ -885,6 +893,7 @@ func (v *Value) GetFastUint64(key string) uint64 {
 func (v *Value) GetStringBytes(keys ...string) []byte {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeString {
+		log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return nil
 	}
 	return s2b(v.s)
@@ -924,6 +933,7 @@ func (v *Value) GetAndReplaceFastString(key string, replacements ...*Replacement
 func (v *Value) GetBool(keys ...string) bool {
 	v = v.Get(keys...)
 	if v != nil && v.t == TypeTrue {
+		log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return true
 	}
 	return false
