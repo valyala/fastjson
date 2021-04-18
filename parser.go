@@ -7,10 +7,11 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf16"
-	"unsafe"
 
 	"github.com/miczone/fastjson/fastfloat"
 )
+
+var DefaultKeySplitSep = "."
 
 // Parser parses JSON.
 //
@@ -742,6 +743,12 @@ func (v *Value) GetObject(keys ...string) *Object {
 	return &v.o
 }
 
+// GetFastObject returns object value by the given key path.
+func (v *Value) GetFastObject(key string) *Object {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetObject(keys...)
+}
+
 // GetArray returns array value by the given keys path.
 //
 // Array indexes may be represented as decimal numbers in keys.
@@ -757,6 +764,12 @@ func (v *Value) GetArray(keys ...string) []*Value {
 	return v.a
 }
 
+// GetFastArray returns object value by the given key path.
+func (v *Value) GetFastArray(key string) []*Value {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetArray(keys...)
+}
+
 // GetFloat64 returns float64 value by the given keys path.
 //
 // Array indexes may be represented as decimal numbers in keys.
@@ -768,6 +781,12 @@ func (v *Value) GetFloat64(keys ...string) float64 {
 		return 0
 	}
 	return fastfloat.ParseBestEffort(v.s)
+}
+
+// GetFastFloat64 returns object value by the given key path.
+func (v *Value) GetFastFloat64(key string) float64 {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetFloat64(keys...)
 }
 
 // GetInt returns int value by the given keys path.
@@ -788,6 +807,12 @@ func (v *Value) GetInt(keys ...string) int {
 	return nn
 }
 
+// GetFastInt returns object value by the given key path.
+func (v *Value) GetFastInt(key string) int {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetInt(keys...)
+}
+
 // GetUint returns uint value by the given keys path.
 //
 // Array indexes may be represented as decimal numbers in keys.
@@ -806,6 +831,12 @@ func (v *Value) GetUint(keys ...string) uint {
 	return nn
 }
 
+// GetFastUint returns object value by the given key path.
+func (v *Value) GetFastUint(key string) uint {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetUint(keys...)
+}
+
 // GetInt64 returns int64 value by the given keys path.
 //
 // Array indexes may be represented as decimal numbers in keys.
@@ -819,6 +850,12 @@ func (v *Value) GetInt64(keys ...string) int64 {
 	return fastfloat.ParseInt64BestEffort(v.s)
 }
 
+// GetFastInt64 returns object value by the given key path.
+func (v *Value) GetFastInt64(key string) int64 {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetInt64(keys...)
+}
+
 // GetUint64 returns uint64 value by the given keys path.
 //
 // Array indexes may be represented as decimal numbers in keys.
@@ -830,6 +867,12 @@ func (v *Value) GetUint64(keys ...string) uint64 {
 		return 0
 	}
 	return fastfloat.ParseUint64BestEffort(v.s)
+}
+
+// GetFastUint64 returns object value by the given key path.
+func (v *Value) GetFastUint64(key string) uint64 {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetUint64(keys...)
 }
 
 // GetStringBytes returns string value by the given keys path.
@@ -848,8 +891,20 @@ func (v *Value) GetStringBytes(keys ...string) []byte {
 }
 
 // GetString returns string value by the given key path.
-func (v *Value) GetString(key string, replacements ...*Replacements) string {
-	var str = bytesToString(v.GetStringBytes(key))
+func (v *Value) GetString(keys ...string) string {
+	return b2s(v.GetStringBytes(keys...))
+}
+
+// GetFastString returns string value by the given key path.
+func (v *Value) GetFastString(key string) string {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return b2s(v.GetStringBytes(keys...))
+}
+
+// GetAndReplaceFastString returns string value by the given key path.
+func (v *Value) GetAndReplaceFastString(key string, replacements ...*Replacements) string {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	var str = b2s(v.GetStringBytes(keys...))
 	if strings.Index(str, "}}") == -1 {
 		return str
 	}
@@ -872,6 +927,12 @@ func (v *Value) GetBool(keys ...string) bool {
 		return true
 	}
 	return false
+}
+
+// GetFastBool returns object value by the given key path.
+func (v *Value) GetFastBool(key string) bool {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetBool(keys...)
 }
 
 // Object returns the underlying JSON object for the v.
@@ -1015,8 +1076,4 @@ func (v *Value) Replace(str string, replacements ...*Replacements) string {
 	}
 	buff := b.String()
 	return buff
-}
-
-func bytesToString(data []byte) string {
-	return *(*string)(unsafe.Pointer(&data))
 }
