@@ -1,10 +1,13 @@
 package fastjson
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"strconv"
 	"strings"
 	"unicode/utf16"
+	"unsafe"
 
 	"github.com/miczone/fastjson/fastfloat"
 )
@@ -22,6 +25,8 @@ type Parser struct {
 	// c is a cache for json values.
 	c cache
 }
+
+type Replacements map[string]interface{}
 
 // Parse parses s containing JSON.
 //
@@ -842,6 +847,20 @@ func (v *Value) GetStringBytes(keys ...string) []byte {
 	return s2b(v.s)
 }
 
+// GetString returns string value by the given key path.
+func (v *Value) GetString(key string, replacements ...*Replacements) string {
+	var str = bytesToString(v.GetStringBytes(key))
+	if strings.Index(str, "}}") == -1 {
+		return str
+	}
+
+	if replacements == nil {
+		return str
+	}
+
+	return v.Replace(str, replacements...)
+}
+
 // GetBool returns bool value by the given keys path.
 //
 // Array indexes may be represented as decimal numbers in keys.
@@ -975,3 +994,29 @@ var (
 	valueFalse = &Value{t: TypeFalse}
 	valueNull  = &Value{t: TypeNull}
 )
+
+func (v *Value) Replace(str string, replacements ...*Replacements) string {
+	b := &bytes.Buffer{}
+	tmpl, err := template.New("").Parse(str)
+	if err != nil {
+		return str
+	}
+
+	replacementsMerge := Replacements{}
+	for _, replacement := range replacements {
+		for k, v := range *replacement {
+			replacementsMerge[k] = v
+		}
+	}
+
+	err = template.Must(tmpl, err).Execute(b, replacementsMerge)
+	if err != nil {
+		return str
+	}
+	buff := b.String()
+	return buff
+}
+
+func bytesToString(data []byte) string {
+	return *(*string)(unsafe.Pointer(&data))
+}
