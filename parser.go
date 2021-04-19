@@ -910,6 +910,13 @@ func (v *Value) GetFastString(key string) string {
 	return b2s(v.GetStringBytes(keys...))
 }
 
+// GetFastStringFmt returns string value by the given key path.
+func (v *Value) GetFastStringFmt(key string, args ...string) string {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	var format = b2s(v.GetStringBytes(keys...))
+	return fmt.Sprintf(format, args)
+}
+
 // GetAndReplaceFastString returns string value by the given key path.
 func (v *Value) GetAndReplaceFastString(key string, replacements ...*Replacements) string {
 	var keys []string = strings.Split(key, DefaultKeySplitSep)
