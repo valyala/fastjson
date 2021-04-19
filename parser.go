@@ -911,7 +911,7 @@ func (v *Value) GetFastString(key string) string {
 }
 
 // GetFastStringFmt returns string value by the given key path.
-func (v *Value) GetFastStringFmt(key string, args ...string) string {
+func (v *Value) GetFastStringFmt(key string, args ...interface{}) string {
 	var keys []string = strings.Split(key, DefaultKeySplitSep)
 	var format = b2s(v.GetStringBytes(keys...))
 	return fmt.Sprintf(format, args)
