@@ -168,3 +168,31 @@ func MustParseBytes(b []byte) *Value {
 	}
 	return v
 }
+
+// ParseValidate parses while validating json string s.
+//
+// The function is slower than Parse but faster than running both Validate and Parse.
+func ValidateParse(s string) (*Value, error) {
+	var p ValidateParser
+	return p.Parse(s)
+}
+
+// ParseValidateBytes parses b containing json.
+//
+// The function is slower than ParseBytes but faster than running both ValidateBytes and ParseBytes.
+func ValidateParseBytes(b []byte) (*Value, error) {
+	var p ValidateParser
+	return p.ParseBytes(b)
+}
+
+// MustValidateParseBytes parses b containing json.
+//
+// The function panics if b cannot be parsed.
+// The function is slower than MustParseBytes but faster than running both ValidateBytes and ParseBytes.
+func MustValidateParseBytes(b []byte) *Value {
+	v, err := ValidateParseBytes(b)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}

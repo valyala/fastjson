@@ -206,6 +206,12 @@ func benchmarkParse(b *testing.B, s string) {
 	b.Run("fastjson-get", func(b *testing.B) {
 		benchmarkFastJSONParseGet(b, s)
 	})
+	b.Run("fastjson-validate-parser", func(b *testing.B) {
+		benchmarkFastJSONParseValidateParser(b, s)
+	})
+	b.Run("fastjson-validate-and-parse", func(b *testing.B) {
+		benchmarkFastJSONParseValidateAndParse(b, s)
+	})
 }
 
 func benchmarkFastJSONParse(b *testing.B, s string) {
@@ -264,7 +270,48 @@ func benchmarkFastJSONParseGet(b *testing.B, s string) {
 	})
 }
 
+func benchmarkFastJSONParseValidateAndParse(b *testing.B, s string) {
+	b.ReportAllocs()
+	b.SetBytes(int64(len(s)))
+	b.RunParallel(func(pb *testing.PB) {
+		p := benchPool.Get()
+		for pb.Next() {
+			err := Validate(s)
+			if err != nil {
+				panic(fmt.Errorf("unexpected error: %s", err))
+			}
+			v, err := p.Parse(s)
+			if err != nil {
+				panic(fmt.Errorf("unexpected error: %s", err))
+			}
+			if v.Type() != TypeObject {
+				panic(fmt.Errorf("unexpected value type; got %s; want %s", v.Type(), TypeObject))
+			}
+		}
+		benchPool.Put(p)
+	})
+}
+
+func benchmarkFastJSONParseValidateParser(b *testing.B, s string) {
+	b.ReportAllocs()
+	b.SetBytes(int64(len(s)))
+	b.RunParallel(func(pb *testing.PB) {
+		p := benchPoolValidate.Get()
+		for pb.Next() {
+			v, err := p.Parse(s)
+			if err != nil {
+				panic(fmt.Errorf("unexpected error: %s", err))
+			}
+			if v.Type() != TypeObject {
+				panic(fmt.Errorf("unexpected value type; got %s; want %s", v.Type(), TypeObject))
+			}
+		}
+		benchPoolValidate.Put(p)
+	})
+}
+
 var benchPool ParserPool
+var benchPoolValidate ValidateParserPool
 
 func benchmarkStdJSONParseMap(b *testing.B, s string) {
 	b.ReportAllocs()
