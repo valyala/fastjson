@@ -54,6 +54,7 @@ func TestParseValidateRawNumber(t *testing.T) {
 		f("01", "01")
 		f("-01", "-01")
 		f("0.", "0.")
+		f("0.,", "0.,")
 		f("-0.1E", "-0.1E")
 		f("0.1E", "0.1E")
 		f(".1E-1", ".1E-1")
