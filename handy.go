@@ -177,6 +177,18 @@ func ValidateParse(s string) (*Value, error) {
 	return p.Parse(s)
 }
 
+// MustValidateParse parses json string s.
+//
+// The function panics if s cannot be parsed.
+// The function is slower than the Parser.Parse for re-used ValidateParser.
+func MustValidateParse(s string) *Value {
+	v, err := ValidateParse(s)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
 // ParseValidateBytes parses b containing json.
 //
 // The function is slower than ParseBytes but faster than running both ValidateBytes and ParseBytes.
