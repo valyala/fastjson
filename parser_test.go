@@ -1196,6 +1196,14 @@ func TestParserParse(t *testing.T) {
 		}
 
 	})
+
+	t.Run("deeply-nested", func(t *testing.T) {
+		s := strings.Repeat(`[`, 500) + "null" + strings.Repeat(`]`, 500)
+		_, err := p.Parse(s)
+		if err == nil {
+			t.Fatalf("expected nest depth error")
+		}
+	})
 }
 
 func TestParseBigObject(t *testing.T) {

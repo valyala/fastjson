@@ -49,6 +49,15 @@ func TestParseValidateRawNumber(t *testing.T) {
 			}
 		}
 
+		f("", "")
+		f("-", "-")
+		f("01", "01")
+		f("-01", "-01")
+		f("0.", "0.")
+		f("-0.1E", "-0.1E")
+		f("0.1E", "0.1E")
+		f(".1E-1", ".1E-1")
+		f("0.1E-", "0.1E-")
 		f("xyz", "xyz")
 		f(" ", " ")
 		f("[", "[")
@@ -792,6 +801,30 @@ func TestValidateParserParse(t *testing.T) {
 			t.Fatalf("unexpected string representation for object; got\n%q; want\n%q", ss, s)
 		}
 
+	})
+
+	t.Run("deeply-nested", func(t *testing.T) {
+		s := strings.Repeat(`[`, 500) + "null" + strings.Repeat(`]`, 500)
+		_, err := p.Parse(s)
+		if err == nil {
+			t.Fatalf("expected nest depth error")
+		}
+	})
+
+	t.Run("control-characters", func(t *testing.T) {
+		s := `{"a":"d"}`
+		_, err := p.Parse(s)
+		if err == nil {
+			t.Fatalf("expected control character error")
+		}
+	})
+
+	t.Run("unknown-escape-sequence", func(t *testing.T) {
+		s := `{"a":"\a"}`
+		_, err := p.Parse(s)
+		if err == nil {
+			t.Fatalf("expected invalid escape sequence error")
+		}
 	})
 }
 
