@@ -110,6 +110,18 @@ func (a *Arena) NewNumberString(s string) *Value {
 	return v
 }
 
+// NewNumberBytes returns new number value containing s.
+//
+// The returned number is valid until Reset is called on a.
+func (a *Arena) NewNumberBytes(b []byte) *Value {
+	v := a.c.getValue()
+	v.t = TypeNumber
+	bLen := len(a.b)
+	a.b = append(a.b, b...)
+	v.s = b2s(a.b[bLen:])
+	return v
+}
+
 // NewNull returns null value.
 func (a *Arena) NewNull() *Value {
 	return valueNull
