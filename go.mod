@@ -1,3 +1,3 @@
-module github.com/miczone/fastjson
+module github.com/wokaio/fastjson
 
-go 1.12
+go 1.18
