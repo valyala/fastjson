@@ -2,10 +2,11 @@ package fastjson
 
 import (
 	"fmt"
-	"github.com/valyala/fastjson/fastfloat"
 	"strconv"
 	"strings"
 	"unicode/utf16"
+
+	"github.com/valyala/fastjson/fastfloat"
 )
 
 // Parser parses JSON.
@@ -557,6 +558,16 @@ func (o *Object) Visit(f func(key []byte, v *Value)) {
 	for _, kv := range o.kvs {
 		f(s2b(kv.k), kv.v)
 	}
+}
+
+// GetKeys returns a slice of strings of all the keys of the
+// parsed JSON object.
+func (o *Object) GetKeys() []string {
+	var keys []string
+	for _, key := range o.kvs {
+		keys = append(keys, key.k)
+	}
+	return keys[:]
 }
 
 // Value represents any JSON value.
