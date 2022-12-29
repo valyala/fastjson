@@ -213,6 +213,10 @@ func ParseBestEffort(s string) float64 {
 		}
 	}
 
+	// the integer part might be elided to remain compliant
+	// with https://go.dev/ref/spec#Floating-point_literals
+	intPartElided := s[i] == '.'
+
 	d := uint64(0)
 	j := i
 	for i < uint(len(s)) {
@@ -232,7 +236,7 @@ func ParseBestEffort(s string) float64 {
 		}
 		break
 	}
-	if i <= j {
+	if i <= j && !intPartElided {
 		s = s[i:]
 		if strings.HasPrefix(s, "+") {
 			s = s[1:]
@@ -263,7 +267,12 @@ func ParseBestEffort(s string) float64 {
 		// Parse fractional part.
 		i++
 		if i >= uint(len(s)) {
-			return 0
+			if intPartElided {
+				return 0
+			}
+			// the fractional part may be elided to remain compliant
+			// with https://go.dev/ref/spec#Floating-point_literals
+			return f
 		}
 		k := i
 		for i < uint(len(s)) {
@@ -296,6 +305,9 @@ func ParseBestEffort(s string) float64 {
 		}
 	}
 	if s[i] == 'e' || s[i] == 'E' {
+		if intPartElided {
+			return 0
+		}
 		// Parse exponent part.
 		i++
 		if i >= uint(len(s)) {
@@ -363,6 +375,10 @@ func Parse(s string) (float64, error) {
 		}
 	}
 
+	// the integer part might be elided to remain compliant
+	// with https://go.dev/ref/spec#Floating-point_literals
+	intPartElided := s[i] == '.'
+
 	d := uint64(0)
 	j := i
 	for i < uint(len(s)) {
@@ -382,7 +398,7 @@ func Parse(s string) (float64, error) {
 		}
 		break
 	}
-	if i <= j {
+	if i <= j && !intPartElided {
 		ss := s[i:]
 		if strings.HasPrefix(ss, "+") {
 			ss = ss[1:]
@@ -413,7 +429,12 @@ func Parse(s string) (float64, error) {
 		// Parse fractional part.
 		i++
 		if i >= uint(len(s)) {
-			return 0, fmt.Errorf("cannot parse fractional part in %q", s)
+			if intPartElided {
+				return 0, fmt.Errorf("cannot parse integer or fractional part in %q", s)
+			}
+			// the fractional part might be elided to remain compliant
+			// with https://go.dev/ref/spec#Floating-point_literals
+			return f, nil
 		}
 		k := i
 		for i < uint(len(s)) {
@@ -446,6 +467,9 @@ func Parse(s string) (float64, error) {
 		}
 	}
 	if s[i] == 'e' || s[i] == 'E' {
+		if intPartElided {
+			return 0, fmt.Errorf("cannot parse integer part in %q", s)
+		}
 		// Parse exponent part.
 		i++
 		if i >= uint(len(s)) {
