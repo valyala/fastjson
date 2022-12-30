@@ -9,7 +9,7 @@ import (
 	"strings"
 	"unicode/utf16"
 
-	"github.com/miczone/fastjson/fastfloat"
+	"github.com/wokaio/fastjson/fastfloat"
 )
 
 var DefaultKeySplitSep = "."

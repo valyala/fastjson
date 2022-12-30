@@ -5,7 +5,7 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/miczone/fastjson"
+	"github.com/wokaio/fastjson"
 )
 
 func ExampleParser_Parse() {

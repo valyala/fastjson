@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/miczone/fastjson"
+	"github.com/wokaio/fastjson"
 )
 
 func ExampleObject_Del() {
