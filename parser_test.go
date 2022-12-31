@@ -324,7 +324,7 @@ func TestValueGetTyped(t *testing.T) {
 		t.Fatalf("unexpected value; got %d; want %d", n, 123)
 	}
 	n64 := v.GetInt64("foo")
-	if n != 123 {
+	if n64 != 123 {
 		t.Fatalf("unexpected value; got %d; want %d", n64, 123)
 	}
 	un := v.GetUint("foo")
@@ -332,7 +332,7 @@ func TestValueGetTyped(t *testing.T) {
 		t.Fatalf("unexpected value; got %d; want %d", un, 123)
 	}
 	un64 := v.GetUint64("foo")
-	if un != 123 {
+	if un64 != 123 {
 		t.Fatalf("unexpected value; got %d; want %d", un64, 123)
 	}
 	n = v.GetInt("bar")
@@ -340,16 +340,16 @@ func TestValueGetTyped(t *testing.T) {
 		t.Fatalf("unexpected non-zero value; got %d", n)
 	}
 	n64 = v.GetInt64("bar")
-	if n != 0 {
+	if n64 != 0 {
 		t.Fatalf("unexpected non-zero value; got %d", n64)
 	}
 	un = v.GetUint("bar")
-	if n != 0 {
+	if un != 0 {
 		t.Fatalf("unexpected non-zero value; got %d", un)
 	}
 	un64 = v.GetUint64("bar")
-	if n != 0 {
-		t.Fatalf("unexpected non-zero value; got %d", n64)
+	if un64 != 0 {
+		t.Fatalf("unexpected non-zero value; got %d", un64)
 	}
 	f := v.GetFloat64("foo")
 	if f != 123.0 {
