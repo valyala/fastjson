@@ -1,11 +1,13 @@
 package fastjson
 
 import (
+	"errors"
 	"fmt"
-	"github.com/valyala/fastjson/fastfloat"
 	"strconv"
 	"strings"
 	"unicode/utf16"
+
+	"github.com/valyala/fastjson/fastfloat"
 )
 
 // Parser parses JSON.
@@ -543,20 +545,72 @@ func (o *Object) Get(key string) *Value {
 	return nil
 }
 
+// TryGet is the fallible version of Get
+//
+// TryGet returns (nil, err) if the given key isn't found
+func (o *Object) TryGet(key string) (*Value, error) {
+	v := o.Get(key)
+	if v != nil {
+		return v, nil
+	}
+
+	return nil, fmt.Errorf("JSON object does not have the requested key %q", key)
+}
+
+// Take is like Get, but also removes the value from the Object by calling Del
+func (o *Object) Take(key string) *Value {
+	v := o.Get(key)
+	o.Del(key)
+	return v
+}
+
+// TryTake is the fallible version of Take
+//
+// TryTake returns (nil, err) if the given key isn't found
+func (o *Object) TryTake(key string) (*Value, error) {
+	v, err := o.TryGet(key)
+	if err != nil {
+		return nil, err
+	}
+	o.Del(key)
+	return v, nil
+}
+
 // Visit calls f for each item in the o in the original order
 // of the parsed JSON.
 //
 // f cannot hold key and/or v after returning.
 func (o *Object) Visit(f func(key []byte, v *Value)) {
+	o.TryVisit(func(key []byte, v *Value) error {
+		f(key, v)
+		return nil
+	})
+}
+
+var ErrAbortVisit = errors.New("abort visit")
+
+// TryVisit the fallible version of Visit
+//
+// TryVisit aborts iteration and returns *nil* if f returns *ErrAbortVisit*
+//
+// TryVisit aborts iteration and returns *err* if f returns any other *err*
+func (o *Object) TryVisit(f func(key []byte, v *Value) error) error {
 	if o == nil {
-		return
+		return fmt.Errorf("JSON object is nil, cannot visit it")
 	}
 
 	o.unescapeKeys()
-
 	for _, kv := range o.kvs {
-		f(s2b(kv.k), kv.v)
+		err := f(s2b(kv.k), kv.v)
+		if errors.Is(err, ErrAbortVisit) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 // Value represents any JSON value.
