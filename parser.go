@@ -267,28 +267,35 @@ func parseObject(s string, c *cache, depth int) (*Value, string, error) {
 }
 
 func escapeString(dst []byte, s string) []byte {
-	if !hasSpecialChars(s) {
-		// Fast path - nothing to escape.
-		dst = append(dst, '"')
-		dst = append(dst, s...)
-		dst = append(dst, '"')
-		return dst
-	}
-
-	// Slow path.
-	return strconv.AppendQuote(dst, s)
-}
-
-func hasSpecialChars(s string) bool {
-	if strings.IndexByte(s, '"') >= 0 || strings.IndexByte(s, '\\') >= 0 {
-		return true
-	}
 	for i := 0; i < len(s); i++ {
-		if s[i] < 0x20 {
-			return true
+		c := s[i]
+		switch {
+		case c == 0x22:
+			// quotation mark
+			dst = append(dst, []byte{92, 34}...)
+		case c == 0x5c:
+			// reverse solidus
+			dst = append(dst, []byte{92, 92}...)
+		case c >= 0x20:
+			// default, rest are control chars
+			dst = append(dst, c)
+		case c < 0x09:
+			dst = append(dst, []byte{92, 117, 48, 48, 48 + c, 48}...)
+		case c == 0x09:
+			dst = append(dst, []byte{92, 116}...)
+		case c == 0x0a:
+			dst = append(dst, []byte{92, 110}...)
+		case c == 0x0d:
+			dst = append(dst, []byte{92, 114}...)
+		case c < 0x10:
+			dst = append(dst, []byte{92, 117, 48, 48, 87 + c, 48}...)
+		case c < 0x1a:
+			dst = append(dst, []byte{92, 117, 48, 49, 32 + c, 48}...)
+		case c < 0x20:
+			dst = append(dst, []byte{92, 117, 48, 49, 71 + c, 48}...)
 		}
 	}
-	return false
+	return dst
 }
 
 func unescapeStringBestEffort(s string) string {
