@@ -323,8 +323,6 @@ func unescapeStringBestEffort(s string) string {
 			b = append(b, '"')
 		case '\\':
 			b = append(b, '\\')
-		case '/':
-			b = append(b, '/')
 		case 'b':
 			b = append(b, '\b')
 		case 'f':
