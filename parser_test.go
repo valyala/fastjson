@@ -181,7 +181,7 @@ func TestParserPool(t *testing.T) {
 	var pp ParserPool
 	for i := 0; i < 10; i++ {
 		p := pp.Get()
-		if _, err := p.Parse("null"); err != nil {
+		if _, err := p.Parse("null", nil); err != nil {
 			t.Fatalf("cannot parse null: %s", err)
 		}
 		pp.Put(p)
@@ -191,7 +191,7 @@ func TestParserPool(t *testing.T) {
 func TestValueInvalidTypeConversion(t *testing.T) {
 	var p Parser
 
-	v, err := p.Parse(`[{},[],"",123.45,true,null]`)
+	v, err := p.Parse(`[{},[],"",123.45,true,null]`, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -279,7 +279,7 @@ func TestValueGetTyped(t *testing.T) {
 		"inf_float": Inf,
 		"minus_inf_float": -Inf,
 		"nan": nan
-	}`)
+	}`, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -432,7 +432,7 @@ func TestValueGetTyped(t *testing.T) {
 
 func TestVisitNil(t *testing.T) {
 	var p Parser
-	v, err := p.Parse(`{}`)
+	v, err := p.Parse(`{}`, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -449,7 +449,7 @@ func TestValueGet(t *testing.T) {
 	var pp ParserPool
 
 	p := pp.Get()
-	v, err := p.ParseBytes([]byte(`{"xx":33.33,"foo":[123,{"bar":["baz"],"x":"y"}], "": "empty-key", "empty-value": ""}`))
+	v, err := p.ParseBytes([]byte(`{"xx":33.33,"foo":[123,{"bar":["baz"],"x":"y"}], "": "empty-key", "empty-value": ""}`), nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -532,7 +532,7 @@ func TestParserParse(t *testing.T) {
 	var p Parser
 
 	t.Run("complex-string", func(t *testing.T) {
-		v, err := p.Parse(`{"тест":1, "\\\"фыва\"":2, "\\\"\u1234x":"\\fЗУ\\\\"}`)
+		v, err := p.Parse(`{"тест":1, "\\\"фыва\"":2, "\\\"\u1234x":"\\fЗУ\\\\"}`, nil)
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
@@ -551,7 +551,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("invalid-string-escape", func(t *testing.T) {
-		v, err := p.Parse(`"fo\u"`)
+		v, err := p.Parse(`"fo\u"`, nil)
 		if err != nil {
 			t.Fatalf("unexpected error when parsing string")
 		}
@@ -564,7 +564,7 @@ func TestParserParse(t *testing.T) {
 			t.Fatalf("unexpected string; got %q; want %q", sb, "fo\\u")
 		}
 
-		v, err = p.Parse(`"foo\ubarz2134"`)
+		v, err = p.Parse(`"foo\ubarz2134"`, nil)
 		if err != nil {
 			t.Fatalf("unexpected error when parsing string")
 		}
@@ -576,7 +576,7 @@ func TestParserParse(t *testing.T) {
 			t.Fatalf("unexpected string; got %q; want %q", sb, "foo")
 		}
 
-		v, err = p.Parse(`"fo` + "\x19" + `\u"`)
+		v, err = p.Parse(`"fo`+"\x19"+`\u"`, nil)
 		if err != nil {
 			t.Fatalf("unexpected error when parsing string")
 		}
@@ -590,7 +590,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("invalid-number", func(t *testing.T) {
-		v, err := p.Parse("123+456")
+		v, err := p.Parse("123+456", nil)
 		if err != nil {
 			t.Fatalf("unexpected error when parsing int")
 		}
@@ -606,22 +606,22 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("empty-json", func(t *testing.T) {
-		_, err := p.Parse("")
+		_, err := p.Parse("", nil)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing empty json")
 		}
-		_, err = p.Parse("\n\t    \n")
+		_, err = p.Parse("\n\t    \n", nil)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing empty json")
 		}
 	})
 
 	t.Run("invalid-tail", func(t *testing.T) {
-		_, err := p.Parse("123 456")
+		_, err := p.Parse("123 456", nil)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing invalid tail")
 		}
-		_, err = p.Parse("[] 1223")
+		_, err = p.Parse("[] 1223", nil)
 		if err == nil {
 			t.Fatalf("expecting non-nil error when parsing invalid tail")
 		}
@@ -630,7 +630,7 @@ func TestParserParse(t *testing.T) {
 	t.Run("invalid-json", func(t *testing.T) {
 		f := func(s string) {
 			t.Helper()
-			if _, err := p.Parse(s); err == nil {
+			if _, err := p.Parse(s, nil); err == nil {
 				t.Fatalf("expecting non-nil error when parsing invalid json %q", s)
 			}
 		}
@@ -651,7 +651,7 @@ func TestParserParse(t *testing.T) {
 		f(`{"foo":123 "bar":"baz"}`)
 		f("-2134.453eec+43")
 
-		if _, err := p.Parse("-2134.453E+43"); err != nil {
+		if _, err := p.Parse("-2134.453E+43", nil); err != nil {
 			t.Fatalf("unexpected error when parsing number: %s", err)
 		}
 
@@ -661,7 +661,7 @@ func TestParserParse(t *testing.T) {
 		// Incomplete string.
 		f(`"{\"foo\": 123}`)
 
-		v, err := p.Parse(`"{\"foo\": 123}"`)
+		v, err := p.Parse(`"{\"foo\": 123}"`, nil)
 		if err != nil {
 			t.Fatalf("unexpected error when parsing json string: %s", err)
 		}
@@ -674,7 +674,7 @@ func TestParserParse(t *testing.T) {
 	t.Run("incomplete-object", func(t *testing.T) {
 		f := func(s string) {
 			t.Helper()
-			if _, err := p.Parse(s); err == nil {
+			if _, err := p.Parse(s, nil); err == nil {
 				t.Fatalf("expecting non-nil error when parsing incomplete object %q", s)
 			}
 		}
@@ -687,7 +687,7 @@ func TestParserParse(t *testing.T) {
 		f(`{"foo":null,}`)
 		f(`{"foo":null,"bar"}`)
 
-		if _, err := p.Parse(`{"foo":null,"bar":"baz"}`); err != nil {
+		if _, err := p.Parse(`{"foo":null,"bar":"baz"}`, nil); err != nil {
 			t.Fatalf("unexpected error when parsing object: %s", err)
 		}
 	})
@@ -695,7 +695,7 @@ func TestParserParse(t *testing.T) {
 	t.Run("incomplete-array", func(t *testing.T) {
 		f := func(s string) {
 			t.Helper()
-			if _, err := p.Parse(s); err == nil {
+			if _, err := p.Parse(s, nil); err == nil {
 				t.Fatalf("expecting non-nil error when parsing incomplete array %q", s)
 			}
 		}
@@ -707,7 +707,7 @@ func TestParserParse(t *testing.T) {
 		f("[123,{}")
 		f("[123,{},]")
 
-		if _, err := p.Parse("[123,{},[]]"); err != nil {
+		if _, err := p.Parse("[123,{},[]]", nil); err != nil {
 			t.Fatalf("unexpected error when parsing array: %s", err)
 		}
 	})
@@ -715,7 +715,7 @@ func TestParserParse(t *testing.T) {
 	t.Run("incomplete-string", func(t *testing.T) {
 		f := func(s string) {
 			t.Helper()
-			if _, err := p.Parse(s); err == nil {
+			if _, err := p.Parse(s, nil); err == nil {
 				t.Fatalf("expecting non-nil error when parsing incomplete string %q", s)
 			}
 		}
@@ -727,13 +727,13 @@ func TestParserParse(t *testing.T) {
 		f(`"foo'`)
 		f(`"foo'bar'`)
 
-		if _, err := p.Parse(`"foo\\\""`); err != nil {
+		if _, err := p.Parse(`"foo\\\""`, nil); err != nil {
 			t.Fatalf("unexpected error when parsing string: %s", err)
 		}
 	})
 
 	t.Run("empty-object", func(t *testing.T) {
-		v, err := p.Parse("{}")
+		v, err := p.Parse("{}", nil)
 		if err != nil {
 			t.Fatalf("cannot parse empty object: %s", err)
 		}
@@ -756,7 +756,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("empty-array", func(t *testing.T) {
-		v, err := p.Parse("[]")
+		v, err := p.Parse("[]", nil)
 		if err != nil {
 			t.Fatalf("cannot parse empty array: %s", err)
 		}
@@ -779,7 +779,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("null", func(t *testing.T) {
-		v, err := p.Parse("null")
+		v, err := p.Parse("null", nil)
 		if err != nil {
 			t.Fatalf("cannot parse null: %s", err)
 		}
@@ -794,7 +794,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("true", func(t *testing.T) {
-		v, err := p.Parse("true")
+		v, err := p.Parse("true", nil)
 		if err != nil {
 			t.Fatalf("cannot parse true: %s", err)
 		}
@@ -816,7 +816,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("false", func(t *testing.T) {
-		v, err := p.Parse("false")
+		v, err := p.Parse("false", nil)
 		if err != nil {
 			t.Fatalf("cannot parse false: %s", err)
 		}
@@ -838,7 +838,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("integer", func(t *testing.T) {
-		v, err := p.Parse("12345")
+		v, err := p.Parse("12345", nil)
 		if err != nil {
 			t.Fatalf("cannot parse integer: %s", err)
 		}
@@ -860,7 +860,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("int64", func(t *testing.T) {
-		v, err := p.Parse("-8838840643388017390")
+		v, err := p.Parse("-8838840643388017390", nil)
 		if err != nil {
 			t.Fatalf("cannot parse int64: %s", err)
 		}
@@ -882,7 +882,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("uint", func(t *testing.T) {
-		v, err := p.Parse("18446744073709551615")
+		v, err := p.Parse("18446744073709551615", nil)
 		if err != nil {
 			t.Fatalf("cannot parse uint: %s", err)
 		}
@@ -904,7 +904,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("uint64", func(t *testing.T) {
-		v, err := p.Parse("18446744073709551615")
+		v, err := p.Parse("18446744073709551615", nil)
 		if err != nil {
 			t.Fatalf("cannot parse uint64: %s", err)
 		}
@@ -926,7 +926,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("float", func(t *testing.T) {
-		v, err := p.Parse("-12.345")
+		v, err := p.Parse("-12.345", nil)
 		if err != nil {
 			t.Fatalf("cannot parse integer: %s", err)
 		}
@@ -948,7 +948,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("string", func(t *testing.T) {
-		v, err := p.Parse(`"foo bar"`)
+		v, err := p.Parse(`"foo bar"`, nil)
 		if err != nil {
 			t.Fatalf("cannot parse string: %s", err)
 		}
@@ -970,7 +970,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("string-escaped", func(t *testing.T) {
-		v, err := p.Parse(`"\n\t\\foo\"bar\u3423x\/\b\f\r\\"`)
+		v, err := p.Parse(`"\n\t\\foo\"bar\u3423x\/\b\f\r\\"`, nil)
 		if err != nil {
 			t.Fatalf("cannot parse string: %s", err)
 		}
@@ -993,7 +993,7 @@ func TestParserParse(t *testing.T) {
 
 	t.Run("object-one-element", func(t *testing.T) {
 		v, err := p.Parse(`  {
-	"foo"   : "bar"  }	 `)
+	"foo"   : "bar"  }	 `, nil)
 		if err != nil {
 			t.Fatalf("cannot parse object: %s", err)
 		}
@@ -1021,7 +1021,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("object-multi-elements", func(t *testing.T) {
-		v, err := p.Parse(`{"foo": [1,2,3  ]  ,"bar":{},"baz":123.456}`)
+		v, err := p.Parse(`{"foo": [1,2,3  ]  ,"bar":{},"baz":123.456}`, nil)
 		if err != nil {
 			t.Fatalf("cannot parse object: %s", err)
 		}
@@ -1057,7 +1057,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("array-one-element", func(t *testing.T) {
-		v, err := p.Parse(`   [{"bar":[  [],[[]]   ]} ]  `)
+		v, err := p.Parse(`   [{"bar":[  [],[[]]   ]} ]  `, nil)
 		if err != nil {
 			t.Fatalf("cannot parse array: %s", err)
 		}
@@ -1083,7 +1083,7 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("array-multi-elements", func(t *testing.T) {
-		v, err := p.Parse(`   [1,"foo",{"bar":[     ],"baz":""}    ,[  "x" ,	"y"   ]     ]   `)
+		v, err := p.Parse(`   [1,"foo",{"bar":[     ],"baz":""}    ,[  "x" ,	"y"   ]     ]   `, nil)
 		if err != nil {
 			t.Fatalf("cannot parse array: %s", err)
 		}
@@ -1119,7 +1119,7 @@ func TestParserParse(t *testing.T) {
 
 	t.Run("complex-object", func(t *testing.T) {
 		s := `{"foo":[-1.345678,[[[[[]]]],{}],"bar"],"baz":{"bbb":123}}`
-		v, err := p.Parse(s)
+		v, err := p.Parse(s, nil)
 		if err != nil {
 			t.Fatalf("cannot parse complex object: %s", err)
 		}
@@ -1133,7 +1133,7 @@ func TestParserParse(t *testing.T) {
 		}
 
 		s = strings.TrimSpace(largeFixture)
-		v, err = p.Parse(s)
+		v, err = p.Parse(s, nil)
 		if err != nil {
 			t.Fatalf("cannot parse largeFixture: %s", err)
 		}
@@ -1178,7 +1178,7 @@ func TestParserParse(t *testing.T) {
 		}
 
 		s := strings.TrimSpace(largeFixture)
-		v, err := p.Parse(s)
+		v, err := p.Parse(s, nil)
 		if err != nil {
 			t.Fatalf("cannot parse largeFixture: %s", err)
 		}
@@ -1214,7 +1214,7 @@ func TestParseBigObject(t *testing.T) {
 
 	// parse it
 	var p Parser
-	v, err := p.Parse(s)
+	v, err := p.Parse(s, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -1260,7 +1260,7 @@ func TestParseGetConcurrent(t *testing.T) {
 func testParseGetSerial(s string) error {
 	var p Parser
 	for i := 0; i < 100; i++ {
-		v, err := p.Parse(s)
+		v, err := p.Parse(s, nil)
 		if err != nil {
 			return fmt.Errorf("cannot parse %q: %s", s, err)
 		}

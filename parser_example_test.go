@@ -9,7 +9,7 @@ import (
 
 func ExampleParser_Parse() {
 	var p fastjson.Parser
-	v, err := p.Parse(`{"foo":"bar", "baz": 123}`)
+	v, err := p.Parse(`{"foo":"bar", "baz": 123}`, nil)
 	if err != nil {
 		log.Fatalf("cannot parse json: %s", err)
 	}
@@ -32,7 +32,7 @@ func ExampleParser_Parse_reuse() {
 
 	for i := 0; i < 3; i++ {
 		s := fmt.Sprintf(`["foo_%d","bar_%d","%d"]`, i, i, i)
-		v, err := p.Parse(s)
+		v, err := p.Parse(s, nil)
 		if err != nil {
 			log.Fatalf("cannot parse json: %s", err)
 		}
@@ -62,7 +62,7 @@ func ExampleValue_MarshalTo() {
 		]
 	}`
 	var p fastjson.Parser
-	v, err := p.Parse(s)
+	v, err := p.Parse(s, nil)
 	if err != nil {
 		log.Fatalf("cannot parse json: %s", err)
 	}
@@ -83,7 +83,7 @@ func ExampleValue_MarshalTo() {
 func ExampleValue_Get() {
 	s := `{"foo":[{"bar":{"baz":123,"x":"434"},"y":[]},[null, false]],"qwe":true}`
 	var p fastjson.Parser
-	v, err := p.Parse(s)
+	v, err := p.Parse(s, nil)
 	if err != nil {
 		log.Fatalf("cannot parse json: %s", err)
 	}
@@ -124,7 +124,7 @@ func ExampleValue_Type() {
 	}`
 
 	var p fastjson.Parser
-	v, err := p.Parse(s)
+	v, err := p.Parse(s, nil)
 	if err != nil {
 		log.Fatalf("cannot parse json: %s", err)
 	}
@@ -155,7 +155,7 @@ func ExampleObject_Visit() {
 	}`
 
 	var p fastjson.Parser
-	v, err := p.Parse(s)
+	v, err := p.Parse(s, nil)
 	if err != nil {
 		log.Fatalf("cannot parse json: %s", err)
 	}
@@ -188,7 +188,7 @@ func ExampleValue_GetStringBytes() {
 	]`
 
 	var p fastjson.Parser
-	v, err := p.Parse(s)
+	v, err := p.Parse(s, nil)
 	if err != nil {
 		log.Fatalf("cannot parse json: %s", err)
 	}

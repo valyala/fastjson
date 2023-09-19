@@ -10,7 +10,7 @@ func TestObjectDelSet(t *testing.T) {
 
 	o.Del("xx")
 
-	v, err := p.Parse(`{"fo\no": "bar", "x": [1,2,3]}`)
+	v, err := p.Parse(`{"fo\no": "bar", "x": [1,2,3]}`, nil)
 	if err != nil {
 		t.Fatalf("unexpected error during parse: %s", err)
 	}
@@ -55,7 +55,7 @@ func TestObjectDelSet(t *testing.T) {
 
 func TestValueDelSet(t *testing.T) {
 	var p Parser
-	v, err := p.Parse(`{"xx": 123, "x": [1,2,3]}`)
+	v, err := p.Parse(`{"xx": 123, "x": [1,2,3]}`, nil)
 	if err != nil {
 		t.Fatalf("unexpected error during parse: %s", err)
 	}

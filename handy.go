@@ -12,7 +12,7 @@ var handyPool ParserPool
 // Parser is faster for obtaining multiple fields from JSON.
 func GetString(data []byte, keys ...string) string {
 	p := handyPool.Get()
-	v, err := p.ParseBytes(data)
+	v, err := p.ParseBytes(data, nil)
 	if err != nil {
 		handyPool.Put(p)
 		return ""
@@ -33,7 +33,7 @@ func GetString(data []byte, keys ...string) string {
 // Parser is faster for obtaining multiple fields from JSON.
 func GetBytes(data []byte, keys ...string) []byte {
 	p := handyPool.Get()
-	v, err := p.ParseBytes(data)
+	v, err := p.ParseBytes(data, nil)
 	if err != nil {
 		handyPool.Put(p)
 		return nil
@@ -60,7 +60,7 @@ func GetBytes(data []byte, keys ...string) []byte {
 // Parser is faster for obtaining multiple fields from JSON.
 func GetInt(data []byte, keys ...string) int {
 	p := handyPool.Get()
-	v, err := p.ParseBytes(data)
+	v, err := p.ParseBytes(data, nil)
 	if err != nil {
 		handyPool.Put(p)
 		return 0
@@ -80,7 +80,7 @@ func GetInt(data []byte, keys ...string) int {
 // Parser is faster for obtaining multiple fields from JSON.
 func GetFloat64(data []byte, keys ...string) float64 {
 	p := handyPool.Get()
-	v, err := p.ParseBytes(data)
+	v, err := p.ParseBytes(data, nil)
 	if err != nil {
 		handyPool.Put(p)
 		return 0
@@ -100,7 +100,7 @@ func GetFloat64(data []byte, keys ...string) float64 {
 // Parser is faster for obtaining multiple fields from JSON.
 func GetBool(data []byte, keys ...string) bool {
 	p := handyPool.Get()
-	v, err := p.ParseBytes(data)
+	v, err := p.ParseBytes(data, nil)
 	if err != nil {
 		handyPool.Put(p)
 		return false
@@ -119,7 +119,7 @@ func GetBool(data []byte, keys ...string) bool {
 // Parser is faster when multiple fields must be checked in the JSON.
 func Exists(data []byte, keys ...string) bool {
 	p := handyPool.Get()
-	v, err := p.ParseBytes(data)
+	v, err := p.ParseBytes(data, nil)
 	if err != nil {
 		handyPool.Put(p)
 		return false
@@ -134,7 +134,7 @@ func Exists(data []byte, keys ...string) bool {
 // The function is slower than the Parser.Parse for re-used Parser.
 func Parse(s string) (*Value, error) {
 	var p Parser
-	return p.Parse(s)
+	return p.Parse(s, nil)
 }
 
 // MustParse parses json string s.
@@ -154,7 +154,7 @@ func MustParse(s string) *Value {
 // The function is slower than the Parser.ParseBytes for re-used Parser.
 func ParseBytes(b []byte) (*Value, error) {
 	var p Parser
-	return p.ParseBytes(b)
+	return p.ParseBytes(b, nil)
 }
 
 // MustParseBytes parses b containing json.

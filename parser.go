@@ -27,12 +27,12 @@ type Parser struct {
 // The returned value is valid until the next call to Parse*.
 //
 // Use Scanner if a stream of JSON values must be parsed.
-func (p *Parser) Parse(s string) (*Value, error) {
+func (p *Parser) Parse(s string, skipMap *SkipMap) (*Value, error) {
 	s = skipWS(s)
 	p.b = append(p.b[:0], s...)
 	p.c.reset()
 
-	v, tail, err := parseValue(b2s(p.b), &p.c, 0)
+	v, tail, err := parseValue(b2s(p.b), &p.c, 0, false, skipMap)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse JSON: %s; unparsed tail: %q", err, startEndString(tail))
 	}
@@ -48,12 +48,18 @@ func (p *Parser) Parse(s string) (*Value, error) {
 // The returned Value is valid until the next call to Parse*.
 //
 // Use Scanner if a stream of JSON values must be parsed.
-func (p *Parser) ParseBytes(b []byte) (*Value, error) {
-	return p.Parse(b2s(b))
+func (p *Parser) ParseBytes(b []byte, skipMap *SkipMap) (*Value, error) {
+	return p.Parse(b2s(b), skipMap)
 }
 
 type cache struct {
 	vs []Value
+}
+
+type SkipMap struct {
+	skip      bool
+	subfields map[string]*SkipMap
+	subArray  []*SkipMap
 }
 
 func (c *cache) reset() {
@@ -98,7 +104,7 @@ type kv struct {
 // MaxDepth is the maximum depth for nested JSON.
 const MaxDepth = 300
 
-func parseValue(s string, c *cache, depth int) (*Value, string, error) {
+func parseValue(s string, c *cache, depth int, skip bool, skipMap *SkipMap) (*Value, string, error) {
 	if len(s) == 0 {
 		return nil, s, fmt.Errorf("cannot parse empty string")
 	}
@@ -108,14 +114,14 @@ func parseValue(s string, c *cache, depth int) (*Value, string, error) {
 	}
 
 	if s[0] == '{' {
-		v, tail, err := parseObject(s[1:], c, depth)
+		v, tail, err := parseObject(s[1:], c, depth, skip, skipMap)
 		if err != nil {
 			return nil, tail, fmt.Errorf("cannot parse object: %s", err)
 		}
 		return v, tail, nil
 	}
 	if s[0] == '[' {
-		v, tail, err := parseArray(s[1:], c, depth)
+		v, tail, err := parseArray(s[1:], c, depth, skip, skipMap)
 		if err != nil {
 			return nil, tail, fmt.Errorf("cannot parse array: %s", err)
 		}
@@ -125,6 +131,9 @@ func parseValue(s string, c *cache, depth int) (*Value, string, error) {
 		ss, tail, err := parseRawString(s[1:])
 		if err != nil {
 			return nil, tail, fmt.Errorf("cannot parse string: %s", err)
+		}
+		if skip {
+			return nil, tail, nil
 		}
 		v := c.getValue()
 		v.t = typeRawString
@@ -147,6 +156,10 @@ func parseValue(s string, c *cache, depth int) (*Value, string, error) {
 		if len(s) < len("null") || s[:len("null")] != "null" {
 			// Try parsing NaN
 			if len(s) >= 3 && strings.EqualFold(s[:3], "nan") {
+				if skip {
+					return nil, s[3:], nil
+				}
+
 				v := c.getValue()
 				v.t = TypeNumber
 				v.s = s[:3]
@@ -161,38 +174,64 @@ func parseValue(s string, c *cache, depth int) (*Value, string, error) {
 	if err != nil {
 		return nil, tail, fmt.Errorf("cannot parse number: %s", err)
 	}
+	if skip {
+		return nil, tail, nil
+	}
+
 	v := c.getValue()
 	v.t = TypeNumber
 	v.s = ns
 	return v, tail, nil
 }
 
-func parseArray(s string, c *cache, depth int) (*Value, string, error) {
+func parseArray(s string, c *cache, depth int, skip bool, skipMap *SkipMap) (*Value, string, error) {
 	s = skipWS(s)
 	if len(s) == 0 {
 		return nil, s, fmt.Errorf("missing ']'")
 	}
 
 	if s[0] == ']' {
+		if skip {
+			return nil, s[1:], nil
+		}
+
 		v := c.getValue()
 		v.t = TypeArray
 		v.a = v.a[:0]
 		return v, s[1:], nil
 	}
 
-	a := c.getValue()
-	a.t = TypeArray
-	a.a = a.a[:0]
+	var a *Value
+
+	if !skip {
+		a = c.getValue()
+		a.t = TypeArray
+		a.a = a.a[:0]
+	}
+
+	i := 0
+
 	for {
 		var v *Value
 		var err error
 
 		s = skipWS(s)
-		v, s, err = parseValue(s, c, depth)
+		var nextMap *SkipMap
+
+		if skipMap != nil && skipMap.subArray != nil && skipMap.subArray[i] != nil {
+			nextMap = skipMap.subArray[i]
+		}
+
+		v, s, err = parseValue(s, c, depth, skip, nextMap)
 		if err != nil {
 			return nil, s, fmt.Errorf("cannot parse array value: %s", err)
 		}
-		a.a = append(a.a, v)
+
+		i++
+
+		if !skip {
+			a.a = append(a.a, v)
+		}
 
 		s = skipWS(s)
 		if len(s) == 0 {
@@ -210,35 +249,59 @@ func parseArray(s string, c *cache, depth int) (*Value, string, error) {
 	}
 }
 
-func parseObject(s string, c *cache, depth int) (*Value, string, error) {
+func parseObject(s string, c *cache, depth int, skip bool, skipMap *SkipMap) (*Value, string, error) {
 	s = skipWS(s)
 	if len(s) == 0 {
 		return nil, s, fmt.Errorf("missing '}'")
 	}
 
 	if s[0] == '}' {
+		if skip {
+			return nil, s[1:], nil
+		}
+
 		v := c.getValue()
 		v.t = TypeObject
 		v.o.reset()
 		return v, s[1:], nil
 	}
 
-	o := c.getValue()
-	o.t = TypeObject
-	o.o.reset()
+	var o *Value
+
+	if !skip {
+		o = c.getValue()
+		o.t = TypeObject
+		o.o.reset()
+	}
+
 	for {
 		var err error
-		kv := o.o.getKV()
+
+		skipKey := skip
 
 		// Parse key.
 		s = skipWS(s)
 		if len(s) == 0 || s[0] != '"' {
 			return nil, s, fmt.Errorf(`cannot find opening '"" for object key`)
 		}
-		kv.k, s, err = parseRawKey(s[1:])
+
+		key := ""
+
+		key, s, err = parseRawKey(s[1:])
 		if err != nil {
 			return nil, s, fmt.Errorf("cannot parse object key: %s", err)
 		}
+
+		var nextMap *SkipMap
+
+		if skipMap != nil && skipMap.subfields[key] != nil {
+			nextMap = skipMap.subfields[key]
+		}
+
+		if nextMap != nil && nextMap.skip {
+			skipKey = true
+		}
+
 		s = skipWS(s)
 		if len(s) == 0 || s[0] != ':' {
 			return nil, s, fmt.Errorf("missing ':' after object key")
@@ -247,10 +310,18 @@ func parseObject(s string, c *cache, depth int) (*Value, string, error) {
 
 		// Parse value
 		s = skipWS(s)
-		kv.v, s, err = parseValue(s, c, depth)
+		var v *Value
+		v, s, err = parseValue(s, c, depth, skipKey, nextMap)
 		if err != nil {
 			return nil, s, fmt.Errorf("cannot parse object value: %s", err)
 		}
+
+		if !skipKey {
+			kv := o.o.getKV()
+			kv.k = key
+			kv.v = v
+		}
+
 		s = skipWS(s)
 		if len(s) == 0 {
 			return nil, s, fmt.Errorf("unexpected end of object")

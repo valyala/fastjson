@@ -92,7 +92,7 @@ func benchmarkObjectGet(b *testing.B, itemsCount, lookupsCount int) {
 	b.RunParallel(func(pb *testing.PB) {
 		p := benchPool.Get()
 		for pb.Next() {
-			v, err := p.Parse(s)
+			v, err := p.Parse(s, nil)
 			if err != nil {
 				panic(fmt.Errorf("unexpected error: %s", err))
 			}
@@ -131,7 +131,7 @@ func BenchmarkMarshalTo(b *testing.B) {
 
 func benchmarkMarshalTo(b *testing.B, s string) {
 	p := benchPool.Get()
-	v, err := p.Parse(s)
+	v, err := p.Parse(s, nil)
 	if err != nil {
 		panic(fmt.Errorf("unexpected error: %s", err))
 	}
@@ -167,6 +167,26 @@ func BenchmarkParse(b *testing.B) {
 	})
 	b.Run("twitter", func(b *testing.B) {
 		benchmarkParse(b, twitterFixture)
+	})
+}
+
+func BenchmarkSkip(b *testing.B) {
+	b.Run("fastjson", func(b *testing.B) {
+		b.ReportAllocs()
+		b.SetBytes(int64(len(citmFixture)))
+		b.RunParallel(func(pb *testing.PB) {
+			p := benchPool.Get()
+			for pb.Next() {
+				v, err := p.Parse(citmFixture, nil)
+				if err != nil {
+					panic(fmt.Errorf("unexpected error: %s", err))
+				}
+				if v.Type() != TypeObject {
+					panic(fmt.Errorf("unexpected value type; got %s; want %s", v.Type(), TypeObject))
+				}
+			}
+			benchPool.Put(p)
+		})
 	})
 }
 
@@ -214,7 +234,7 @@ func benchmarkFastJSONParse(b *testing.B, s string) {
 	b.RunParallel(func(pb *testing.PB) {
 		p := benchPool.Get()
 		for pb.Next() {
-			v, err := p.Parse(s)
+			v, err := p.Parse(s, nil)
 			if err != nil {
 				panic(fmt.Errorf("unexpected error: %s", err))
 			}
@@ -233,7 +253,7 @@ func benchmarkFastJSONParseGet(b *testing.B, s string) {
 		p := benchPool.Get()
 		var n int
 		for pb.Next() {
-			v, err := p.Parse(s)
+			v, err := p.Parse(s, nil)
 			if err != nil {
 				panic(fmt.Errorf("unexpected error: %s", err))
 			}
