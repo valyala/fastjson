@@ -59,6 +59,7 @@ func testArena(a *Arena) error {
 	s := a.NewString("foo")
 	o.Set("str1", s)
 	o.Set("str2", a.NewStringBytes([]byte("xx")))
+	o.Set("str3", a.NewString("\r"))
 
 	aa := a.NewArray()
 	aa.SetArrayItem(0, s)
@@ -69,7 +70,7 @@ func testArena(a *Arena) error {
 	o.Set("obj", obj)
 
 	str := o.String()
-	strExpected := `{"nil1":null,"nil2":null,"false":false,"true":true,"ni":123,"nf":1.23,"ns":34.43,"str1":"foo","str2":"xx","a":["foo",123],"obj":{"s":"foo"}}`
+	strExpected := `{"nil1":null,"nil2":null,"false":false,"true":true,"ni":123,"nf":1.23,"ns":34.43,"str1":"foo","str2":"xx","str3":"\r","a":["foo",123],"obj":{"s":"foo"}}`
 	if str != strExpected {
 		return fmt.Errorf("unexpected json\ngot\n%s\nwant\n%s", str, strExpected)
 	}
