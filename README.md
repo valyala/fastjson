@@ -114,7 +114,7 @@ Build using `go-fuzz-build` and run `go-fuzz` with an optional corpus.
 ```bash
 mkdir -p workdir/corpus
 cp $GOPATH/src/github.com/dvyukov/go-fuzz-corpus/json/corpus/* workdir/corpus
-go-fuzz-build github.com/valyala/fastjson
+go-fuzz-build github.com/wokaio/fastjson
 go-fuzz -bin=fastjson-fuzz.zip -workdir=workdir
 ```
 

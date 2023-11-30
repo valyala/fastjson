@@ -1,12 +1,18 @@
 package fastjson
 
 import (
+	"bytes"
 	"fmt"
-	"github.com/valyala/fastjson/fastfloat"
+	"html/template"
+	//"log"
 	"strconv"
 	"strings"
 	"unicode/utf16"
+
+	"github.com/wokaio/fastjson/fastfloat"
 )
+
+var DefaultKeySplitSep = "."
 
 // Parser parses JSON.
 //
@@ -21,6 +27,8 @@ type Parser struct {
 	// c is a cache for json values.
 	c cache
 }
+
+type Replacements map[string]interface{}
 
 // Parse parses s containing JSON.
 //
@@ -731,9 +739,16 @@ func (v *Value) Get(keys ...string) *Value {
 func (v *Value) GetObject(keys ...string) *Object {
 	v = v.Get(keys...)
 	if v == nil || v.t != TypeObject {
+		//log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return nil
 	}
 	return &v.o
+}
+
+// GetFastObject returns object value by the given key path.
+func (v *Value) GetFastObject(key string) *Object {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetObject(keys...)
 }
 
 // GetArray returns array value by the given keys path.
@@ -746,9 +761,16 @@ func (v *Value) GetObject(keys ...string) *Object {
 func (v *Value) GetArray(keys ...string) []*Value {
 	v = v.Get(keys...)
 	if v == nil || v.t != TypeArray {
+		//log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return nil
 	}
 	return v.a
+}
+
+// GetFastArray returns object value by the given key path.
+func (v *Value) GetFastArray(key string) []*Value {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetArray(keys...)
 }
 
 // GetFloat64 returns float64 value by the given keys path.
@@ -759,9 +781,16 @@ func (v *Value) GetArray(keys ...string) []*Value {
 func (v *Value) GetFloat64(keys ...string) float64 {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeNumber {
+		//log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return 0
 	}
 	return fastfloat.ParseBestEffort(v.s)
+}
+
+// GetFastFloat64 returns object value by the given key path.
+func (v *Value) GetFastFloat64(key string) float64 {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetFloat64(keys...)
 }
 
 // GetInt returns int value by the given keys path.
@@ -772,6 +801,7 @@ func (v *Value) GetFloat64(keys ...string) float64 {
 func (v *Value) GetInt(keys ...string) int {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeNumber {
+		//log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return 0
 	}
 	n := fastfloat.ParseInt64BestEffort(v.s)
@@ -782,6 +812,12 @@ func (v *Value) GetInt(keys ...string) int {
 	return nn
 }
 
+// GetFastInt returns object value by the given key path.
+func (v *Value) GetFastInt(key string) int {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetInt(keys...)
+}
+
 // GetUint returns uint value by the given keys path.
 //
 // Array indexes may be represented as decimal numbers in keys.
@@ -790,6 +826,7 @@ func (v *Value) GetInt(keys ...string) int {
 func (v *Value) GetUint(keys ...string) uint {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeNumber {
+		//log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return 0
 	}
 	n := fastfloat.ParseUint64BestEffort(v.s)
@@ -800,6 +837,12 @@ func (v *Value) GetUint(keys ...string) uint {
 	return nn
 }
 
+// GetFastUint returns object value by the given key path.
+func (v *Value) GetFastUint(key string) uint {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetUint(keys...)
+}
+
 // GetInt64 returns int64 value by the given keys path.
 //
 // Array indexes may be represented as decimal numbers in keys.
@@ -808,9 +851,16 @@ func (v *Value) GetUint(keys ...string) uint {
 func (v *Value) GetInt64(keys ...string) int64 {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeNumber {
+		//log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return 0
 	}
 	return fastfloat.ParseInt64BestEffort(v.s)
+}
+
+// GetFastInt64 returns object value by the given key path.
+func (v *Value) GetFastInt64(key string) int64 {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetInt64(keys...)
 }
 
 // GetUint64 returns uint64 value by the given keys path.
@@ -821,9 +871,16 @@ func (v *Value) GetInt64(keys ...string) int64 {
 func (v *Value) GetUint64(keys ...string) uint64 {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeNumber {
+		//log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return 0
 	}
 	return fastfloat.ParseUint64BestEffort(v.s)
+}
+
+// GetFastUint64 returns object value by the given key path.
+func (v *Value) GetFastUint64(key string) uint64 {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetUint64(keys...)
 }
 
 // GetStringBytes returns string value by the given keys path.
@@ -836,9 +893,43 @@ func (v *Value) GetUint64(keys ...string) uint64 {
 func (v *Value) GetStringBytes(keys ...string) []byte {
 	v = v.Get(keys...)
 	if v == nil || v.Type() != TypeString {
+		//log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return nil
 	}
 	return s2b(v.s)
+}
+
+// GetString returns string value by the given key path.
+func (v *Value) GetString(keys ...string) string {
+	return b2s(v.GetStringBytes(keys...))
+}
+
+// GetFastString returns string value by the given key path.
+func (v *Value) GetFastString(key string) string {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return b2s(v.GetStringBytes(keys...))
+}
+
+// GetFastStringFmt returns string value by the given key path.
+func (v *Value) GetFastStringFmt(key string, args ...interface{}) string {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	var format = b2s(v.GetStringBytes(keys...))
+	return fmt.Sprintf(format, args...)
+}
+
+// GetAndReplaceFastString returns string value by the given key path.
+func (v *Value) GetAndReplaceFastString(key string, replacements ...*Replacements) string {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	var str = b2s(v.GetStringBytes(keys...))
+	if strings.Index(str, "}}") == -1 {
+		return str
+	}
+
+	if replacements == nil {
+		return str
+	}
+
+	return v.Replace(str, replacements...)
 }
 
 // GetBool returns bool value by the given keys path.
@@ -849,9 +940,16 @@ func (v *Value) GetStringBytes(keys ...string) []byte {
 func (v *Value) GetBool(keys ...string) bool {
 	v = v.Get(keys...)
 	if v != nil && v.t == TypeTrue {
+		//log.Println(fmt.Sprintf("Invalid key: %v", keys))
 		return true
 	}
 	return false
+}
+
+// GetFastBool returns object value by the given key path.
+func (v *Value) GetFastBool(key string) bool {
+	var keys []string = strings.Split(key, DefaultKeySplitSep)
+	return v.GetBool(keys...)
 }
 
 // Object returns the underlying JSON object for the v.
@@ -974,3 +1072,25 @@ var (
 	valueFalse = &Value{t: TypeFalse}
 	valueNull  = &Value{t: TypeNull}
 )
+
+func (v *Value) Replace(str string, replacements ...*Replacements) string {
+	b := &bytes.Buffer{}
+	tmpl, err := template.New("").Parse(str)
+	if err != nil {
+		return str
+	}
+
+	replacementsMerge := Replacements{}
+	for _, replacement := range replacements {
+		for k, v := range *replacement {
+			replacementsMerge[k] = v
+		}
+	}
+
+	err = template.Must(tmpl, err).Execute(b, replacementsMerge)
+	if err != nil {
+		return str
+	}
+	buff := b.String()
+	return buff
+}
