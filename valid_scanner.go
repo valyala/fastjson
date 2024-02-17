@@ -1,15 +1,15 @@
 package fastjson
 
-// ValidateScanner scans a series of JSON values. Values may be delimited by whitespace.
+// ValidScanner scans a series of JSON values. Values may be delimited by whitespace.
 //
-// ValidateScanner may parse JSON lines ( http://jsonlines.org/ ).
+// ValidScanner may parse JSON lines ( http://jsonlines.org/ ).
 //
-// ValidateScanner may be re-used for subsequent parsing.
+// ValidScanner may be re-used for subsequent parsing.
 //
-// ValidateScanner cannot be used from concurrent goroutines.
+// ValidScanner cannot be used from concurrent goroutines.
 //
 // Use Parser for parsing only a single JSON value.
-type ValidateScanner struct {
+type ValidScanner struct {
 	// b contains a working copy of json value passed to Init.
 	b []byte
 
@@ -29,7 +29,7 @@ type ValidateScanner struct {
 // Init initializes sc with the given s.
 //
 // s may contain multiple JSON values, which may be delimited by whitespace.
-func (sc *ValidateScanner) Init(s string) {
+func (sc *ValidScanner) Init(s string) {
 	sc.b = append(sc.b[:0], s...)
 	sc.s = b2s(sc.b)
 	sc.err = nil
@@ -39,7 +39,7 @@ func (sc *ValidateScanner) Init(s string) {
 // InitBytes initializes sc with the given b.
 //
 // b may contain multiple JSON values, which may be delimited by whitespace.
-func (sc *ValidateScanner) InitBytes(b []byte) {
+func (sc *ValidScanner) InitBytes(b []byte) {
 	sc.Init(b2s(b))
 }
 
@@ -49,7 +49,7 @@ func (sc *ValidateScanner) InitBytes(b []byte) {
 //
 // Returns false either on error or on the end of s.
 // Call Error in order to determine the cause of the returned false.
-func (sc *ValidateScanner) Next() bool {
+func (sc *ValidScanner) Next() bool {
 	if sc.err != nil {
 		return false
 	}
@@ -61,7 +61,7 @@ func (sc *ValidateScanner) Next() bool {
 	}
 
 	sc.c.reset()
-	v, tail, err := parseValidateValue(sc.s, &sc.c, 0)
+	v, tail, err := parseValidValue(sc.s, &sc.c, 0)
 	if err != nil {
 		sc.err = err
 		return false
@@ -73,7 +73,7 @@ func (sc *ValidateScanner) Next() bool {
 }
 
 // Error returns the last error.
-func (sc *ValidateScanner) Error() error {
+func (sc *ValidScanner) Error() error {
 	if sc.err == errEOF {
 		return nil
 	}
@@ -83,6 +83,6 @@ func (sc *ValidateScanner) Error() error {
 // Value returns the last parsed value.
 //
 // The value is valid until the Next call.
-func (sc *ValidateScanner) Value() *Value {
+func (sc *ValidScanner) Value() *Value {
 	return sc.v
 }

@@ -6,13 +6,13 @@ import (
 	"strings"
 )
 
-// ValidateParser validates while parsing JSON.
+// ValidParser validates while parsing JSON.
 //
-// ValidateParser may be re-used for subsequent parsing.
+// ValidParser may be re-used for subsequent parsing.
 //
-// ValidateParser cannot be used from concurrent goroutines.
-// Use per-goroutine ValidateParsers or ValidateParserPool instead.
-type ValidateParser struct {
+// ValidParser cannot be used from concurrent goroutines.
+// Use per-goroutine ValidParsers or ValidParserPool instead.
+type ValidParser struct {
 	// b contains working copy of the string to be parsed.
 	b []byte
 
@@ -25,14 +25,14 @@ type ValidateParser struct {
 // The returned value is valid until the next call to Parse*.
 //
 // Use Scanner if a stream of JSON values must be parsed and validated.
-func (p *ValidateParser) Parse(s string) (*Value, error) {
+func (p *ValidParser) Parse(s string) (*Value, error) {
 	s = skipWS(s)
 	p.b = append(p.b[:0], s...)
 	p.c.reset()
 
-	v, tail, err := parseValidateValue(b2s(p.b), &p.c, 0)
+	v, tail, err := parseValidValue(b2s(p.b), &p.c, 0)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parseValidate JSON: %s; unparsed tail: %q", err, startEndString(tail))
+		return nil, fmt.Errorf("cannot parseValid JSON: %s; unparsed tail: %q", err, startEndString(tail))
 	}
 	tail = skipWS(tail)
 	if len(tail) > 0 {
@@ -46,13 +46,13 @@ func (p *ValidateParser) Parse(s string) (*Value, error) {
 // The returned Value is valid until the next call to Parse*.
 //
 // Use Scanner if a stream of JSON values must be parsed and validated.
-func (p *ValidateParser) ParseBytes(b []byte) (*Value, error) {
+func (p *ValidParser) ParseBytes(b []byte) (*Value, error) {
 	return p.Parse(b2s(b))
 }
 
-func parseValidateValue(s string, c *cache, depth int) (*Value, string, error) {
+func parseValidValue(s string, c *cache, depth int) (*Value, string, error) {
 	if len(s) == 0 {
-		return nil, s, fmt.Errorf("cannot parseValidate empty string")
+		return nil, s, fmt.Errorf("cannot parseValid empty string")
 	}
 	depth++
 	if depth > MaxDepth {
@@ -60,23 +60,23 @@ func parseValidateValue(s string, c *cache, depth int) (*Value, string, error) {
 	}
 
 	if s[0] == '{' {
-		v, tail, err := parseValidateObject(s[1:], c, depth)
+		v, tail, err := parseValidObject(s[1:], c, depth)
 		if err != nil {
-			return nil, tail, fmt.Errorf("cannot parseValidate object: %s", err)
+			return nil, tail, fmt.Errorf("cannot parseValid object: %s", err)
 		}
 		return v, tail, nil
 	}
 	if s[0] == '[' {
-		v, tail, err := parseValidateArray(s[1:], c, depth)
+		v, tail, err := parseValidArray(s[1:], c, depth)
 		if err != nil {
-			return nil, tail, fmt.Errorf("cannot parseValidate array: %s", err)
+			return nil, tail, fmt.Errorf("cannot parseValid array: %s", err)
 		}
 		return v, tail, nil
 	}
 	if s[0] == '"' {
-		ss, tail, err := parseValidateRawString(s[1:])
+		ss, tail, err := parseValidRawString(s[1:])
 		if err != nil {
-			return nil, tail, fmt.Errorf("cannot parseValidate string: %s", err)
+			return nil, tail, fmt.Errorf("cannot parseValid string: %s", err)
 		}
 		// Scan the string for control chars.
 		for i := 0; i < len(ss); i++ {
@@ -108,9 +108,9 @@ func parseValidateValue(s string, c *cache, depth int) (*Value, string, error) {
 		return valueNull, s[len("null"):], nil
 	}
 
-	ns, tail, err := parseValidateRawNumber(s)
+	ns, tail, err := parseValidRawNumber(s)
 	if err != nil {
-		return nil, tail, fmt.Errorf("cannot parseValidate number: %s", err)
+		return nil, tail, fmt.Errorf("cannot parseValid number: %s", err)
 	}
 	v := c.getValue()
 	v.t = TypeNumber
@@ -118,7 +118,7 @@ func parseValidateValue(s string, c *cache, depth int) (*Value, string, error) {
 	return v, tail, nil
 }
 
-func parseValidateArray(s string, c *cache, depth int) (*Value, string, error) {
+func parseValidArray(s string, c *cache, depth int) (*Value, string, error) {
 	s = skipWS(s)
 	if len(s) == 0 {
 		return nil, s, fmt.Errorf("missing ']'")
@@ -139,9 +139,9 @@ func parseValidateArray(s string, c *cache, depth int) (*Value, string, error) {
 		var err error
 
 		s = skipWS(s)
-		v, s, err = parseValidateValue(s, c, depth)
+		v, s, err = parseValidValue(s, c, depth)
 		if err != nil {
-			return nil, s, fmt.Errorf("cannot parseValidate array value: %s", err)
+			return nil, s, fmt.Errorf("cannot parseValid array value: %s", err)
 		}
 		a.a = append(a.a, v)
 
@@ -161,7 +161,7 @@ func parseValidateArray(s string, c *cache, depth int) (*Value, string, error) {
 	}
 }
 
-func parseValidateObject(s string, c *cache, depth int) (*Value, string, error) {
+func parseValidObject(s string, c *cache, depth int) (*Value, string, error) {
 	s = skipWS(s)
 	if len(s) == 0 {
 		return nil, s, fmt.Errorf("missing '}'")
@@ -186,9 +186,9 @@ func parseValidateObject(s string, c *cache, depth int) (*Value, string, error) 
 		if len(s) == 0 || s[0] != '"' {
 			return nil, s, fmt.Errorf(`cannot find opening '"" for object key`)
 		}
-		kv.k, s, err = parseValidateRawKey(s[1:])
+		kv.k, s, err = parseValidRawKey(s[1:])
 		if err != nil {
-			return nil, s, fmt.Errorf("cannot parseValidate object key: %s", err)
+			return nil, s, fmt.Errorf("cannot parseValid object key: %s", err)
 		}
 		s = skipWS(s)
 		if len(s) == 0 || s[0] != ':' {
@@ -198,9 +198,9 @@ func parseValidateObject(s string, c *cache, depth int) (*Value, string, error) 
 
 		// Parse value
 		s = skipWS(s)
-		kv.v, s, err = parseValidateValue(s, c, depth)
+		kv.v, s, err = parseValidValue(s, c, depth)
 		if err != nil {
-			return nil, s, fmt.Errorf("cannot parseValidate object value: %s", err)
+			return nil, s, fmt.Errorf("cannot parseValid object value: %s", err)
 		}
 		s = skipWS(s)
 		if len(s) == 0 {
@@ -217,9 +217,9 @@ func parseValidateObject(s string, c *cache, depth int) (*Value, string, error) 
 	}
 }
 
-// parseValidateRawKey is similar to parseValidateRawString, but is optimized
+// parseValidRawKey is similar to parseValidRawString, but is optimized
 // for small-sized keys without escape sequences.
-func parseValidateRawKey(s string) (string, string, error) {
+func parseValidRawKey(s string) (string, string, error) {
 	for i := 0; i < len(s); i++ {
 		if s[i] == '"' {
 			// Fast path.
@@ -227,13 +227,13 @@ func parseValidateRawKey(s string) (string, string, error) {
 		}
 		if s[i] == '\\' {
 			// Slow path.
-			return parseValidateRawString(s)
+			return parseValidRawString(s)
 		}
 	}
 	return s, "", fmt.Errorf(`missing closing '"'`)
 }
 
-func parseValidateRawString(s string) (string, string, error) {
+func parseValidRawString(s string) (string, string, error) {
 	// Try fast path - a string without escape sequences.
 	if n := strings.IndexByte(s, '"'); n >= 0 && strings.IndexByte(s[:n], '\\') < 0 {
 		return s[:n], s[n+1:], nil
@@ -273,21 +273,21 @@ func parseValidateRawString(s string) (string, string, error) {
 	}
 }
 
-func parseValidateRawNumber(s string) (string, string, error) {
+func parseValidRawNumber(s string) (string, string, error) {
 	if len(s) == 0 {
 		return "", s, fmt.Errorf("zero-length number")
 	}
 	i := 0
 	/*
-	 * Validator does not Support Inf/NaN. Parser does.
-	 * Choosing not to support it in ValidateParser in order to match JSON spec and behavior of encoding/json.
-	 *
-	if len(s[i:]) >= 3 {
-		xs := s[i : i+3]
-		if strings.EqualFold(xs, "inf") || strings.EqualFold(xs, "nan") {
-			return s[:i+3], s[i+3:], nil
+		 * Validator does not Support Inf/NaN. Parser does.
+		 * Choosing not to support it in ValidParser in order to match JSON spec and behavior of encoding/json.
+		 *
+		if len(s[i:]) >= 3 {
+			xs := s[i : i+3]
+			if strings.EqualFold(xs, "inf") || strings.EqualFold(xs, "nan") {
+				return s[:i+3], s[i+3:], nil
+			}
 		}
-	}
 	*/
 	if s[0] == '-' {
 		i++
@@ -305,7 +305,7 @@ func parseValidateRawNumber(s string) (string, string, error) {
 	if j == i {
 		return "", s, fmt.Errorf("expecting 0..9 digit, got %c", s[0])
 	}
-	if s[j] == '0' && i - j != 1 {
+	if s[j] == '0' && i-j != 1 {
 		return "", s, fmt.Errorf("unexpected number starting from 0")
 	}
 	if i >= len(s) {

@@ -277,9 +277,8 @@ func TestMustParse(t *testing.T) {
 	}
 }
 
-
-func TestValidateParse(t *testing.T) {
-	v, err := ValidateParse(`{"foo": "bar"}`)
+func TestValidParse(t *testing.T) {
+	v, err := ValidParse(`{"foo": "bar"}`)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -289,8 +288,8 @@ func TestValidateParse(t *testing.T) {
 	}
 }
 
-func TestValidateParseBytes(t *testing.T) {
-	v, err := ValidateParseBytes([]byte(`{"foo": "bar"}`))
+func TestValidParseBytes(t *testing.T) {
+	v, err := ValidParseBytes([]byte(`{"foo": "bar"}`))
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -300,24 +299,24 @@ func TestValidateParseBytes(t *testing.T) {
 	}
 }
 
-func TestMustValidateParse(t *testing.T) {
+func TestMustValidParse(t *testing.T) {
 	s := `{"foo":"bar"}`
-	v := MustValidateParse(s)
+	v := MustValidParse(s)
 	str := v.String()
 	if str != s {
 		t.Fatalf("unexpected value parsed; %q; want %q", str, s)
 	}
 
-	v = MustValidateParseBytes([]byte(s))
+	v = MustValidParseBytes([]byte(s))
 	if str != s {
 		t.Fatalf("unexpected value parsed; %q; want %q", str, s)
 	}
 
-	if !causesPanic(func() { v = MustValidateParse(`[`) }) {
+	if !causesPanic(func() { v = MustValidParse(`[`) }) {
 		t.Fatalf("expected MustParse to panic")
 	}
 
-	if !causesPanic(func() { v = MustValidateParseBytes([]byte(`[`)) }) {
+	if !causesPanic(func() { v = MustValidParseBytes([]byte(`[`)) }) {
 		t.Fatalf("expected MustParse to panic")
 	}
 }

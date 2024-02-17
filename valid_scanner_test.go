@@ -6,8 +6,8 @@ import (
 	"testing"
 )
 
-func TestValidateScanner(t *testing.T) {
-	var sc ValidateScanner
+func TestValidScanner(t *testing.T) {
+	var sc ValidScanner
 
 	t.Run("success", func(t *testing.T) {
 		sc.InitBytes([]byte(`[] {} "" 123`))

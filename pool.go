@@ -51,26 +51,26 @@ func (ap *ArenaPool) Put(a *Arena) {
 	ap.pool.Put(a)
 }
 
-// ValidateParserPool may be used for pooling ValidateParsers for similarly typed JSONs.
-type ValidateParserPool struct {
+// ValidParserPool may be used for pooling ValidParsers for similarly typed JSONs.
+type ValidParserPool struct {
 	pool sync.Pool
 }
 
 // Get returns a Parser from pp.
 //
-// The ValidateParser must be Put to pp after use.
-func (pp *ValidateParserPool) Get() *ValidateParser {
+// The ValidParser must be Put to pp after use.
+func (pp *ValidParserPool) Get() *ValidParser {
 	v := pp.pool.Get()
 	if v == nil {
-		return &ValidateParser{}
+		return &ValidParser{}
 	}
-	return v.(*ValidateParser)
+	return v.(*ValidParser)
 }
 
 // Put returns p to pp.
 //
 // p and objects recursively returned from p cannot be used after p
 // is put into pp.
-func (pp *ValidateParserPool) Put(p *ValidateParser) {
+func (pp *ValidParserPool) Put(p *ValidParser) {
 	pp.pool.Put(p)
 }

@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-func TestParseValidateRawNumber(t *testing.T) {
+func TestParseValidRawNumber(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		f := func(s, expectedRN, expectedTail string) {
 			t.Helper()
 
-			rn, tail, err := parseValidateRawNumber(s)
+			rn, tail, err := parseValidRawNumber(s)
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
 			}
@@ -40,7 +40,7 @@ func TestParseValidateRawNumber(t *testing.T) {
 		f := func(s, expectedTail string) {
 			t.Helper()
 
-			_, tail, err := parseValidateRawNumber(s)
+			_, tail, err := parseValidRawNumber(s)
 			if err == nil {
 				t.Fatalf("expecting non-nil error")
 			}
@@ -74,32 +74,32 @@ func TestParseValidateRawNumber(t *testing.T) {
 	})
 }
 
-func TestParseValidateRawString(t *testing.T) {
+func TestParseValidRawString(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		f := func(s, expectedRS, expectedTail string) {
 			t.Helper()
 
-			rs, tail, err := parseValidateRawString(s[1:])
+			rs, tail, err := parseValidRawString(s[1:])
 			if err != nil {
-				t.Fatalf("unexpected error on parseValidateRawString: %s", err)
+				t.Fatalf("unexpected error on parseValidRawString: %s", err)
 			}
 			if rs != expectedRS {
-				t.Fatalf("unexpected string on parseValidateRawString; got %q; want %q", rs, expectedRS)
+				t.Fatalf("unexpected string on parseValidRawString; got %q; want %q", rs, expectedRS)
 			}
 			if tail != expectedTail {
-				t.Fatalf("unexpected tail on parseValidateRawString; got %q; want %q", tail, expectedTail)
+				t.Fatalf("unexpected tail on parseValidRawString; got %q; want %q", tail, expectedTail)
 			}
 
-			// parseValidateRawKey results must be identical to parseValidateRawString.
-			rs, tail, err = parseValidateRawKey(s[1:])
+			// parseValidRawKey results must be identical to parseValidRawString.
+			rs, tail, err = parseValidRawKey(s[1:])
 			if err != nil {
-				t.Fatalf("unexpected error on parseValidateRawKey: %s", err)
+				t.Fatalf("unexpected error on parseValidRawKey: %s", err)
 			}
 			if rs != expectedRS {
-				t.Fatalf("unexpected string on parseValidateRawKey; got %q; want %q", rs, expectedRS)
+				t.Fatalf("unexpected string on parseValidRawKey; got %q; want %q", rs, expectedRS)
 			}
 			if tail != expectedTail {
-				t.Fatalf("unexpected tail on parseValidateRawKey; got %q; want %q", tail, expectedTail)
+				t.Fatalf("unexpected tail on parseValidRawKey; got %q; want %q", tail, expectedTail)
 			}
 		}
 
@@ -124,21 +124,21 @@ func TestParseValidateRawString(t *testing.T) {
 		f := func(s, expectedTail string) {
 			t.Helper()
 
-			_, tail, err := parseValidateRawString(s[1:])
+			_, tail, err := parseValidRawString(s[1:])
 			if err == nil {
-				t.Fatalf("expecting non-nil error on parseValidateRawString")
+				t.Fatalf("expecting non-nil error on parseValidRawString")
 			}
 			if tail != expectedTail {
-				t.Fatalf("unexpected tail on parseValidateRawString; got %q; want %q", tail, expectedTail)
+				t.Fatalf("unexpected tail on parseValidRawString; got %q; want %q", tail, expectedTail)
 			}
 
-			// parseValidateRawKey results must be identical to parseValidateRawString.
-			_, tail, err = parseValidateRawKey(s[1:])
+			// parseValidRawKey results must be identical to parseValidRawString.
+			_, tail, err = parseValidRawKey(s[1:])
 			if err == nil {
-				t.Fatalf("expecting non-nil error on parseValidateRawKey")
+				t.Fatalf("expecting non-nil error on parseValidRawKey")
 			}
 			if tail != expectedTail {
-				t.Fatalf("unexpected tail on parseValidateRawKey; got %q; want %q", tail, expectedTail)
+				t.Fatalf("unexpected tail on parseValidRawKey; got %q; want %q", tail, expectedTail)
 			}
 		}
 
@@ -150,8 +150,8 @@ func TestParseValidateRawString(t *testing.T) {
 	})
 }
 
-func TestValidateParserPool(t *testing.T) {
-	var pp ValidateParserPool
+func TestValidParserPool(t *testing.T) {
+	var pp ValidParserPool
 	for i := 0; i < 10; i++ {
 		p := pp.Get()
 		if _, err := p.Parse("null"); err != nil {
@@ -161,8 +161,8 @@ func TestValidateParserPool(t *testing.T) {
 	}
 }
 
-func TestValidateParserParse(t *testing.T) {
-	var p ValidateParser
+func TestValidParserParse(t *testing.T) {
+	var p ValidParser
 
 	t.Run("complex-string", func(t *testing.T) {
 		v, err := p.Parse(`{"тест":1, "\\\"фыва\"":2, "\\\"\u1234x":"\\fЗУ\\\\"}`)
@@ -254,6 +254,9 @@ func TestValidateParserParse(t *testing.T) {
 		f(`{"foo" "bar"}`)
 		f(`{"foo":123 "bar":"baz"}`)
 		f("-2134.453eec+43")
+		f("NaN")
+		f("Inf")
+		f("-Inf")
 
 		if _, err := p.Parse("-2134.453E+43"); err != nil {
 			t.Fatalf("unexpected error when parsing number: %s", err)
@@ -829,7 +832,7 @@ func TestValidateParserParse(t *testing.T) {
 	})
 }
 
-func TestValidateParseBigObject(t *testing.T) {
+func TestValidParseBigObject(t *testing.T) {
 	const itemsCount = 10000
 
 	// build big json object
@@ -841,7 +844,7 @@ func TestValidateParseBigObject(t *testing.T) {
 	s := "{" + strings.Join(ss, ",") + "}"
 
 	// parse it
-	var p ValidateParser
+	var p ValidParser
 	v, err := p.Parse(s)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
@@ -864,13 +867,13 @@ func TestValidateParseBigObject(t *testing.T) {
 	}
 }
 
-func TestValidateParseGetConcurrent(t *testing.T) {
+func TestValidParseGetConcurrent(t *testing.T) {
 	concurrency := 10
 	ch := make(chan error, concurrency)
 	s := `{"foo": "bar", "empty_obj": {}}`
 	for i := 0; i < concurrency; i++ {
 		go func() {
-			ch <- testValidateParseGetSerial(s)
+			ch <- testValidParseGetSerial(s)
 		}()
 	}
 	for i := 0; i < concurrency; i++ {
@@ -885,8 +888,8 @@ func TestValidateParseGetConcurrent(t *testing.T) {
 	}
 }
 
-func testValidateParseGetSerial(s string) error {
-	var p ValidateParser
+func testValidParseGetSerial(s string) error {
+	var p ValidParser
 	for i := 0; i < 100; i++ {
 		v, err := p.Parse(s)
 		if err != nil {
