@@ -64,10 +64,7 @@ func (c *cache) reset() {
 	c.vs = c.vs[:0]
 }
 
-const (
-	minPreAllocatedCacheSize = 256
-	maxPreAllocatedCacheSize = 32768
-)
+const preAllocatedCacheSize = 32768
 
 func (c *cache) getValue() *Value {
 	last := len(c.vs) - 1
@@ -77,12 +74,7 @@ func (c *cache) getValue() *Value {
 			if cap(c.vs) > len(c.vs) {
 				c.vs = c.vs[:len(c.vs)+1]
 			} else {
-				c.allocated++
-				newSz := minPreAllocatedCacheSize * c.allocated
-				if newSz > maxPreAllocatedCacheSize {
-					newSz = maxPreAllocatedCacheSize
-				}
-				c.vs = append(c.vs, make([]Value, 0, newSz))
+				c.vs = append(c.vs, make([]Value, 0, preAllocatedCacheSize))
 			}
 			last = len(c.vs) - 1
 			needExt = false
