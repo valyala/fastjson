@@ -53,7 +53,8 @@ func (p *Parser) ParseBytes(b []byte) (*Value, error) {
 }
 
 type cache struct {
-	vs [][]Value
+	vs        [][]Value
+	allocated int
 }
 
 func (c *cache) reset() {
@@ -63,7 +64,10 @@ func (c *cache) reset() {
 	c.vs = c.vs[:0]
 }
 
-const preAllocatedCacheSize = 409 // calculated as 32768 / unsafe.SizeOf(Value)
+const (
+	minPreAllocatedCacheSize = 256
+	maxPreAllocatedCacheSize = 32768
+)
 
 func (c *cache) getValue() *Value {
 	last := len(c.vs) - 1
@@ -73,7 +77,12 @@ func (c *cache) getValue() *Value {
 			if cap(c.vs) > len(c.vs) {
 				c.vs = c.vs[:len(c.vs)+1]
 			} else {
-				c.vs = append(c.vs, make([]Value, 0, preAllocatedCacheSize))
+				c.allocated++
+				newSz := minPreAllocatedCacheSize * c.allocated
+				if newSz > maxPreAllocatedCacheSize {
+					newSz = maxPreAllocatedCacheSize
+				}
+				c.vs = append(c.vs, make([]Value, 0, newSz))
 			}
 			last = len(c.vs) - 1
 			needExt = false
