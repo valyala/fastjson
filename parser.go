@@ -63,27 +63,29 @@ func (c *cache) reset() {
 	c.vs = c.vs[:0]
 }
 
+const preAllocatedCacheSize = 409 // calculated as 32768 / unsafe.SizeOf(Value)
+
 func (c *cache) getValue() *Value {
-	l := len(c.vs) - 1
-	needExt := l < 0 || cap(c.vs[l]) == len(c.vs[l])
+	last := len(c.vs) - 1
+	needExt := last < 0 || cap(c.vs[last]) == len(c.vs[last])
 	for {
 		if needExt {
 			if cap(c.vs) > len(c.vs) {
 				c.vs = c.vs[:len(c.vs)+1]
 			} else {
-				c.vs = append(c.vs, make([]Value, 0, 32768))
+				c.vs = append(c.vs, make([]Value, 0, preAllocatedCacheSize))
 			}
-			l = len(c.vs) - 1
+			last = len(c.vs) - 1
 			needExt = false
 		}
-		if cap(c.vs[l]) > len(c.vs[l]) {
-			c.vs[l] = c.vs[l][:len(c.vs[l])+1]
+		if cap(c.vs[last]) > len(c.vs[last]) {
+			c.vs[last] = c.vs[last][:len(c.vs[last])+1]
 		} else {
 			needExt = true
 			continue
 		}
 		// Do not reset the value, since the caller must properly init it.
-		return &c.vs[l][len(c.vs[l])-1]
+		return &c.vs[last][len(c.vs[last])-1]
 	}
 }
 
