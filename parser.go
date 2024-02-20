@@ -53,21 +53,38 @@ func (p *Parser) ParseBytes(b []byte) (*Value, error) {
 }
 
 type cache struct {
-	vs []Value
+	vs [][]Value
 }
 
 func (c *cache) reset() {
+	for i := range c.vs {
+		c.vs[i] = c.vs[i][:0]
+	}
 	c.vs = c.vs[:0]
 }
 
 func (c *cache) getValue() *Value {
-	if cap(c.vs) > len(c.vs) {
-		c.vs = c.vs[:len(c.vs)+1]
-	} else {
-		c.vs = append(c.vs, Value{})
+	l := len(c.vs) - 1
+	needExt := l < 0 || cap(c.vs[l]) == len(c.vs[l])
+	for {
+		if needExt {
+			if cap(c.vs) > len(c.vs) {
+				c.vs = c.vs[:len(c.vs)+1]
+			} else {
+				c.vs = append(c.vs, make([]Value, 0, 32768))
+			}
+			l = len(c.vs) - 1
+			needExt = false
+		}
+		if cap(c.vs[l]) > len(c.vs[l]) {
+			c.vs[l] = c.vs[l][:len(c.vs[l])+1]
+		} else {
+			needExt = true
+			continue
+		}
+		// Do not reset the value, since the caller must properly init it.
+		return &c.vs[l][len(c.vs[l])-1]
 	}
-	// Do not reset the value, since the caller must properly init it.
-	return &c.vs[len(c.vs)-1]
 }
 
 func skipWS(s string) string {
