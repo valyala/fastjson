@@ -53,41 +53,70 @@ func (p *Parser) ParseBytes(b []byte) (*Value, error) {
 }
 
 type cache struct {
-	vs        [][]Value
-	allocated int
+	vs []Value
+	nx *cache // next
+	lt *cache // last
 }
 
 func (c *cache) reset() {
-	for i := range c.vs {
-		c.vs[i] = c.vs[i][:0]
-	}
 	c.vs = c.vs[:0]
+	c.lt = nil
+	if c.nx != nil {
+		c.nx.reset()
+	}
 }
 
-const preAllocatedCacheSize = 32768
+const (
+	preAllocatedCacheSize = 409 // 32kb class size
+	macAllocatedCacheSize = 1024
+)
 
 func (c *cache) getValue() *Value {
-	last := len(c.vs) - 1
-	needExt := last < 0 || cap(c.vs[last]) == len(c.vs[last])
-	for {
-		if needExt {
-			if cap(c.vs) > len(c.vs) {
-				c.vs = c.vs[:len(c.vs)+1]
-			} else {
-				c.vs = append(c.vs, make([]Value, 0, preAllocatedCacheSize))
-			}
-			last = len(c.vs) - 1
-			needExt = false
+	var (
+		addNext bool
+		readSrc = c
+	)
+	switch {
+	case cap(c.vs) == 0:
+		// initial state
+		c.vs = make([]Value, 1, preAllocatedCacheSize)
+
+	case c.lt != nil:
+		l := c.lt
+		if cap(l.vs) > len(l.vs) {
+			l.vs = l.vs[:len(l.vs)+1]
+			readSrc = l
+			break
 		}
-		if cap(c.vs[last]) > len(c.vs[last]) {
-			c.vs[last] = c.vs[last][:len(c.vs[last])+1]
-		} else {
-			needExt = true
-			continue
+		addNext = true
+
+	default:
+		if cap(c.vs) > len(c.vs) {
+			c.vs = c.vs[:len(c.vs)+1]
+			break
 		}
-		// Do not reset the value, since the caller must properly init it.
-		return &c.vs[last][len(c.vs[last])-1]
+		addNext = true
 	}
+	if addNext {
+		nextSize := len(c.vs)
+		if nextSize*2 < macAllocatedCacheSize {
+			nextSize *= 2
+		} else {
+			nextSize = macAllocatedCacheSize
+		}
+		readSrc = &cache{
+			vs: make([]Value, 1, nextSize),
+		}
+		if c.lt != nil {
+			c.lt.nx = readSrc
+			c.lt = c.lt.nx
+		} else {
+			c.nx = readSrc
+			c.lt = c.nx
+		}
+	}
+	// Do not reset the value, since the caller must properly init it.
+	return &readSrc.vs[len(readSrc.vs)-1]
 }
 
 func skipWS(s string) string {
