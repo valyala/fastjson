@@ -98,21 +98,32 @@ func (c *cache) getValue() *Value {
 		addNext = true
 	}
 	if addNext {
-		nextSize := len(c.vs)
-		if nextSize*2 < macAllocatedCacheSize {
-			nextSize *= 2
-		} else {
-			nextSize = macAllocatedCacheSize
-		}
-		readSrc = &cache{
-			vs: make([]Value, 1, nextSize),
-		}
-		if c.lt != nil {
-			c.lt.nx = readSrc
+		switch {
+		case c.lt != nil && c.lt.nx != nil:
 			c.lt = c.lt.nx
-		} else {
-			c.nx = readSrc
+			readSrc = c.lt
+			readSrc.vs = readSrc.vs[:1]
+		case c.lt == nil && c.nx != nil:
 			c.lt = c.nx
+			readSrc = c.lt
+			readSrc.vs = readSrc.vs[:1]
+		default:
+			nextSize := len(c.vs)
+			if nextSize*2 < macAllocatedCacheSize {
+				nextSize *= 2
+			} else {
+				nextSize = macAllocatedCacheSize
+			}
+			readSrc = &cache{
+				vs: make([]Value, 1, nextSize),
+			}
+			if c.lt != nil {
+				c.lt.nx = readSrc
+				c.lt = c.lt.nx
+			} else {
+				c.nx = readSrc
+				c.lt = c.nx
+			}
 		}
 	}
 	// Do not reset the value, since the caller must properly init it.
