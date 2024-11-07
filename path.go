@@ -161,8 +161,13 @@ func createValueFromAny(anyVal interface{}) *Value {
 					continue
 				}
 				var name = field.Name
+				var omitempty = false
 				if tag != "" {
 					name, _, _ = strings.Cut(tag, ",")
+					omitempty = strings.Contains(tag, "omitempty")
+				}
+				if omitempty && reflect.DeepEqual(rv.Field(i).Interface(), reflect.Zero(field.Type).Interface()) {
+					continue
 				}
 				obj.Set(name, createValueFromAny(rv.Field(i).Interface())) // recursive call
 			}

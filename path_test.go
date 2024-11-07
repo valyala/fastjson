@@ -262,7 +262,20 @@ func TestValue_SetAny(t *testing.T) {
 	})
 
 	t.Run("Set struct with json tags and omitempty", func(t *testing.T) {
-		// todo: implement omitempty
+		type S struct {
+			A int    `json:"a,omitempty"`
+			B string `json:"b,omitempty"`
+			C int    `json:"c"`
+		}
+		v := MustParse(`{}`)
+		v.SetAny(Path{"a"}, S{A: 0, B: "", C: 0})
+		if v.String() != `{"a":{"c":0}}` {
+			t.Fatalf(`expected {"a":{"c":0}}, got %v`, v.String())
+		}
+		v.SetAny(Path{"a"}, S{A: 1, B: "test"})
+		if v.String() != `{"a":{"a":1,"b":"test","c":0}}` {
+			t.Fatalf(`expected {"a":{"a":1,"b":"test","c":0}}, got %v`, v.String())
+		}
 	})
 
 	t.Run("Set *Value", func(t *testing.T) {
