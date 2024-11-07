@@ -3,6 +3,54 @@
 [![Go Report](https://goreportcard.com/badge/github.com/valyala/fastjson)](https://goreportcard.com/report/github.com/valyala/fastjson)
 [![codecov](https://codecov.io/gh/valyala/fastjson/branch/master/graph/badge.svg)](https://codecov.io/gh/valyala/fastjson)
 
+# fastjson2 - fork description
+
+**fastjson2** is a fork of the original [fastjson](https://github.com/valyala/fastjson) library that adds path-based manipulation capabilities for JSON objects. The `SetAny` method is introduced to allow inserting Go data types into JSON structures. It utilizes reflection to manage complex data types such as structs, slices, and maps.
+
+### Examples using `SetAny`
+
+**Setting a struct:**
+```go
+val := MustParse("{}")
+type User struct {
+	Name string `json:"name"`
+	Age  int    `json:"age"`
+}
+
+userInfo := User{Name: "John Doe", Age: 30}
+val.SetAny([]any{"user", "details"}, userInfo)
+
+// Result: {"user": {"details": {"name": "John Doe", "age": 30}}}
+```
+
+**Inserting a map:**
+```go
+val := MustParse("{}")
+userMap := map[string]any{"name": "Jane Doe", "age": 28}
+val.SetAny([]any{"user", "info"}, userMap)
+
+// Result: {"user": {"info": {"age": 28, "name": "Jane Doe"}}}
+```
+
+**Adding an array of integers:**
+```go
+val := MustParse("{}")
+numbers := []int{1, 2, 3}
+val.SetAny([]any{"numbers"}, numbers)
+
+// Result: {"numbers": [1, 2, 3]}
+```
+
+**Appending a new element to an array:**
+```go
+val := MustParse(`{"numbers": [1, 2, 3]}`)
+val.SetAny([]any{"numbers", -1}, 4)
+
+// Result: {"numbers": [1, 2, 3, 4]}
+```
+
+Below is the original README content for the `fastjson` library.
+
 # fastjson - fast JSON parser and validator for Go
 
 
