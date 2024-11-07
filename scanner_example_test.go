@@ -1,13 +1,12 @@
-package fastjson_test
+package fastjson2
 
 import (
 	"fmt"
-	"github.com/valyala/fastjson"
 	"log"
 )
 
 func ExampleScanner() {
-	var sc fastjson.Scanner
+	var sc Scanner
 
 	sc.Init(`   {"foo":  "bar"  }[  ]
 		12345"xyz" true false null    `)
@@ -30,7 +29,7 @@ func ExampleScanner() {
 }
 
 func ExampleScanner_reuse() {
-	var sc fastjson.Scanner
+	var sc Scanner
 
 	// The sc may be re-used in order to reduce the number
 	// of memory allocations.

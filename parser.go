@@ -1,8 +1,8 @@
-package fastjson
+package fastjson2
 
 import (
 	"fmt"
-	"github.com/valyala/fastjson/fastfloat"
+	"github.com/phplego/fastjson2/fastfloat"
 	"strconv"
 	"strings"
 	"unicode/utf16"

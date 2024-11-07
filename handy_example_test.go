@@ -1,14 +1,13 @@
-package fastjson_test
+package fastjson2
 
 import (
 	"fmt"
-	"github.com/valyala/fastjson"
 )
 
 func ExampleGetString() {
 	data := []byte(`{"foo":{"bar":[123,"baz"]}}`)
 
-	s := fastjson.GetString(data, "foo", "bar", "1")
+	s := GetString(data, "foo", "bar", "1")
 	fmt.Printf("data.foo.bar[1] = %s", s)
 
 	// Output:
@@ -18,10 +17,10 @@ func ExampleGetString() {
 func ExampleGetInt() {
 	data := []byte(`{"foo": [233,true, {"bar": [2343]} ]}`)
 
-	n1 := fastjson.GetInt(data, "foo", "0")
+	n1 := GetInt(data, "foo", "0")
 	fmt.Printf("data.foo[0] = %d\n", n1)
 
-	n2 := fastjson.GetInt(data, "foo", "2", "bar", "0")
+	n2 := GetInt(data, "foo", "2", "bar", "0")
 	fmt.Printf("data.foo[2].bar[0] = %d\n", n2)
 
 	// Output:
@@ -32,11 +31,11 @@ func ExampleGetInt() {
 func ExampleExists() {
 	data := []byte(`{"foo": [1.23,{"bar":33,"baz":null}]}`)
 
-	fmt.Printf("exists(data.foo) = %v\n", fastjson.Exists(data, "foo"))
-	fmt.Printf("exists(data.foo[0]) = %v\n", fastjson.Exists(data, "foo", "0"))
-	fmt.Printf("exists(data.foo[1].baz) = %v\n", fastjson.Exists(data, "foo", "1", "baz"))
-	fmt.Printf("exists(data.foobar) = %v\n", fastjson.Exists(data, "foobar"))
-	fmt.Printf("exists(data.foo.bar) = %v\n", fastjson.Exists(data, "foo", "bar"))
+	fmt.Printf("exists(data.foo) = %v\n", Exists(data, "foo"))
+	fmt.Printf("exists(data.foo[0]) = %v\n", Exists(data, "foo", "0"))
+	fmt.Printf("exists(data.foo[1].baz) = %v\n", Exists(data, "foo", "1", "baz"))
+	fmt.Printf("exists(data.foobar) = %v\n", Exists(data, "foobar"))
+	fmt.Printf("exists(data.foo.bar) = %v\n", Exists(data, "foo", "bar"))
 
 	// Output:
 	// exists(data.foo) = true

@@ -1,4 +1,4 @@
-package fastjson
+package fastjson2
 
 import (
 	"fmt"
