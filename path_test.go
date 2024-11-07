@@ -143,3 +143,138 @@ func TestValue_GetP(t *testing.T) {
 		}
 	})
 }
+
+func TestValue_SetAny(t *testing.T) {
+	t.Run("Set int", func(t *testing.T) {
+		v := MustParse(`{}`)
+		v.SetAny(Path{"a"}, 2)
+		if v.String() != `{"a":2}` {
+			t.Fatalf(`expected {"a":2}, got %v`, v.String())
+		}
+	})
+
+	t.Run("Set string", func(t *testing.T) {
+		v := MustParse(`{}`)
+		v.SetAny(Path{"a"}, "test")
+		if v.String() != `{"a":"test"}` {
+			t.Fatalf(`expected {"a":"test"}, got %v`, v.String())
+		}
+	})
+
+	t.Run("Set float", func(t *testing.T) {
+		v := MustParse(`{}`)
+		v.SetAny(Path{"a"}, 2.5)
+		if v.String() != `{"a":2.5}` {
+			t.Fatalf(`expected {"a":2.5}, got %v`, v.String())
+		}
+	})
+
+	t.Run("Set byte", func(t *testing.T) {
+		v := MustParse(`{}`)
+		v.SetAny(Path{"a"}, byte(1))
+		if v.String() != `{"a":1}` {
+			t.Fatalf(`expected {"a":1}, got %v`, v.String())
+		}
+	})
+
+	t.Run("Set bool", func(t *testing.T) {
+		v := MustParse(`{}`)
+		v.SetAny(Path{"a"}, true)
+		if v.String() != `{"a":true}` {
+			t.Fatalf(`expected {"a":true}, got %v`, v.String())
+		}
+	})
+
+	t.Run("Set nil", func(t *testing.T) {
+		v := MustParse(`{}`)
+		v.SetAny(Path{"a"}, nil)
+		if v.String() != `{"a":null}` {
+			t.Fatalf(`expected {"a":null}, got %v`, v.String())
+		}
+	})
+
+	t.Run("Set array", func(t *testing.T) {
+		v := MustParse(`{}`)
+		v.SetAny(Path{"a"}, []int{1, 2, 3})
+		if v.String() != `{"a":[1,2,3]}` {
+			t.Fatalf(`expected {"a":[1,2,3]}, got %v`, v.String())
+		}
+	})
+
+	t.Run("Set map", func(t *testing.T) {
+		v := MustParse(`{}`)
+		v.SetAny(Path{"a"}, map[string]int{"b": 2})
+		if v.String() != `{"a":{"b":2}}` {
+			t.Fatalf(`expected {"a":{"b":2}}, got %v`, v.String())
+		}
+	})
+
+	t.Run("Set struct", func(t *testing.T) {
+		type S struct {
+			A int
+			B string
+		}
+		v := MustParse(`{}`)
+		v.SetAny(Path{"a"}, S{A: 1, B: "test"})
+		if v.String() != `{"a":{"A":1,"B":"test"}}` {
+			t.Fatalf(`expected {"a":{"A":1,"B":"test"}}, got %v`, v.String())
+		}
+	})
+
+	t.Run("Set struct pointer", func(t *testing.T) {
+		type S struct {
+			A int
+			B string
+		}
+		v := MustParse(`{}`)
+		v.SetAny(Path{"a"}, &S{A: 1, B: "test"})
+		if v.String() != `{"a":{"A":1,"B":"test"}}` {
+			t.Fatalf(`expected {"a":{"A":1,"B":"test"}}, got %v`, v.String())
+		}
+	})
+
+	t.Run("Set nested struct", func(t *testing.T) {
+		type Nested struct {
+			A int
+			B string
+		}
+		type T struct {
+			N Nested
+		}
+		v := MustParse(`{}`)
+		v.SetAny(Path{"a"}, T{N: Nested{A: 1, B: "test"}})
+		if v.String() != `{"a":{"N":{"A":1,"B":"test"}}}` {
+			t.Fatalf(`expected {"a":{"N":{"A":1,"B":"test"}}}, got %v`, v.String())
+		}
+	})
+
+	t.Run("Set struct with json tags", func(t *testing.T) {
+		type S struct {
+			A int    `json:"a"` // renamed to "a"
+			B string `json:"b"` // renamed to "b"
+			C int    `json:"-"` // should be ignored
+		}
+		v := MustParse(`{}`)
+		v.SetAny(Path{"a"}, S{A: 1, B: "test"})
+		if v.String() != `{"a":{"a":1,"b":"test"}}` {
+			t.Fatalf(`expected {"a":{"a":1,"b":"test"}}, got %v`, v.String())
+		}
+	})
+
+	t.Run("Set struct with json tags and omitempty", func(t *testing.T) {
+		// todo: implement omitempty
+	})
+
+	t.Run("Set *Value", func(t *testing.T) {
+		v := MustParse(`{}`)
+		v.SetAny(Path{"a"}, MustParse(`{"b":2}`))
+		if v.String() != `{"a":{"b":2}}` {
+			t.Fatalf(`expected {"a":{"b":2}}, got %v`, v.String())
+		}
+		v.SetAny(Path{"a"}, *MustParse(`[1,2,3]`)) // dereference the pointer
+		if v.String() != `{"a":[1,2,3]}` {
+			t.Fatalf(`expected {"a":[1,2,3]}, got %v`, v.String())
+		}
+	})
+
+}

@@ -1,5 +1,12 @@
 package fastjson
 
+import (
+	"fmt"
+	"reflect"
+	"sort"
+	"strings"
+)
+
 // Path represents a path to a value in a JSON object.
 // It is a sequence of keys (strings) and indexes (integers).
 // For example, Path{"a", 0, "b"} for accessing field 'b' of the first element of array field 'a'.
@@ -103,4 +110,90 @@ func (v *Value) GetP(path Path) *Value {
 		return child.GetP(rest) // recursive call
 	}
 	return nil
+}
+
+func (v *Value) SetAny(path Path, anyVal interface{}) {
+	v.SetP(path, createValueFromAny(anyVal))
+}
+
+func createValueFromAny(anyVal interface{}) *Value {
+	switch v := anyVal.(type) {
+	// supported scalar types defined here
+	case string:
+		return &Value{
+			t: TypeString,
+			s: v,
+		}
+	case int, int64, int32, int16, int8, float64, float32, uint, uint64, uint32, uint16, uint8:
+		return &Value{
+			t: TypeNumber,
+			s: fmt.Sprintf("%v", v), // todo find a better way to convert to string
+		}
+	case bool:
+		if v {
+			return valueTrue
+		} else {
+			return valueFalse
+		}
+	case nil:
+		return valueNull
+	case *Value:
+		return v
+	case Value:
+		return &v
+	default:
+		// use reflection to handle structs, slices, maps
+		rv := reflect.ValueOf(anyVal)
+		if rv.Kind() == reflect.Ptr {
+			rv = rv.Elem()
+		}
+		switch rv.Kind() {
+		case reflect.Struct:
+			obj := Object{}
+			for i := 0; i < rv.NumField(); i++ {
+				field := rv.Type().Field(i)
+				if field.PkgPath != "" { // skip unexported field
+					continue
+				}
+				// respect json tag if present
+				tag := field.Tag.Get("json")
+				if tag == "-" {
+					continue
+				}
+				var name = field.Name
+				if tag != "" {
+					name, _, _ = strings.Cut(tag, ",")
+				}
+				obj.Set(name, createValueFromAny(rv.Field(i).Interface())) // recursive call
+			}
+
+			return &Value{
+				t: TypeObject,
+				o: obj,
+			}
+		case reflect.Slice:
+			value := &Value{t: TypeArray}
+			for i := 0; i < rv.Len(); i++ {
+				value.a = append(value.a, createValueFromAny(rv.Index(i).Interface())) // recursive call
+			}
+			return value
+		case reflect.Map:
+			obj := Object{}
+			for _, k := range rv.MapKeys() {
+				obj.Set(k.String(), createValueFromAny(rv.MapIndex(k).Interface())) // recursive call
+			}
+			// sort keys alphabetically, because foreach on map is not guaranteed to be in order
+			sort.Slice(obj.kvs, func(i, j int) bool {
+				return obj.kvs[i].k < obj.kvs[j].k
+			})
+
+			return &Value{
+				t: TypeObject,
+				o: obj,
+			}
+		default:
+			// todo implement fallback for other types
+			panic(fmt.Sprintf("unsupported type: %T", anyVal))
+		}
+	}
 }
