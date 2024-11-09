@@ -42,7 +42,16 @@ val.SetAny([]any{"numbers"}, numbers)
 ```
 
 **Appending a new element to an array:**
+
 ```go
+// using index
+val := MustParse(`[]`)
+val.SetAny([]any{0}, 1)
+val.SetAny([]any{1}, 2)
+
+// Result: [1, 2]
+
+// using special index -1
 val := MustParse(`{"numbers": [1, 2, 3]}`)
 val.SetAny([]any{"numbers", -1}, 4)
 
