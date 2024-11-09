@@ -290,4 +290,22 @@ func TestValue_SetAny(t *testing.T) {
 		}
 	})
 
+	t.Run("Set should preserve order", func(t *testing.T) {
+		v := MustParse(`{}`)
+		v.SetAny(Path{"z"}, 1)
+		v.SetAny(Path{"a"}, 2)
+		v.SetAny(Path{"b"}, 3)
+		v.SetAny(Path{"1"}, 4)
+		if v.String() != `{"z":1,"a":2,"b":3,"1":4}` {
+			t.Fatalf(`expected {"z":1,"a":2,"b":3,"1":4}, got %v`, v.String())
+		}
+	})
+
+	t.Run("Set map should sort keys alphabetically", func(t *testing.T) {
+		v := MustParse(`[]`)
+		v.SetAny(Path{0}, map[string]int{"z": 0, "a": 0, "b": 0, "1": 0})
+		if v.String() != `[{"1":0,"a":0,"b":0,"z":0}]` {
+			t.Fatalf(`expected [{"1":0,"a":0,"b":0,"z":0}], got %v`, v.String())
+		}
+	})
 }
