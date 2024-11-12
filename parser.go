@@ -2,10 +2,11 @@ package fastjson
 
 import (
 	"fmt"
-	"github.com/valyala/fastjson/fastfloat"
 	"strconv"
 	"strings"
 	"unicode/utf16"
+
+	"github.com/valyala/fastjson/fastfloat"
 )
 
 // Parser parses JSON.
@@ -67,64 +68,39 @@ func (c *cache) reset() {
 }
 
 const (
-	preAllocatedCacheSize = 409 // 32kb class size
-	macAllocatedCacheSize = 1024
+	preAllocatedCacheSize = 341   // 32kb class size
+	maxAllocatedCacheSize = 10922 // 1MB
 )
 
 func (c *cache) getValue() *Value {
-	var (
-		addNext bool
-		readSrc = c
-	)
+	if c == nil {
+		return &Value{}
+	}
+	readSrc := c
+	if readSrc.lt != nil {
+		readSrc = readSrc.lt
+	}
 	switch {
-	case cap(c.vs) == 0:
+	case cap(readSrc.vs) == 0:
 		// initial state
-		c.vs = make([]Value, 1, preAllocatedCacheSize)
+		readSrc.vs = make([]Value, 1, preAllocatedCacheSize)
 
-	case c.lt != nil:
-		l := c.lt
-		if cap(l.vs) > len(l.vs) {
-			l.vs = l.vs[:len(l.vs)+1]
-			readSrc = l
-			break
-		}
-		addNext = true
+	case cap(readSrc.vs) > len(readSrc.vs):
+		readSrc.vs = readSrc.vs[:len(readSrc.vs)+1]
 
 	default:
-		if cap(c.vs) > len(c.vs) {
-			c.vs = c.vs[:len(c.vs)+1]
-			break
-		}
-		addNext = true
-	}
-	if addNext {
-		switch {
-		case c.lt != nil && c.lt.nx != nil:
-			c.lt = c.lt.nx
-			readSrc = c.lt
-			readSrc.vs = readSrc.vs[:1]
-		case c.lt == nil && c.nx != nil:
-			c.lt = c.nx
-			readSrc = c.lt
-			readSrc.vs = readSrc.vs[:1]
-		default:
-			nextSize := len(c.vs)
-			if nextSize*2 < macAllocatedCacheSize {
-				nextSize *= 2
-			} else {
-				nextSize = macAllocatedCacheSize
+		if readSrc.nx == nil {
+			nextLen := len(readSrc.vs) * 2
+			if nextLen > maxAllocatedCacheSize {
+				nextLen = maxAllocatedCacheSize
 			}
-			readSrc = &cache{
-				vs: make([]Value, 1, nextSize),
-			}
-			if c.lt != nil {
-				c.lt.nx = readSrc
-				c.lt = c.lt.nx
-			} else {
-				c.nx = readSrc
-				c.lt = c.nx
+			readSrc.nx = &cache{
+				vs: make([]Value, 0, nextLen),
 			}
 		}
+		c.lt = readSrc.nx
+		readSrc = readSrc.nx
+		readSrc.vs = readSrc.vs[:len(readSrc.vs)+1]
 	}
 	// Do not reset the value, since the caller must properly init it.
 	return &readSrc.vs[len(readSrc.vs)-1]
@@ -505,36 +481,44 @@ func parseRawNumber(s string) (string, string, error) {
 	return s, "", nil
 }
 
-// Object represents JSON object.
-//
-// Object cannot be used from concurrent goroutines.
-// Use per-goroutine parsers or ParserPool instead.
 type Object struct {
 	kvs           []kv
 	keysUnescaped bool
+	nx            *Object
+	lt            *Object
 }
 
 func (o *Object) reset() {
 	o.kvs = o.kvs[:0]
 	o.keysUnescaped = false
+	o.lt = nil
+	if o.nx != nil {
+		o.nx.reset()
+	}
 }
 
 // MarshalTo appends marshaled o to dst and returns the result.
 func (o *Object) MarshalTo(dst []byte) []byte {
 	dst = append(dst, '{')
-	for i, kv := range o.kvs {
-		if o.keysUnescaped {
-			dst = escapeString(dst, kv.k)
-		} else {
-			dst = append(dst, '"')
-			dst = append(dst, kv.k...)
-			dst = append(dst, '"')
+	srcKV := o
+	lastN := o.Len()
+	n := 0
+	for srcKV != nil {
+		for _, kv := range srcKV.kvs {
+			if srcKV.keysUnescaped {
+				dst = escapeString(dst, kv.k)
+			} else {
+				dst = append(dst, '"')
+				dst = append(dst, kv.k...)
+				dst = append(dst, '"')
+			}
+			dst = append(dst, ':')
+			dst = kv.v.MarshalTo(dst)
+			if n++; n != lastN {
+				dst = append(dst, ',')
+			}
 		}
-		dst = append(dst, ':')
-		dst = kv.v.MarshalTo(dst)
-		if i != len(o.kvs)-1 {
-			dst = append(dst, ',')
-		}
+		srcKV = srcKV.nx
 	}
 	dst = append(dst, '}')
 	return dst
@@ -551,13 +535,45 @@ func (o *Object) String() string {
 	return b2s(b)
 }
 
+const (
+	preAllocatedObjectKVs = 170   // 8kb class
+	maxAllocatedObjectKVS = 21845 // 1MB class
+)
+
 func (o *Object) getKV() *kv {
-	if cap(o.kvs) > len(o.kvs) {
-		o.kvs = o.kvs[:len(o.kvs)+1]
-	} else {
-		o.kvs = append(o.kvs, kv{})
+	kvSrc := o
+	if kvSrc.lt != nil {
+		kvSrc = kvSrc.lt
 	}
-	return &o.kvs[len(o.kvs)-1]
+	switch {
+	case cap(kvSrc.kvs) == 0:
+		// initial state
+		kvSrc.kvs = append(kvSrc.kvs, kv{})
+
+	case cap(kvSrc.kvs) > len(kvSrc.kvs):
+		kvSrc.kvs = kvSrc.kvs[:len(kvSrc.kvs)+1]
+
+	default:
+		if cap(kvSrc.kvs) < preAllocatedObjectKVs {
+			kvSrc.kvs = append(kvSrc.kvs, kv{})
+			break
+		}
+		// new chain
+		if kvSrc.nx == nil {
+			nextLen := len(kvSrc.kvs) * 2
+			if nextLen > maxAllocatedObjectKVS {
+				nextLen = maxAllocatedObjectKVS
+			}
+			kvSrc.nx = &Object{
+				kvs: make([]kv, 0, nextLen),
+			}
+		}
+		kvSrc = kvSrc.nx
+		o.lt = kvSrc
+		kvSrc.kvs = kvSrc.kvs[:len(kvSrc.kvs)+1]
+	}
+
+	return &kvSrc.kvs[len(kvSrc.kvs)-1]
 }
 
 func (o *Object) unescapeKeys() {
@@ -569,12 +585,18 @@ func (o *Object) unescapeKeys() {
 		kv := &kvs[i]
 		kv.k = unescapeStringBestEffort(kv.k)
 	}
+	if o.nx != nil {
+		o.nx.unescapeKeys()
+	}
 	o.keysUnescaped = true
 }
 
 // Len returns the number of items in the o.
 func (o *Object) Len() int {
-	return len(o.kvs)
+	if o.nx == nil {
+		return len(o.kvs)
+	}
+	return len(o.kvs) + o.nx.Len()
 }
 
 // Get returns the value for the given key in the o.
@@ -590,6 +612,11 @@ func (o *Object) Get(key string) *Value {
 				return kv.v
 			}
 		}
+		if o.nx != nil {
+			if v := o.nx.Get(key); v != nil {
+				return v
+			}
+		}
 	}
 
 	// Slow path - unescape object keys.
@@ -598,6 +625,11 @@ func (o *Object) Get(key string) *Value {
 	for _, kv := range o.kvs {
 		if kv.k == key {
 			return kv.v
+		}
+	}
+	if o.nx != nil {
+		if v := o.nx.Get(key); v != nil {
+			return v
 		}
 	}
 	return nil
@@ -616,6 +648,9 @@ func (o *Object) Visit(f func(key []byte, v *Value)) {
 
 	for _, kv := range o.kvs {
 		f(s2b(kv.k), kv.v)
+	}
+	if o.nx != nil {
+		o.nx.Visit(f)
 	}
 }
 
