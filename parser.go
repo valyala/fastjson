@@ -15,6 +15,8 @@ import (
 // Parser cannot be used from concurrent goroutines.
 // Use per-goroutine parsers or ParserPool instead.
 type Parser struct {
+	AllowUnexpectedTail bool
+
 	// b contains working copy of the string to be parsed.
 	b []byte
 
@@ -36,6 +38,11 @@ func (p *Parser) Parse(s string) (*Value, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse JSON: %s; unparsed tail: %q", err, startEndString(tail))
 	}
+
+	if p.AllowUnexpectedTail {
+		return v, nil
+	}
+
 	tail = skipWS(tail)
 	if len(tail) > 0 {
 		return nil, fmt.Errorf("unexpected tail: %q", startEndString(tail))
