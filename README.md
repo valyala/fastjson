@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/valyala/fastjson.svg)](https://travis-ci.org/valyala/fastjson)
-[![GoDoc](https://godoc.org/github.com/valyala/fastjson?status.svg)](http://godoc.org/github.com/valyala/fastjson)
-[![Go Report](https://goreportcard.com/badge/github.com/valyala/fastjson)](https://goreportcard.com/report/github.com/valyala/fastjson)
+[![GoDoc](https://godoc.org/github.com/vearutop/fastjson?status.svg)](http://godoc.org/github.com/vearutop/fastjson)
+[![Go Report](https://goreportcard.com/badge/github.com/vearutop/fastjson)](https://goreportcard.com/report/github.com/vearutop/fastjson)
 [![codecov](https://codecov.io/gh/valyala/fastjson/branch/master/graph/badge.svg)](https://codecov.io/gh/valyala/fastjson)
 
 # fastjson - fast JSON parser and validator for Go
@@ -12,28 +12,28 @@
     See [benchmarks](#benchmarks).
   * Parses arbitrary JSON without schema, reflection, struct magic and code generation
     contrary to [easyjson](https://github.com/mailru/easyjson).
-  * Provides simple [API](http://godoc.org/github.com/valyala/fastjson).
+  * Provides simple [API](http://godoc.org/github.com/vearutop/fastjson).
   * Outperforms [jsonparser](https://github.com/buger/jsonparser) and [gjson](https://github.com/tidwall/gjson)
     when accessing multiple unrelated fields, since `fastjson` parses the input JSON only once.
   * Validates the parsed JSON unlike [jsonparser](https://github.com/buger/jsonparser)
     and [gjson](https://github.com/tidwall/gjson).
   * May quickly extract a part of the original JSON with `Value.Get(...).MarshalTo` and modify it
-    with [Del](https://godoc.org/github.com/valyala/fastjson#Value.Del)
-    and [Set](https://godoc.org/github.com/valyala/fastjson#Value.Set) functions.
+    with [Del](https://godoc.org/github.com/vearutop/fastjson#Value.Del)
+    and [Set](https://godoc.org/github.com/vearutop/fastjson#Value.Set) functions.
   * May parse array containing values with distinct types (aka non-homogenous types).
     For instance, `fastjson` easily parses the following JSON array `[123, "foo", [456], {"k": "v"}, null]`.
   * `fastjson` preserves the original order of object items when calling
-    [Object.Visit](https://godoc.org/github.com/valyala/fastjson#Object.Visit).
+    [Object.Visit](https://godoc.org/github.com/vearutop/fastjson#Object.Visit).
 
 
 ## Known limitations
 
   * Requies extra care to work with - references to certain objects recursively
-    returned by [Parser](https://godoc.org/github.com/valyala/fastjson#Parser)
-    must be released before the next call to [Parse](https://godoc.org/github.com/valyala/fastjson#Parser.Parse).
-    Otherwise the program may work improperly. The same applies to objects returned by [Arena](https://godoc.org/github.com/valyala/fastjson#Arena).
-    Adhere recommendations from [docs](https://godoc.org/github.com/valyala/fastjson).
-  * Cannot parse JSON from `io.Reader`. There is [Scanner](https://godoc.org/github.com/valyala/fastjson#Scanner)
+    returned by [Parser](https://godoc.org/github.com/vearutop/fastjson#Parser)
+    must be released before the next call to [Parse](https://godoc.org/github.com/vearutop/fastjson#Parser.Parse).
+    Otherwise the program may work improperly. The same applies to objects returned by [Arena](https://godoc.org/github.com/vearutop/fastjson#Arena).
+    Adhere recommendations from [docs](https://godoc.org/github.com/vearutop/fastjson).
+  * Cannot parse JSON from `io.Reader`. There is [Scanner](https://godoc.org/github.com/vearutop/fastjson#Scanner)
     for parsing stream of JSON values from a string.
 
 
@@ -75,7 +75,7 @@ Accessing multiple fields with error handling:
         // arr.1=foo
 ```
 
-See also [examples](https://godoc.org/github.com/valyala/fastjson#pkg-examples).
+See also [examples](https://godoc.org/github.com/vearutop/fastjson#pkg-examples).
 
 
 ## Security
@@ -89,17 +89,17 @@ See also [examples](https://godoc.org/github.com/valyala/fastjson#pkg-examples).
 
 ## Performance optimization tips
 
-  * Re-use [Parser](https://godoc.org/github.com/valyala/fastjson#Parser) and [Scanner](https://godoc.org/github.com/valyala/fastjson#Scanner)
+  * Re-use [Parser](https://godoc.org/github.com/vearutop/fastjson#Parser) and [Scanner](https://godoc.org/github.com/vearutop/fastjson#Scanner)
     for parsing many JSONs. This reduces memory allocations overhead.
-    [ParserPool](https://godoc.org/github.com/valyala/fastjson#ParserPool) may be useful in this case.
-  * Prefer calling `Value.Get*` on the value returned from [Parser](https://godoc.org/github.com/valyala/fastjson#Parser)
+    [ParserPool](https://godoc.org/github.com/vearutop/fastjson#ParserPool) may be useful in this case.
+  * Prefer calling `Value.Get*` on the value returned from [Parser](https://godoc.org/github.com/vearutop/fastjson#Parser)
     instead of calling `Get*` one-liners when multiple fields
     must be obtained from JSON, since each `Get*` one-liner re-parses
     the input JSON again.
-  * Prefer calling once [Value.Get](https://godoc.org/github.com/valyala/fastjson#Value.Get)
+  * Prefer calling once [Value.Get](https://godoc.org/github.com/vearutop/fastjson#Value.Get)
     for common prefix paths and then calling `Value.Get*` on the returned value
     for distinct suffix paths.
-  * Prefer iterating over array returned from [Value.GetArray](https://godoc.org/github.com/valyala/fastjson#Object.Visit)
+  * Prefer iterating over array returned from [Value.GetArray](https://godoc.org/github.com/vearutop/fastjson#Object.Visit)
     with a range loop instead of calling `Value.Get*` for each array item.
 
 ## Fuzzing
@@ -114,7 +114,7 @@ Build using `go-fuzz-build` and run `go-fuzz` with an optional corpus.
 ```bash
 mkdir -p workdir/corpus
 cp $GOPATH/src/github.com/dvyukov/go-fuzz-corpus/json/corpus/* workdir/corpus
-go-fuzz-build github.com/valyala/fastjson
+go-fuzz-build github.com/vearutop/fastjson
 go-fuzz -bin=fastjson-fuzz.zip -workdir=workdir
 ```
 
@@ -141,10 +141,10 @@ Legend:
   * `fastjson-get` - parse using `fastjson` with fields access similar to `stdjson-struct`.
 
 ```
-$ GOMAXPROCS=1 go test github.com/valyala/fastjson -bench='Parse$'
+$ GOMAXPROCS=1 go test github.com/vearutop/fastjson -bench='Parse$'
 goos: linux
 goarch: amd64
-pkg: github.com/valyala/fastjson
+pkg: github.com/vearutop/fastjson
 BenchmarkParse/small/stdjson-map         	  200000	      7305 ns/op	  26.01 MB/s	     960 B/op	      51 allocs/op
 BenchmarkParse/small/stdjson-struct      	  500000	      3431 ns/op	  55.37 MB/s	     224 B/op	       4 allocs/op
 BenchmarkParse/small/stdjson-empty-struct         	  500000	      2273 ns/op	  83.58 MB/s	     168 B/op	       2 allocs/op
@@ -180,10 +180,10 @@ BenchmarkParse/twitter/fastjson-get               	    2000	    777833 ns/op	 81
 Benchmark results for json validation:
 
 ```
-$ GOMAXPROCS=1 go test github.com/valyala/fastjson -bench='Validate$'
+$ GOMAXPROCS=1 go test github.com/vearutop/fastjson -bench='Validate$'
 goos: linux
 goarch: amd64
-pkg: github.com/valyala/fastjson
+pkg: github.com/vearutop/fastjson
 BenchmarkValidate/small/stdjson 	 2000000	       955 ns/op	 198.83 MB/s	      72 B/op	       2 allocs/op
 BenchmarkValidate/small/fastjson         	 5000000	       384 ns/op	 493.60 MB/s	       0 B/op	       0 allocs/op
 BenchmarkValidate/medium/stdjson         	  200000	     10799 ns/op	 215.66 MB/s	     184 B/op	       5 allocs/op
@@ -204,14 +204,14 @@ BenchmarkValidate/twitter/fastjson       	    2000	   1036796 ns/op	 609.10 MB/s
     A: Because other packages require either rigid JSON schema via struct magic
        and code generation or perform poorly when multiple unrelated fields
        must be obtained from the parsed JSON.
-       Additionally, `fastjson` provides nicer [API](http://godoc.org/github.com/valyala/fastjson).
+       Additionally, `fastjson` provides nicer [API](http://godoc.org/github.com/vearutop/fastjson).
 
   * Q: _What is the main purpose for `fastjson`?_
     A: High-perf JSON parsing for [RTB](https://www.iab.com/wp-content/uploads/2015/05/OpenRTB_API_Specification_Version_2_3_1.pdf)
        and other [JSON-RPC](https://en.wikipedia.org/wiki/JSON-RPC) services.
 
   * Q: _Why fastjson doesn't provide fast marshaling (serialization)?_
-    A: Actually it provides some sort of marshaling - see [Value.MarshalTo](https://godoc.org/github.com/valyala/fastjson#Value.MarshalTo).
+    A: Actually it provides some sort of marshaling - see [Value.MarshalTo](https://godoc.org/github.com/vearutop/fastjson#Value.MarshalTo).
        But I'd recommend using [quicktemplate](https://github.com/valyala/quicktemplate#use-cases)
        for high-performance JSON marshaling :)
 
@@ -219,9 +219,9 @@ BenchmarkValidate/twitter/fastjson       	    2000	   1036796 ns/op	 609.10 MB/s
     A: There is high probability of improper use.
        * Make sure you don't hold references to objects recursively returned by `Parser` / `Scanner`
          beyond the next `Parser.Parse` / `Scanner.Next` call
-         if such restriction is mentioned in [docs](https://github.com/valyala/fastjson/issues/new).
+         if such restriction is mentioned in [docs](https://github.com/vearutop/fastjson/issues/new).
        * Make sure you don't access `fastjson` objects from concurrently running goroutines
-         if such restriction is mentioned in [docs](https://github.com/valyala/fastjson/issues/new).
+         if such restriction is mentioned in [docs](https://github.com/vearutop/fastjson/issues/new).
        * Build and run your program with [-race](https://golang.org/doc/articles/race_detector.html) flag.
          Make sure the race detector detects zero races.
-       * If your program continue crashing after fixing issues mentioned above, [file a bug](https://github.com/valyala/fastjson/issues/new).
+       * If your program continue crashing after fixing issues mentioned above, [file a bug](https://github.com/vearutop/fastjson/issues/new).
