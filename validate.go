@@ -215,7 +215,7 @@ func validateString(s string) (string, string, error) {
 		switch ch {
 		case '"', '\\', '/', 'b', 'f', 'n', 'r', 't':
 			// Valid escape sequences - see http://json.org/
-			break
+			continue
 		case 'u':
 			if len(rs) < 4 {
 				return rs, tail, fmt.Errorf(`too short escape sequence: \u%s`, rs)
