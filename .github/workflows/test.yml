@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - allow-use-b2s-and-s2b-function-with-old-and-new-formats
   pull_request:
 jobs:
   test:
