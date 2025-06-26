@@ -21,8 +21,8 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
 
-      - run: go version
-      - run: go test -race ./...
+      - run: go test -shuffle=on ./...
+      - run: go test -race -shuffle=on ./...
   backward_compatibility:
     strategy:
       fail-fast: false
