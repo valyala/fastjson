@@ -13,10 +13,27 @@ jobs:
         go-version: 
           - stable
           - oldstable
+        os: [ubuntu-latest, macos-latest, windows-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - run: go version
+      - run: go test -race ./...
+  backward_compatibility:
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version:
+          - 1.22.x
+          - 1.21.x 
           - 1.20.x
           - 1.19.x
           - 1.12.x
-        os: [ubuntu-latest, macos-latest, windows-latest, macos-14]
+        os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
