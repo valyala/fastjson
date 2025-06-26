@@ -1,1 +1,7 @@
 tags
+*.pprof
+.idea
+.vscode
+.DS_Store
+vendor/
+testdata/fuzz
