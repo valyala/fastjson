@@ -349,7 +349,7 @@ func TestValueGetTyped(t *testing.T) {
 	}
 	un64 = v.GetUint64("bar")
 	if n != 0 {
-		t.Fatalf("unexpected non-zero value; got %d", n64)
+		t.Fatalf("unexpected non-zero value; got %d", un64)
 	}
 	f := v.GetFloat64("foo")
 	if f != 123.0 {
