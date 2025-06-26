@@ -144,7 +144,6 @@ func TestParseRawString(t *testing.T) {
 		f(`"x\\y"tail`, `x\\y`, "tail")
 		f(`"\\\"й\n\"я"tail`, `\\\"й\n\"я`, "tail")
 		f(`"\\\\\\\\"tail`, `\\\\\\\\`, "tail")
-
 	})
 
 	t.Run("error", func(t *testing.T) {
@@ -1197,7 +1196,6 @@ func TestParserParse(t *testing.T) {
 		if ss != s {
 			t.Fatalf("unexpected string representation for object; got\n%q; want\n%q", ss, s)
 		}
-
 	})
 }
 

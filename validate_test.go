@@ -48,7 +48,7 @@ func TestValidateNumberZeroLen(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	var tests = []string{
+	tests := []string{
 		"",
 		"   ",
 		" z",

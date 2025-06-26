@@ -507,5 +507,7 @@ func Parse(s string) (float64, error) {
 	return 0, fmt.Errorf("cannot parse float64 from %q", s)
 }
 
-var inf = math.Inf(1)
-var nan = math.NaN()
+var (
+	inf = math.Inf(1)
+	nan = math.NaN()
+)
