@@ -78,7 +78,7 @@ func BenchmarkObjectGet(b *testing.B) {
 func benchmarkObjectGet(b *testing.B, itemsCount, lookupsCount int) {
 	b.StopTimer()
 	var ss []string
-	for i := 0; i < itemsCount; i++ {
+	for i := range itemsCount {
 		s := fmt.Sprintf(`"key_%d": "value_%d"`, i, i)
 		ss = append(ss, s)
 	}
@@ -97,7 +97,7 @@ func benchmarkObjectGet(b *testing.B, itemsCount, lookupsCount int) {
 				panic(fmt.Errorf("unexpected error: %s", err))
 			}
 			o := v.GetObject()
-			for i := 0; i < lookupsCount; i++ {
+			for range lookupsCount {
 				sb := o.Get(key).GetStringBytes()
 				if string(sb) != expectedValue {
 					panic(fmt.Errorf("unexpected value; got %q; want %q", sb, expectedValue))
@@ -271,7 +271,7 @@ func benchmarkStdJSONParseMap(b *testing.B, s string) {
 	b.SetBytes(int64(len(s)))
 	bb := s2b(s)
 	b.RunParallel(func(pb *testing.PB) {
-		var m map[string]interface{}
+		var m map[string]any
 		for pb.Next() {
 			if err := json.Unmarshal(bb, &m); err != nil {
 				panic(fmt.Errorf("unexpected error: %s", err))
@@ -288,12 +288,12 @@ func benchmarkStdJSONParseStruct(b *testing.B, s string) {
 		var m struct {
 			Sid            int
 			UUID           string
-			Person         map[string]interface{}
-			Company        map[string]interface{}
-			Users          []interface{}
-			Features       []map[string]interface{}
-			TopicSubTopics map[string]interface{}
-			SearchMetadata map[string]interface{}
+			Person         map[string]any
+			Company        map[string]any
+			Users          []any
+			Features       []map[string]any
+			TopicSubTopics map[string]any
+			SearchMetadata map[string]any
 		}
 		for pb.Next() {
 			if err := json.Unmarshal(bb, &m); err != nil {

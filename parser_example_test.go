@@ -31,7 +31,7 @@ func ExampleParser_Parse_reuse() {
 	// Parse call invalidates all the objects previously obtained from p,
 	// so don't hold these objects after parsing the next json.
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		s := fmt.Sprintf(`["foo_%d","bar_%d","%d"]`, i, i, i)
 		v, err := p.Parse(s)
 		if err != nil {

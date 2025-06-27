@@ -9,7 +9,7 @@ import (
 func TestArena(t *testing.T) {
 	t.Run("serial", func(t *testing.T) {
 		var a Arena
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			if err := testArena(&a); err != nil {
 				t.Fatal(err)
 			}
@@ -20,12 +20,12 @@ func TestArena(t *testing.T) {
 		var ap ArenaPool
 		workers := 4
 		ch := make(chan error, workers)
-		for i := 0; i < workers; i++ {
+		for range workers {
 			go func() {
 				a := ap.Get()
 				defer ap.Put(a)
 				var err error
-				for i := 0; i < 10; i++ {
+				for range 10 {
 					if err = testArena(a); err != nil {
 						break
 					}
@@ -33,7 +33,7 @@ func TestArena(t *testing.T) {
 				ch <- err
 			}()
 		}
-		for i := 0; i < workers; i++ {
+		for range workers {
 			select {
 			case err := <-ch:
 				if err != nil {

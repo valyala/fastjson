@@ -35,7 +35,7 @@ func ExampleScanner_reuse() {
 
 	// The sc may be re-used in order to reduce the number
 	// of memory allocations.
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		s := fmt.Sprintf(`[%d] "%d"`, i, i)
 		sc.Init(s)
 		for sc.Next() {

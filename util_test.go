@@ -17,7 +17,7 @@ func TestStartEndString(t *testing.T) {
 
 	getString := func(n int) string {
 		b := make([]byte, 0, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			b = append(b, 'a'+byte(i%26))
 		}
 		return string(b)

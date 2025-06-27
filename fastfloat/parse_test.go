@@ -475,7 +475,7 @@ func TestParseSuccess(t *testing.T) {
 
 func TestParseBestEffortFuzz(t *testing.T) {
 	r := rand.New(rand.NewSource(0))
-	for i := 0; i < 100000; i++ {
+	for range 100000 {
 		f := r.Float64()
 		s := strconv.FormatFloat(f, 'g', -1, 64)
 		numExpected, err := strconv.ParseFloat(s, 64)
@@ -491,7 +491,7 @@ func TestParseBestEffortFuzz(t *testing.T) {
 
 func TestParseFuzz(t *testing.T) {
 	r := rand.New(rand.NewSource(0))
-	for i := 0; i < 100000; i++ {
+	for range 100000 {
 		f := r.Float64()
 		s := strconv.FormatFloat(f, 'g', -1, 64)
 		numExpected, err := strconv.ParseFloat(s, 64)

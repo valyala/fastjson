@@ -12,7 +12,7 @@ func TestGetStringConcurrent(t *testing.T) {
 
 	ch := make(chan error, concurrency)
 
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		go func() {
 			s := GetString(data, "non-existing-key")
 			if s != "" {
@@ -22,7 +22,7 @@ func TestGetStringConcurrent(t *testing.T) {
 		}()
 	}
 
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		select {
 		case <-time.After(time.Second * 5):
 			t.Fatalf("timeout")
@@ -40,7 +40,7 @@ func TestGetBytesConcurrent(t *testing.T) {
 
 	ch := make(chan error, concurrency)
 
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		go func() {
 			b := GetBytes(data, "non-existing-key")
 			if b != nil {
@@ -50,7 +50,7 @@ func TestGetBytesConcurrent(t *testing.T) {
 		}()
 	}
 
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		select {
 		case <-time.After(time.Second * 5):
 			t.Fatalf("timeout")

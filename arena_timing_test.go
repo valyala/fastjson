@@ -34,7 +34,7 @@ func benchCreateArenaObject(a *Arena) *Value {
 	// Create a string only once and use multuple times as a performance optimization.
 	s := a.NewString("foobar")
 	aa := a.NewArray()
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		aa.SetArrayItem(i, s)
 	}
 	o.Set("key3", aa)
