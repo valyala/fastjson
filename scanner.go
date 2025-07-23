@@ -58,14 +58,14 @@ func (sc *Scanner) Next() bool {
 		return false
 	}
 
-	sc.s = skipWS(sc.s)
+	sc.s = sc.s[skipWS(sc.s):]
 	if len(sc.s) == 0 {
 		sc.err = errEOF
 		return false
 	}
 
 	sc.c.reset()
-	v, tail, err := parseValue(sc.s, &sc.c, 0)
+	v, tail, err := parseValue(sc.s, 0, &sc.c, 0)
 	if err != nil {
 		sc.err = err
 		return false

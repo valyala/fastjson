@@ -13,7 +13,8 @@ func TestParseRawNumber(t *testing.T) {
 		f := func(s, expectedRN, expectedTail string) {
 			t.Helper()
 
-			rn, tail, err := parseRawNumber(s)
+			rn, rlen, err := parseRawNumber(s, 0)
+			tail := s[rlen:]
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
 			}
@@ -50,7 +51,8 @@ func TestParseRawNumber(t *testing.T) {
 		f := func(s, expectedTail string) {
 			t.Helper()
 
-			_, tail, err := parseRawNumber(s)
+			_, rlen, err := parseRawNumber(s, 0)
+			tail := s[rlen:]
 			if err == nil {
 				t.Fatalf("expecting non-nil error")
 			}
@@ -106,7 +108,8 @@ func TestParseRawString(t *testing.T) {
 		f := func(s, expectedRS, expectedTail string) {
 			t.Helper()
 
-			rs, tail, err := parseRawString(s[1:])
+			rs, rlen, err := parseRawString(s, 0)
+			tail := s[rlen:]
 			if err != nil {
 				t.Fatalf("unexpected error on parseRawString: %s", err)
 			}
@@ -118,7 +121,8 @@ func TestParseRawString(t *testing.T) {
 			}
 
 			// parseRawKey results must be identical to parseRawString.
-			rs, tail, err = parseRawKey(s[1:])
+			rs, rlen, err = parseRawKey(s, 0)
+			tail = s[rlen:]
 			if err != nil {
 				t.Fatalf("unexpected error on parseRawKey: %s", err)
 			}
@@ -151,7 +155,8 @@ func TestParseRawString(t *testing.T) {
 		f := func(s, expectedTail string) {
 			t.Helper()
 
-			_, tail, err := parseRawString(s[1:])
+			_, rlen, err := parseRawString(s, 0)
+			tail := s[rlen:]
 			if err == nil {
 				t.Fatalf("expecting non-nil error on parseRawString")
 			}
@@ -160,7 +165,8 @@ func TestParseRawString(t *testing.T) {
 			}
 
 			// parseRawKey results must be identical to parseRawString.
-			_, tail, err = parseRawKey(s[1:])
+			_, rlen, err = parseRawKey(s, 0)
+			tail = s[rlen:]
 			if err == nil {
 				t.Fatalf("expecting non-nil error on parseRawKey")
 			}
