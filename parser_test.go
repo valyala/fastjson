@@ -459,12 +459,19 @@ func TestValueGet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
+	if v.do != 0 {
+		t.Fatalf("unexpected main data offset; got %d; want 0", v.do)
+	}
+	if v.dl != 84 {
+		t.Fatalf("unexpected main data length; got %d; want 84", v.dl)
+	}
 
 	t.Run("positive", func(t *testing.T) {
 		sb := v.GetStringBytes("")
 		if string(sb) != "empty-key" {
 			t.Fatalf("unexpected value for empty key; got %q; want %q", sb, "empty-key")
 		}
+
 		sb = v.GetStringBytes("empty-value")
 		if string(sb) != "" {
 			t.Fatalf("unexpected non-empty value: %q", sb)
@@ -473,6 +480,12 @@ func TestValueGet(t *testing.T) {
 		vv := v.Get("foo", "1")
 		if vv == nil {
 			t.Fatalf("cannot find the required value")
+		}
+		if vv.do != 23 {
+			t.Fatalf("unexpected data offset for foo, 1 value; got %d; want 23", vv.do)
+		}
+		if vv.dl != 23 {
+			t.Fatalf("unexpected data length for foo, 1 value; got %d; want 23", vv.dl)
 		}
 		o, err := vv.Object()
 		if err != nil {
@@ -491,6 +504,12 @@ func TestValueGet(t *testing.T) {
 				if s != `["baz"]` {
 					t.Fatalf("unexpected array; got %q; want %q", s, `["baz"]`)
 				}
+				if v.do != 30 {
+					t.Fatalf("unexpected data offset for baz; got %d; want 30", v.do)
+				}
+				if v.dl != 7 {
+					t.Fatalf("unexpected data length for baz, 1 value; got %d; want 7", v.dl)
+				}
 			case "x":
 				sb, err := v.StringBytes()
 				if err != nil {
@@ -498,6 +517,12 @@ func TestValueGet(t *testing.T) {
 				}
 				if string(sb) != "y" {
 					t.Fatalf("unexpected string; got %q; want %q", sb, "y")
+				}
+				if v.do != 42 {
+					t.Fatalf("unexpected data offset for y; got %d; want 42", v.do)
+				}
+				if v.dl != 3 {
+					t.Fatalf("unexpected data length for y; got %d; want 3", v.dl)
 				}
 			default:
 				t.Fatalf("unknown key: %s", k)
