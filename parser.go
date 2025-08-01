@@ -729,6 +729,22 @@ func (v *Value) Type() Type {
 	return v.t
 }
 
+// Offset returns the zero-indexed offset of the v in the original JSON string.
+func (v *Value) Offset() int {
+	if v == nil {
+		return 0
+	}
+	return v.do
+}
+
+// Len returns the length of the v in the original JSON string.
+func (v *Value) Len() int {
+	if v == nil {
+		return 0
+	}
+	return v.dl
+}
+
 // Exists returns true if the field exists for the given keys path.
 //
 // Array indexes may be represented as decimal numbers in keys.

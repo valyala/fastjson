@@ -459,11 +459,11 @@ func TestValueGet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
-	if v.do != 0 {
-		t.Fatalf("unexpected main data offset; got %d; want 0", v.do)
+	if v.Offset() != 0 {
+		t.Fatalf("unexpected main data offset; got %d; want 0", v.Offset())
 	}
-	if v.dl != 84 {
-		t.Fatalf("unexpected main data length; got %d; want 84", v.dl)
+	if v.Len() != 84 {
+		t.Fatalf("unexpected main data length; got %d; want 84", v.Len())
 	}
 
 	t.Run("positive", func(t *testing.T) {
@@ -481,11 +481,11 @@ func TestValueGet(t *testing.T) {
 		if vv == nil {
 			t.Fatalf("cannot find the required value")
 		}
-		if vv.do != 23 {
-			t.Fatalf("unexpected data offset for foo, 1 value; got %d; want 23", vv.do)
+		if vv.Offset() != 23 {
+			t.Fatalf("unexpected data offset for foo, 1 value; got %d; want 23", vv.Offset())
 		}
-		if vv.dl != 23 {
-			t.Fatalf("unexpected data length for foo, 1 value; got %d; want 23", vv.dl)
+		if vv.Len() != 23 {
+			t.Fatalf("unexpected data length for foo, 1 value; got %d; want 23", vv.Len())
 		}
 		o, err := vv.Object()
 		if err != nil {
@@ -504,11 +504,11 @@ func TestValueGet(t *testing.T) {
 				if s != `["baz"]` {
 					t.Fatalf("unexpected array; got %q; want %q", s, `["baz"]`)
 				}
-				if v.do != 30 {
-					t.Fatalf("unexpected data offset for baz; got %d; want 30", v.do)
+				if v.Offset() != 30 {
+					t.Fatalf("unexpected data offset for baz; got %d; want 30", v.Offset())
 				}
-				if v.dl != 7 {
-					t.Fatalf("unexpected data length for baz, 1 value; got %d; want 7", v.dl)
+				if v.Len() != 7 {
+					t.Fatalf("unexpected data length for baz, 1 value; got %d; want 7", v.Len())
 				}
 			case "x":
 				sb, err := v.StringBytes()
@@ -518,11 +518,11 @@ func TestValueGet(t *testing.T) {
 				if string(sb) != "y" {
 					t.Fatalf("unexpected string; got %q; want %q", sb, "y")
 				}
-				if v.do != 42 {
-					t.Fatalf("unexpected data offset for y; got %d; want 42", v.do)
+				if v.Offset() != 42 {
+					t.Fatalf("unexpected data offset for y; got %d; want 42", v.Offset())
 				}
-				if v.dl != 3 {
-					t.Fatalf("unexpected data length for y; got %d; want 3", v.dl)
+				if v.Len() != 3 {
+					t.Fatalf("unexpected data length for y; got %d; want 3", v.Len())
 				}
 			default:
 				t.Fatalf("unknown key: %s", k)
