@@ -566,10 +566,11 @@ func (o *Object) Visit(f func(key []byte, v *Value)) {
 // Value cannot be used from concurrent goroutines.
 // Use per-goroutine parsers or ParserPool instead.
 type Value struct {
-	o Object
-	a []*Value
-	s string
-	t Type
+    o Object
+    a []*Value
+    s string
+    t Type
+    n float64
 }
 
 // MarshalTo appends marshaled v to dst and returns the result.
@@ -967,6 +968,51 @@ func (v *Value) Bool() (bool, error) {
 		return false, nil
 	}
 	return false, fmt.Errorf("value doesn't contain bool; it contains %s", v.Type())
+}
+
+// GetRawString returns a copy of the raw string data for a string value.
+// Returns an empty string if the value is not a string.
+func (v *Value) GetRawString() string {
+	if v.Type() != TypeString {
+		return ""
+	}
+	return v.s
+}
+
+// GetStringArray returns an array of strings from a JSON array.
+// Returns nil if the value is not an array or if any element is not a string.
+func (v *Value) GetStringArray() ([]string, error) {
+	if v.Type() != TypeArray {
+		return nil, fmt.Errorf("value is not an array")
+	}
+	result := make([]string, len(v.a))
+	for i, elem := range v.a {
+		if elem.Type() != TypeString {
+			return nil, fmt.Errorf("element at index %d is not a string", i)
+		}
+		result[i] = elem.s
+	}
+	return result, nil
+}
+
+// GetFloatArray returns an array of floats from a JSON array.
+// Returns nil if the value is not an array or if any element is not a number.
+func (v *Value) GetFloatArray() ([]float64, error) {
+	if v.Type() != TypeArray {
+		return nil, fmt.Errorf("value is not an array")
+	}
+	result := make([]float64, len(v.a))
+	for i, elem := range v.a {
+		if elem.Type() != TypeNumber {
+			return nil, fmt.Errorf("element at index %d is not a number", i)
+		}
+		n, err := fastfloat.Parse(elem.s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse float at index %d: %v", i, err)
+		}
+		result[i] = n
+	}
+	return result, nil
 }
 
 var (

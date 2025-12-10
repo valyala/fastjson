@@ -3,6 +3,7 @@ package fastjson
 import (
 	"fmt"
 	"math"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -774,7 +775,7 @@ func TestParserParse(t *testing.T) {
 		}
 		s := v.String()
 		if s != "[]" {
-			t.Fatalf("unexpected string representation of empty array: got %q; want %q", s, "[]")
+			t.Fatalf("unexpected string representation of empty array; got %q; want %q", s, "[]")
 		}
 	})
 
@@ -1274,4 +1275,170 @@ func testParseGetSerial(s string) error {
 		}
 	}
 	return nil
+}
+func TestValue_GetRawString(t *testing.T) {
+    var p Parser
+    tests := []struct {
+        json     string
+        path     string
+        expected string
+    }{
+        {`{"foo":"bar"}`, "foo", "bar"},
+        {`{"foo":123}`, "foo", ""}, // not a string
+        {`{"foo":""}`, "foo", ""},  // empty string
+        {`{"foo":"\"escaped\""}`, "foo", "\"escaped\""},
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.json, func(t *testing.T) {
+            v, err := p.Parse(tt.json)
+            if err != nil {
+                t.Fatalf("parse error: %v", err)
+            }
+            got := v.Get(tt.path).GetRawString()
+            if got != tt.expected {
+                t.Errorf("GetRawString(%q) = %q, want %q", tt.json, got, tt.expected)
+            }
+        })
+    }
+}
+
+func TestValue_GetStringArray(t *testing.T) {
+    var p Parser
+    tests := []struct {
+        name     string
+        json     string
+        path     string
+        expected []string
+        wantErr  bool
+        errMsg   string
+    }{
+        {
+            name:     "valid string array",
+            json:     `{"foo":["a","b","c"]}`,
+            path:     "foo",
+            expected: []string{"a", "b", "c"},
+            wantErr:  false,
+        },
+        {
+            name:     "empty array",
+            json:     `{"foo":[]}`,
+            path:     "foo",
+            expected: []string{},
+            wantErr:  false,
+        },
+        {
+            name:     "non-string elements",
+            json:     `{"foo":[1,2,3]}`,
+            path:     "foo",
+            expected: nil,
+            wantErr:  true,
+            errMsg:   "element at index 0 is not a string",
+        },
+        {
+            name:     "not an array",
+            json:     `{"foo":"not an array"}`,
+            path:     "foo",
+            expected: nil,
+            wantErr:  true,
+            errMsg:   "value is not an array",
+        },
+        {
+            name:     "mixed types",
+            json:     `{"foo":["a",1,"c"]}`,
+            path:     "foo",
+            expected: nil,
+            wantErr:  true,
+            errMsg:   "element at index 1 is not a string",
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            v, err := p.Parse(tt.json)
+            if err != nil {
+                t.Fatalf("parse error: %v", err)
+            }
+            got, err := v.Get(tt.path).GetStringArray()
+            if (err != nil) != tt.wantErr {
+                t.Errorf("GetStringArray(%q) error = %v, wantErr %v", tt.json, err, tt.wantErr)
+            }
+            if tt.wantErr && err != nil && !strings.Contains(err.Error(), tt.errMsg) {
+                t.Errorf("GetStringArray(%q) error = %q, want error containing %q", tt.json, err.Error(), tt.errMsg)
+            }
+            if !reflect.DeepEqual(got, tt.expected) {
+                t.Errorf("GetStringArray(%q) = %v, want %v", tt.json, got, tt.expected)
+            }
+        })
+    }
+}
+
+func TestValue_GetFloatArray(t *testing.T) {
+    var p Parser
+    tests := []struct {
+        name     string
+        json     string
+        path     string
+        expected []float64
+        wantErr  bool
+        errMsg   string
+    }{
+        {
+            name:     "valid float array",
+            json:     `{"foo":[1.23,4.56,0]}`,
+            path:     "foo",
+            expected: []float64{1.23, 4.56, 0},
+            wantErr:  false,
+        },
+        {
+            name:     "empty array",
+            json:     `{"foo":[]}`,
+            path:     "foo",
+            expected: []float64{},
+            wantErr:  false,
+        },
+        {
+            name:     "non-number elements",
+            json:     `{"foo":["a","b"]}`,
+            path:     "foo",
+            expected: nil,
+            wantErr:  true,
+            errMsg:   "element at index 0 is not a number",
+        },
+        {
+            name:     "not an array",
+            json:     `{"foo":"not an array"}`,
+            path:     "foo",
+            expected: nil,
+            wantErr:  true,
+            errMsg:   "value is not an array",
+        },
+        {
+            name:     "mixed types",
+            json:     `{"foo":[1.23,"b",3]}`,
+            path:     "foo",
+            expected: nil,
+            wantErr:  true,
+            errMsg:   "element at index 1 is not a number",
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            v, err := p.Parse(tt.json)
+            if err != nil {
+                t.Fatalf("parse error: %v", err)
+            }
+            got, err := v.Get(tt.path).GetFloatArray()
+            if (err != nil) != tt.wantErr {
+                t.Errorf("GetFloatArray(%q) error = %v, wantErr %v", tt.json, err, tt.wantErr)
+            }
+            if tt.wantErr && err != nil && !strings.Contains(err.Error(), tt.errMsg) {
+                t.Errorf("GetFloatArray(%q) error = %q, want error containing %q", tt.json, err.Error(), tt.errMsg)
+            }
+            if !reflect.DeepEqual(got, tt.expected) {
+                t.Errorf("GetFloatArray(%q) = %v, want %v", tt.json, got, tt.expected)
+            }
+        })
+    }
 }
