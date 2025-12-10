@@ -423,12 +423,24 @@ func parseRawString(s string) (string, string, error) {
 func parseRawNumber(s string) (string, string, error) {
 	// The caller must ensure len(s) > 0
 
+	dotFound := false
+	eFound := false
+
 	// Find the end of the number.
 	for i := 0; i < len(s); i++ {
 		ch := s[i]
-		if (ch >= '0' && ch <= '9') || ch == '.' || ch == '-' || ch == 'e' || ch == 'E' || ch == '+' {
+		if (ch >= '0' && ch <= '9') || ch == '-' || ch == '+' {
 			continue
 		}
+		if ch == '.' && !dotFound {
+			dotFound = true
+			continue
+		}
+		if (ch == 'e' || ch == 'E') && !eFound {
+			eFound = true
+			continue
+		}
+
 		if i == 0 || i == 1 && (s[0] == '-' || s[0] == '+') {
 			if len(s[i:]) >= 3 {
 				xs := s[i : i+3]
