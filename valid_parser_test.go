@@ -2,23 +2,22 @@ package fastjson
 
 import (
 	"fmt"
-	"math"
 	"strings"
 	"testing"
 	"time"
 )
 
-func TestParseRawNumber(t *testing.T) {
+func TestParseValidRawNumber(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		f := func(s, expectedRN, expectedTail string) {
 			t.Helper()
 
-			rn, tail, err := parseRawNumber(s)
+			rn, tail, err := parseValidRawNumber(s)
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
 			}
 			if rn != expectedRN {
-				t.Fatalf("unexpected raw number; got %q; want %q", rn, expectedRN)
+				t.Fatalf("unexpected raw number; got %q; want %q; in %q; tail %q", rn, expectedRN, s, tail)
 			}
 			if tail != expectedTail {
 				t.Fatalf("unexpected tail; got %q; want %q", tail, expectedTail)
@@ -35,22 +34,13 @@ func TestParseRawNumber(t *testing.T) {
 		f("-12.345E+67 tail", "-12.345E+67", " tail")
 		f("-12.345E-67,tail", "-12.345E-67", ",tail")
 		f("-1234567.8e+90tail", "-1234567.8e+90", "tail")
-		f("12.tail", "12.", "tail")
-		f(".2tail", ".2", "tail")
-		f("-.2tail", "-.2", "tail")
-		f("NaN", "NaN", "")
-		f("nantail", "nan", "tail")
-		f("inf", "inf", "")
-		f("Inftail", "Inf", "tail")
-		f("-INF", "-INF", "")
-		f("-Inftail", "-Inf", "tail")
 	})
 
 	t.Run("error", func(t *testing.T) {
 		f := func(s, expectedTail string) {
 			t.Helper()
 
-			_, tail, err := parseRawNumber(s)
+			_, tail, err := parseValidRawNumber(s)
 			if err == nil {
 				t.Fatalf("expecting non-nil error")
 			}
@@ -59,74 +49,57 @@ func TestParseRawNumber(t *testing.T) {
 			}
 		}
 
+		f("", "")
+		f("-", "-")
+		f("01", "01")
+		f("-01", "-01")
+		f("0.", "0.")
+		f("0.,", "0.,")
+		f("-0.1E", "-0.1E")
+		f("0.1E", "0.1E")
+		f(".1E-1", ".1E-1")
+		f("0.1E-", "0.1E-")
 		f("xyz", "xyz")
 		f(" ", " ")
 		f("[", "[")
 		f(",", ",")
 		f("{", "{")
 		f("\"", "\"")
+		f("NaN", "NaN")
+		f("nantail", "nantail")
+		f("inf", "inf")
+		f("Inftail", "Inftail")
+		f("-INF", "-INF")
+		f("-Inftail", "-Inftail")
 	})
 }
 
-func TestUnescapeStringBestEffort(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
-		testUnescapeStringBestEffort(t, ``, ``)
-		testUnescapeStringBestEffort(t, `\"`, `"`)
-		testUnescapeStringBestEffort(t, `\\`, `\`)
-		testUnescapeStringBestEffort(t, `\\\"`, `\"`)
-		testUnescapeStringBestEffort(t, `\\\"абв`, `\"абв`)
-		testUnescapeStringBestEffort(t, `йцук\n\"\\Y`, "йцук\n\"\\Y")
-		testUnescapeStringBestEffort(t, `q\u1234we`, "q\u1234we")
-		testUnescapeStringBestEffort(t, `п\ud83e\udd2dи`, "п🤭и")
-	})
-
-	t.Run("error", func(t *testing.T) {
-		testUnescapeStringBestEffort(t, `\`, ``)
-		testUnescapeStringBestEffort(t, `foo\qwe`, `foo\qwe`)
-		testUnescapeStringBestEffort(t, `\"x\uyz\"`, `"x\uyz"`)
-		testUnescapeStringBestEffort(t, `\u12\"пролw`, `\u12"пролw`)
-		testUnescapeStringBestEffort(t, `п\ud83eи`, "п\\ud83eи")
-	})
-}
-
-func testUnescapeStringBestEffort(t *testing.T, s, expectedS string) {
-	t.Helper()
-
-	// unescapeString modifies the original s, so call it
-	// on a byte slice copy.
-	b := append([]byte{}, s...)
-	us := unescapeStringBestEffort(b2s(b))
-	if us != expectedS {
-		t.Fatalf("unexpected unescaped string; got %q; want %q", us, expectedS)
-	}
-}
-
-func TestParseRawString(t *testing.T) {
+func TestParseValidRawString(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		f := func(s, expectedRS, expectedTail string) {
 			t.Helper()
 
-			rs, tail, err := parseRawString(s[1:])
+			rs, tail, err := parseValidRawString(s[1:])
 			if err != nil {
-				t.Fatalf("unexpected error on parseRawString: %s", err)
+				t.Fatalf("unexpected error on parseValidRawString: %s", err)
 			}
 			if rs != expectedRS {
-				t.Fatalf("unexpected string on parseRawString; got %q; want %q", rs, expectedRS)
+				t.Fatalf("unexpected string on parseValidRawString; got %q; want %q", rs, expectedRS)
 			}
 			if tail != expectedTail {
-				t.Fatalf("unexpected tail on parseRawString; got %q; want %q", tail, expectedTail)
+				t.Fatalf("unexpected tail on parseValidRawString; got %q; want %q", tail, expectedTail)
 			}
 
-			// parseRawKey results must be identical to parseRawString.
-			rs, tail, err = parseRawKey(s[1:])
+			// parseValidRawKey results must be identical to parseValidRawString.
+			rs, tail, err = parseValidRawKey(s[1:])
 			if err != nil {
-				t.Fatalf("unexpected error on parseRawKey: %s", err)
+				t.Fatalf("unexpected error on parseValidRawKey: %s", err)
 			}
 			if rs != expectedRS {
-				t.Fatalf("unexpected string on parseRawKey; got %q; want %q", rs, expectedRS)
+				t.Fatalf("unexpected string on parseValidRawKey; got %q; want %q", rs, expectedRS)
 			}
 			if tail != expectedTail {
-				t.Fatalf("unexpected tail on parseRawKey; got %q; want %q", tail, expectedTail)
+				t.Fatalf("unexpected tail on parseValidRawKey; got %q; want %q", tail, expectedTail)
 			}
 		}
 
@@ -151,21 +124,21 @@ func TestParseRawString(t *testing.T) {
 		f := func(s, expectedTail string) {
 			t.Helper()
 
-			_, tail, err := parseRawString(s[1:])
+			_, tail, err := parseValidRawString(s[1:])
 			if err == nil {
-				t.Fatalf("expecting non-nil error on parseRawString")
+				t.Fatalf("expecting non-nil error on parseValidRawString")
 			}
 			if tail != expectedTail {
-				t.Fatalf("unexpected tail on parseRawString; got %q; want %q", tail, expectedTail)
+				t.Fatalf("unexpected tail on parseValidRawString; got %q; want %q", tail, expectedTail)
 			}
 
-			// parseRawKey results must be identical to parseRawString.
-			_, tail, err = parseRawKey(s[1:])
+			// parseValidRawKey results must be identical to parseValidRawString.
+			_, tail, err = parseValidRawKey(s[1:])
 			if err == nil {
-				t.Fatalf("expecting non-nil error on parseRawKey")
+				t.Fatalf("expecting non-nil error on parseValidRawKey")
 			}
 			if tail != expectedTail {
-				t.Fatalf("unexpected tail on parseRawKey; got %q; want %q", tail, expectedTail)
+				t.Fatalf("unexpected tail on parseValidRawKey; got %q; want %q", tail, expectedTail)
 			}
 		}
 
@@ -177,8 +150,8 @@ func TestParseRawString(t *testing.T) {
 	})
 }
 
-func TestParserPool(t *testing.T) {
-	var pp ParserPool
+func TestValidParserPool(t *testing.T) {
+	var pp ValidParserPool
 	for i := 0; i < 10; i++ {
 		p := pp.Get()
 		if _, err := p.Parse("null"); err != nil {
@@ -188,348 +161,8 @@ func TestParserPool(t *testing.T) {
 	}
 }
 
-func TestValueInvalidTypeConversion(t *testing.T) {
-	var p Parser
-
-	v, err := p.Parse(`[{},[],"",123.45,true,null]`)
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-	a := v.GetArray()
-
-	// object
-	_, err = a[0].Object()
-	if err != nil {
-		t.Fatalf("unexpected error when obtaining object: %s", err)
-	}
-	_, err = a[0].Array()
-	if err == nil {
-		t.Fatalf("expecting non-nil error when trying to obtain array from object")
-	}
-
-	// array
-	_, err = a[1].Array()
-	if err != nil {
-		t.Fatalf("unexpected error when obtaining array: %s", err)
-	}
-	_, err = a[1].Object()
-	if err == nil {
-		t.Fatalf("expecting non-nil error when trying to obtain object from array")
-	}
-
-	// string
-	_, err = a[2].StringBytes()
-	if err != nil {
-		t.Fatalf("unexpected error when obtaining string: %s", err)
-	}
-	_, err = a[2].Int()
-	if err == nil {
-		t.Fatalf("expecting non-nil error when trying to obtain int from string")
-	}
-	_, err = a[2].Int64()
-	if err == nil {
-		t.Fatalf("expecting non-nil error when trying to obtain int64 from string")
-	}
-	_, err = a[2].Uint()
-	if err == nil {
-		t.Fatalf("expecting non-nil error when trying to obtain uint from string")
-	}
-	_, err = a[2].Uint64()
-	if err == nil {
-		t.Fatalf("expecting non-nil error when trying to obtain uint64 from string")
-	}
-	_, err = a[2].Float64()
-	if err == nil {
-		t.Fatalf("expecting non-nil error when trying to obtain float64 from string")
-	}
-
-	// number
-	_, err = a[3].Float64()
-	if err != nil {
-		t.Fatalf("unexpected error when obtaining float64: %s", err)
-	}
-	_, err = a[3].StringBytes()
-	if err == nil {
-		t.Fatalf("expecting non-nil error when trying to obtain string from number")
-	}
-
-	// true
-	_, err = a[4].Bool()
-	if err != nil {
-		t.Fatalf("unexpected error when obtaining bool: %s", err)
-	}
-	_, err = a[4].StringBytes()
-	if err == nil {
-		t.Fatalf("expecting non-nil error when trying to obtain string from bool")
-	}
-
-	// null
-	_, err = a[5].Bool()
-	if err == nil {
-		t.Fatalf("expecting non-nil error when trying to obtain bool from null")
-	}
-}
-
-func TestValueGetTyped(t *testing.T) {
-	var p Parser
-
-	v, err := p.Parse(`{"foo": 123, "bar": "433", "baz": true, "obj":{}, "arr":[1,2,3],
-		"zero_float1": 0.00,
-		"zero_float2": -0e123,
-		"inf_float": Inf,
-		"minus_inf_float": -Inf,
-		"nan": nan
-	}`)
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-
-	if !v.Exists("foo") {
-		t.Fatalf("foo must exist in the v")
-	}
-	if v.Exists("foo", "bar") {
-		t.Fatalf("foo.bar mustn't exist in the v")
-	}
-	if v.Exists("foobar") {
-		t.Fatalf("foobar mustn't exist in the v")
-	}
-
-	o := v.GetObject("obj")
-	os := o.String()
-	if os != "{}" {
-		t.Fatalf("unexpected object; got %s; want %s", os, "{}")
-	}
-	o = v.GetObject("arr")
-	if o != nil {
-		t.Fatalf("unexpected non-nil object: %s", o)
-	}
-	o = v.GetObject("foo", "bar")
-	if o != nil {
-		t.Fatalf("unexpected non-nil object: %s", o)
-	}
-	a := v.GetArray("arr")
-	if len(a) != 3 {
-		t.Fatalf("unexpected array len; got %d; want %d", len(a), 3)
-	}
-	a = v.GetArray("obj")
-	if a != nil {
-		t.Fatalf("unexpected non-nil array: %s", a)
-	}
-	a = v.GetArray("foo", "bar")
-	if a != nil {
-		t.Fatalf("unexpected non-nil array: %s", a)
-	}
-	n := v.GetInt("foo")
-	if n != 123 {
-		t.Fatalf("unexpected value; got %d; want %d", n, 123)
-	}
-	n64 := v.GetInt64("foo")
-	if n != 123 {
-		t.Fatalf("unexpected value; got %d; want %d", n64, 123)
-	}
-	un := v.GetUint("foo")
-	if un != 123 {
-		t.Fatalf("unexpected value; got %d; want %d", un, 123)
-	}
-	un64 := v.GetUint64("foo")
-	if un != 123 {
-		t.Fatalf("unexpected value; got %d; want %d", un64, 123)
-	}
-	n = v.GetInt("bar")
-	if n != 0 {
-		t.Fatalf("unexpected non-zero value; got %d", n)
-	}
-	n64 = v.GetInt64("bar")
-	if n != 0 {
-		t.Fatalf("unexpected non-zero value; got %d", n64)
-	}
-	un = v.GetUint("bar")
-	if n != 0 {
-		t.Fatalf("unexpected non-zero value; got %d", un)
-	}
-	un64 = v.GetUint64("bar")
-	if n != 0 {
-		t.Fatalf("unexpected non-zero value; got %d", n64)
-	}
-	f := v.GetFloat64("foo")
-	if f != 123.0 {
-		t.Fatalf("unexpected value; got %f; want %f", f, 123.0)
-	}
-	f = v.GetFloat64("bar")
-	if f != 0 {
-		t.Fatalf("unexpected value; got %f; want %f", f, 0.0)
-	}
-	f = v.GetFloat64("foooo", "bar")
-	if f != 0 {
-		t.Fatalf("unexpected value; got %f; want %f", f, 0.0)
-	}
-	f = v.GetFloat64()
-	if f != 0 {
-		t.Fatalf("unexpected value; got %f; want %f", f, 0.0)
-	}
-	sb := v.GetStringBytes("bar")
-	if string(sb) != "433" {
-		t.Fatalf("unexpected value; got %q; want %q", sb, "443")
-	}
-	sb = v.GetStringBytes("foo")
-	if sb != nil {
-		t.Fatalf("unexpected value; got %q; want %q", sb, []byte(nil))
-	}
-	bv := v.GetBool("baz")
-	if !bv {
-		t.Fatalf("unexpected value; got %v; want %v", bv, true)
-	}
-	bv = v.GetBool("bar")
-	if bv {
-		t.Fatalf("unexpected value; got %v; want %v", bv, false)
-	}
-
-	zv := v.Get("zero_float1")
-	zf, err := zv.Float64()
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-	if zf != 0 {
-		t.Fatalf("unexpected zero_float1 value: %f. Expecting 0", zf)
-	}
-
-	zv = v.Get("zero_float2")
-	zf, err = zv.Float64()
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-	if zf != 0 {
-		t.Fatalf("unexpected zero_float1 value: %f. Expecting 0", zf)
-	}
-
-	infv := v.Get("inf_float")
-	inff, err := infv.Float64()
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-	if !math.IsInf(inff, 1) {
-		t.Fatalf("unexpected inf_float value: %f. Expecting %f", inff, math.Inf(1))
-	}
-
-	ninfv := v.Get("minus_inf_float")
-	ninff, err := ninfv.Float64()
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-	if !math.IsInf(ninff, -1) {
-		t.Fatalf("unexpected inf_float value: %f. Expecting %f", ninff, math.Inf(-11))
-	}
-
-	nanv := v.Get("nan")
-	nanf, err := nanv.Float64()
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-	if !math.IsNaN(nanf) {
-		t.Fatalf("unexpected nan value: %f. Expecting %f", nanf, math.NaN())
-	}
-}
-
-func TestVisitNil(t *testing.T) {
-	var p Parser
-	v, err := p.Parse(`{}`)
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-	o := v.GetObject("non-existing-key")
-	if o != nil {
-		t.Fatalf("obtained an object for non-existing key: %#v", o)
-	}
-	o.Visit(func(k []byte, v *Value) {
-		t.Fatalf("unexpected visit call; k=%q; v=%s", k, v)
-	})
-}
-
-func TestValueGet(t *testing.T) {
-	var pp ParserPool
-
-	p := pp.Get()
-	v, err := p.ParseBytes([]byte(`{"xx":33.33,"foo":[123,{"bar":["baz"],"x":"y"}], "": "empty-key", "empty-value": ""}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-
-	t.Run("positive", func(t *testing.T) {
-		sb := v.GetStringBytes("")
-		if string(sb) != "empty-key" {
-			t.Fatalf("unexpected value for empty key; got %q; want %q", sb, "empty-key")
-		}
-		sb = v.GetStringBytes("empty-value")
-		if string(sb) != "" {
-			t.Fatalf("unexpected non-empty value: %q", sb)
-		}
-
-		vv := v.Get("foo", "1")
-		if vv == nil {
-			t.Fatalf("cannot find the required value")
-		}
-		o, err := vv.Object()
-		if err != nil {
-			t.Fatalf("cannot obtain object: %s", err)
-		}
-
-		n := 0
-		o.Visit(func(k []byte, v *Value) {
-			n++
-			switch string(k) {
-			case "bar":
-				if v.Type() != TypeArray {
-					t.Fatalf("unexpected value type; got %d; want %d", v.Type(), TypeArray)
-				}
-				s := v.String()
-				if s != `["baz"]` {
-					t.Fatalf("unexpected array; got %q; want %q", s, `["baz"]`)
-				}
-			case "x":
-				sb, err := v.StringBytes()
-				if err != nil {
-					t.Fatalf("cannot obtain string: %s", err)
-				}
-				if string(sb) != "y" {
-					t.Fatalf("unexpected string; got %q; want %q", sb, "y")
-				}
-			default:
-				t.Fatalf("unknown key: %s", k)
-			}
-		})
-		if n != 2 {
-			t.Fatalf("unexpected number of items visited in the array; got %d; want %d", n, 2)
-		}
-	})
-
-	t.Run("negative", func(t *testing.T) {
-		vv := v.Get("nonexisting", "path")
-		if vv != nil {
-			t.Fatalf("expecting nil value for nonexisting path. Got %#v", vv)
-		}
-		vv = v.Get("foo", "bar", "baz")
-		if vv != nil {
-			t.Fatalf("expecting nil value for nonexisting path. Got %#v", vv)
-		}
-		vv = v.Get("foo", "-123")
-		if vv != nil {
-			t.Fatalf("expecting nil value for nonexisting path. Got %#v", vv)
-		}
-		vv = v.Get("foo", "234")
-		if vv != nil {
-			t.Fatalf("expecting nil value for nonexisting path. Got %#v", vv)
-		}
-		vv = v.Get("xx", "yy")
-		if vv != nil {
-			t.Fatalf("expecting nil value for nonexisting path. Got %#v", vv)
-		}
-	})
-
-	pp.Put(p)
-}
-
-func TestParserParse(t *testing.T) {
-	var p Parser
+func TestValidParserParse(t *testing.T) {
+	var p ValidParser
 
 	t.Run("complex-string", func(t *testing.T) {
 		v, err := p.Parse(`{"тест":1, "\\\"фыва\"":2, "\\\"\u1234x":"\\fЗУ\\\\"}`)
@@ -550,58 +183,29 @@ func TestParserParse(t *testing.T) {
 		}
 	})
 
+	// Behavior differs from Parse (rejected)
 	t.Run("invalid-string-escape", func(t *testing.T) {
-		v, err := p.Parse(`"fo\u"`)
-		if err != nil {
-			t.Fatalf("unexpected error when parsing string")
-		}
-		// Make sure only valid string part remains
-		sb, err := v.StringBytes()
-		if err != nil {
-			t.Fatalf("cannot obtain string: %s", err)
-		}
-		if string(sb) != "fo\\u" {
-			t.Fatalf("unexpected string; got %q; want %q", sb, "fo\\u")
+		_, err := p.Parse(`"fo\u"`)
+		if err == nil {
+			t.Fatalf("expected error when parsing string")
 		}
 
-		v, err = p.Parse(`"foo\ubarz2134"`)
-		if err != nil {
-			t.Fatalf("unexpected error when parsing string")
-		}
-		sb, err = v.StringBytes()
-		if err != nil {
-			t.Fatalf("cannot obtain string: %s", err)
-		}
-		if string(sb) != "foo\\ubarz2134" {
-			t.Fatalf("unexpected string; got %q; want %q", sb, "foo")
+		_, err = p.Parse(`"foo\ubarz2134"`)
+		if err == nil {
+			t.Fatalf("expected error when parsing string")
 		}
 
-		v, err = p.Parse(`"fo` + "\x19" + `\u"`)
-		if err != nil {
-			t.Fatalf("unexpected error when parsing string")
-		}
-		sb, err = v.StringBytes()
-		if err != nil {
-			t.Fatalf("cannot obtain string: %s", err)
-		}
-		if string(sb) != "fo\x19\\u" {
-			t.Fatalf("unexpected string; got %q; want %q", sb, "fo\x19\\u")
+		_, err = p.Parse(`"fo` + "\x19" + `\u"`)
+		if err == nil {
+			t.Fatalf("expected error when parsing string")
 		}
 	})
 
+	// Behavior differs from Parse (rejected)
 	t.Run("invalid-number", func(t *testing.T) {
-		v, err := p.Parse("123+456")
-		if err != nil {
-			t.Fatalf("unexpected error when parsing int")
-		}
-
-		// Make sure invalid int isn't parsed.
-		n, err := v.Int()
+		_, err := p.Parse("123+456")
 		if err == nil {
-			t.Fatalf("expecting non-nil error")
-		}
-		if n != 0 {
-			t.Fatalf("unexpected int; got %d; want %d", n, 0)
+			t.Fatalf("expected error when parsing int")
 		}
 	})
 
@@ -650,6 +254,9 @@ func TestParserParse(t *testing.T) {
 		f(`{"foo" "bar"}`)
 		f(`{"foo":123 "bar":"baz"}`)
 		f("-2134.453eec+43")
+		f("NaN")
+		f("Inf")
+		f("-Inf")
 
 		if _, err := p.Parse("-2134.453E+43"); err != nil {
 			t.Fatalf("unexpected error when parsing number: %s", err)
@@ -1207,9 +814,25 @@ func TestParserParse(t *testing.T) {
 			t.Fatalf("expected nest depth error")
 		}
 	})
+
+	t.Run("control-characters", func(t *testing.T) {
+		s := `{"a":"d"}`
+		_, err := p.Parse(s)
+		if err == nil {
+			t.Fatalf("expected control character error")
+		}
+	})
+
+	t.Run("unknown-escape-sequence", func(t *testing.T) {
+		s := `{"a":"\a"}`
+		_, err := p.Parse(s)
+		if err == nil {
+			t.Fatalf("expected invalid escape sequence error")
+		}
+	})
 }
 
-func TestParseBigObject(t *testing.T) {
+func TestValidParseBigObject(t *testing.T) {
 	const itemsCount = 10000
 
 	// build big json object
@@ -1221,7 +844,7 @@ func TestParseBigObject(t *testing.T) {
 	s := "{" + strings.Join(ss, ",") + "}"
 
 	// parse it
-	var p Parser
+	var p ValidParser
 	v, err := p.Parse(s)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
@@ -1244,13 +867,13 @@ func TestParseBigObject(t *testing.T) {
 	}
 }
 
-func TestParseGetConcurrent(t *testing.T) {
+func TestValidParseGetConcurrent(t *testing.T) {
 	concurrency := 10
 	ch := make(chan error, concurrency)
 	s := `{"foo": "bar", "empty_obj": {}}`
 	for i := 0; i < concurrency; i++ {
 		go func() {
-			ch <- testParseGetSerial(s)
+			ch <- testValidParseGetSerial(s)
 		}()
 	}
 	for i := 0; i < concurrency; i++ {
@@ -1265,8 +888,8 @@ func TestParseGetConcurrent(t *testing.T) {
 	}
 }
 
-func testParseGetSerial(s string) error {
-	var p Parser
+func testValidParseGetSerial(s string) error {
+	var p ValidParser
 	for i := 0; i < 100; i++ {
 		v, err := p.Parse(s)
 		if err != nil {
