@@ -8,13 +8,13 @@ import (
 
 // Validate validates JSON s.
 func Validate(s string) error {
-	s = skipWS(s)
+	s = s[skipWS(s):]
 
 	tail, err := validateValue(s)
 	if err != nil {
 		return fmt.Errorf("cannot parse JSON: %s; unparsed tail: %q", err, startEndString(tail))
 	}
-	tail = skipWS(tail)
+	tail = tail[skipWS(tail):]
 	if len(tail) > 0 {
 		return fmt.Errorf("unexpected tail: %q", startEndString(tail))
 	}
@@ -46,7 +46,7 @@ func validateValue(s string) (string, error) {
 		return tail, nil
 	}
 	if s[0] == '"' {
-		sv, tail, err := validateString(s[1:])
+		sv, tail, err := validateString(s)
 		if err != nil {
 			return tail, fmt.Errorf("cannot parse string: %s", err)
 		}
@@ -85,7 +85,7 @@ func validateValue(s string) (string, error) {
 }
 
 func validateArray(s string) (string, error) {
-	s = skipWS(s)
+	s = s[skipWS(s):]
 	if len(s) == 0 {
 		return s, fmt.Errorf("missing ']'")
 	}
@@ -96,13 +96,13 @@ func validateArray(s string) (string, error) {
 	for {
 		var err error
 
-		s = skipWS(s)
+		s = s[skipWS(s):]
 		s, err = validateValue(s)
 		if err != nil {
 			return s, fmt.Errorf("cannot parse array value: %s", err)
 		}
 
-		s = skipWS(s)
+		s = s[skipWS(s):]
 		if len(s) == 0 {
 			return s, fmt.Errorf("unexpected end of array")
 		}
@@ -119,7 +119,7 @@ func validateArray(s string) (string, error) {
 }
 
 func validateObject(s string) (string, error) {
-	s = skipWS(s)
+	s = s[skipWS(s):]
 	if len(s) == 0 {
 		return s, fmt.Errorf("missing '}'")
 	}
@@ -131,7 +131,7 @@ func validateObject(s string) (string, error) {
 		var err error
 
 		// Parse key.
-		s = skipWS(s)
+		s = s[skipWS(s):]
 		if len(s) == 0 || s[0] != '"' {
 			return s, fmt.Errorf(`cannot find opening '"" for object key`)
 		}
@@ -147,19 +147,19 @@ func validateObject(s string) (string, error) {
 				return s, fmt.Errorf("object key cannot contain control char 0x%02X", key[i])
 			}
 		}
-		s = skipWS(s)
+		s = s[skipWS(s):]
 		if len(s) == 0 || s[0] != ':' {
 			return s, fmt.Errorf("missing ':' after object key")
 		}
 		s = s[1:]
 
 		// Parse value
-		s = skipWS(s)
+		s = s[skipWS(s):]
 		s, err = validateValue(s)
 		if err != nil {
 			return s, fmt.Errorf("cannot parse object value: %s", err)
 		}
-		s = skipWS(s)
+		s = s[skipWS(s):]
 		if len(s) == 0 {
 			return s, fmt.Errorf("unexpected end of object")
 		}
@@ -192,12 +192,13 @@ func validateKey(s string) (string, string, error) {
 
 func validateString(s string) (string, string, error) {
 	// Try fast path - a string without escape sequences.
-	if n := strings.IndexByte(s, '"'); n >= 0 && strings.IndexByte(s[:n], '\\') < 0 {
-		return s[:n], s[n+1:], nil
+	if n := strings.IndexByte(s[1:], '"'); n >= 0 && strings.IndexByte(s[:n+1], '\\') < 0 {
+		return s[1:n+1], s[n+1+1:], nil
 	}
 
 	// Slow path - escape sequences are present.
-	rs, tail, err := parseRawString(s)
+	rs, rlen, err := parseRawString(s, 0)
+	tail := s[rlen:]
 	if err != nil {
 		return rs, tail, err
 	}

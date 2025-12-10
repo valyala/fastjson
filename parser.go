@@ -2,10 +2,11 @@ package fastjson
 
 import (
 	"fmt"
-	"github.com/valyala/fastjson/fastfloat"
 	"strconv"
 	"strings"
 	"unicode/utf16"
+
+	"github.com/valyala/fastjson/fastfloat"
 )
 
 // Parser parses JSON.
@@ -28,15 +29,15 @@ type Parser struct {
 //
 // Use Scanner if a stream of JSON values must be parsed.
 func (p *Parser) Parse(s string) (*Value, error) {
-	s = skipWS(s)
+	s = s[skipWS(s):]
 	p.b = append(p.b[:0], s...)
 	p.c.reset()
 
-	v, tail, err := parseValue(b2s(p.b), &p.c, 0)
+	v, tail, err := parseValue(b2s(p.b), 0, &p.c, 0)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse JSON: %s; unparsed tail: %q", err, startEndString(tail))
 	}
-	tail = skipWS(tail)
+	tail = tail[skipWS(tail):]
 	if len(tail) > 0 {
 		return nil, fmt.Errorf("unexpected tail: %q", startEndString(tail))
 	}
@@ -70,24 +71,24 @@ func (c *cache) getValue() *Value {
 	return &c.vs[len(c.vs)-1]
 }
 
-func skipWS(s string) string {
+func skipWS(s string) int {
 	if len(s) == 0 || s[0] > 0x20 {
 		// Fast path.
-		return s
+		return 0
 	}
 	return skipWSSlow(s)
 }
 
-func skipWSSlow(s string) string {
+func skipWSSlow(s string) int {
 	if len(s) == 0 || s[0] != 0x20 && s[0] != 0x0A && s[0] != 0x09 && s[0] != 0x0D {
-		return s
+		return 0
 	}
 	for i := 1; i < len(s); i++ {
 		if s[i] != 0x20 && s[i] != 0x0A && s[i] != 0x09 && s[i] != 0x0D {
-			return s[i:]
+			return i
 		}
 	}
-	return ""
+	return len(s)
 }
 
 type kv struct {
@@ -98,171 +99,206 @@ type kv struct {
 // MaxDepth is the maximum depth for nested JSON.
 const MaxDepth = 300
 
-func parseValue(s string, c *cache, depth int) (*Value, string, error) {
-	if len(s) == 0 {
-		return nil, s, fmt.Errorf("cannot parse empty string")
+func parseValue(s string, offset int, c *cache, depth int) (*Value, string, error) {
+	if offset >= len(s) {
+		return nil, s[offset:], fmt.Errorf("cannot parse empty string")
 	}
 	depth++
 	if depth > MaxDepth {
 		return nil, s, fmt.Errorf("too big depth for the nested JSON; it exceeds %d", MaxDepth)
 	}
 
-	if s[0] == '{' {
-		v, tail, err := parseObject(s[1:], c, depth)
+	if s[offset] == '{' {
+		v, olen, err := parseObject(s, offset, c, depth)
 		if err != nil {
-			return nil, tail, fmt.Errorf("cannot parse object: %s", err)
+			return nil, s[offset+olen:], fmt.Errorf("cannot parse object: %s", err)
 		}
-		return v, tail, nil
+		return v, s[offset+olen:], nil
 	}
-	if s[0] == '[' {
-		v, tail, err := parseArray(s[1:], c, depth)
+	if s[offset] == '[' {
+		v, alen, err := parseArray(s, offset, c, depth)
 		if err != nil {
-			return nil, tail, fmt.Errorf("cannot parse array: %s", err)
+			return nil, s[offset+alen:], fmt.Errorf("cannot parse array: %s", err)
 		}
-		return v, tail, nil
+		return v, s[offset+alen:], nil
 	}
-	if s[0] == '"' {
-		ss, tail, err := parseRawString(s[1:])
+	if s[offset] == '"' {
+		ss, slen, err := parseRawString(s, offset)
 		if err != nil {
-			return nil, tail, fmt.Errorf("cannot parse string: %s", err)
+			return nil, s[offset+slen:], fmt.Errorf("cannot parse string: %s", err)
 		}
 		v := c.getValue()
 		v.t = typeRawString
 		v.s = ss
-		return v, tail, nil
+		v.do = offset
+		v.dl = slen
+		return v, s[offset+slen:], nil
 	}
-	if s[0] == 't' {
-		if len(s) < len("true") || s[:len("true")] != "true" {
-			return nil, s, fmt.Errorf("unexpected value found: %q", s)
+	if s[offset] == 't' {
+		if len(s[offset:]) < len("true") || s[offset:offset + len("true")] != "true" {
+			return nil, s, fmt.Errorf("unexpected value found: %q", s[offset:])
 		}
-		return valueTrue, s[len("true"):], nil
+		v := c.getValue()
+		v.t = valueTrue.t
+		v.do = offset
+		v.dl = valueTrue.dl
+		return v, s[offset+v.dl:], nil
 	}
-	if s[0] == 'f' {
-		if len(s) < len("false") || s[:len("false")] != "false" {
-			return nil, s, fmt.Errorf("unexpected value found: %q", s)
+	if s[offset] == 'f' {
+		if len(s[offset:]) < len("false") || s[offset:offset + len("false")] != "false" {
+			return nil, s, fmt.Errorf("unexpected value found: %q", s[offset:])
 		}
-		return valueFalse, s[len("false"):], nil
+		v := c.getValue()
+		v.t = valueFalse.t
+		v.do = offset
+		v.dl = valueFalse.dl
+		return v, s[offset+v.dl:], nil
 	}
-	if s[0] == 'n' {
-		if len(s) < len("null") || s[:len("null")] != "null" {
+	if s[offset] == 'n' {
+		if len(s[offset:]) < len("null") || s[offset:offset + len("null")] != "null" {
 			// Try parsing NaN
-			if len(s) >= 3 && strings.EqualFold(s[:3], "nan") {
+			if len(s[offset:]) >= 3 && strings.EqualFold(s[offset:offset+3], "nan") {
 				v := c.getValue()
 				v.t = TypeNumber
-				v.s = s[:3]
-				return v, s[3:], nil
+				v.s = s[offset:offset+3]
+				v.do = offset
+				v.dl = 3
+				return v, s[offset+3:], nil
 			}
-			return nil, s, fmt.Errorf("unexpected value found: %q", s)
+			return nil, s, fmt.Errorf("unexpected value found: %q", s[offset:])
 		}
-		return valueNull, s[len("null"):], nil
+		v := c.getValue()
+		v.t = valueNull.t
+		v.do = offset
+		v.dl = valueNull.dl
+		return v, s[offset+v.dl:], nil
 	}
 
-	ns, tail, err := parseRawNumber(s)
+	ns, nlen, err := parseRawNumber(s, offset)
+	offset += nlen
 	if err != nil {
-		return nil, tail, fmt.Errorf("cannot parse number: %s", err)
+		return nil, s[offset:], fmt.Errorf("cannot parse number: %s", err)
 	}
 	v := c.getValue()
 	v.t = TypeNumber
 	v.s = ns
-	return v, tail, nil
+	v.do = offset
+	v.dl = nlen
+	return v, s[offset:], nil
 }
 
-func parseArray(s string, c *cache, depth int) (*Value, string, error) {
-	s = skipWS(s)
-	if len(s) == 0 {
-		return nil, s, fmt.Errorf("missing ']'")
+func parseArray(s string, offset int, c *cache, depth int) (*Value, int, error) {
+	start_offset := offset
+	offset++
+	offset += skipWS(s[offset:])
+	if offset >= len(s) {
+		return nil, offset - start_offset, fmt.Errorf("missing ']'")
 	}
 
-	if s[0] == ']' {
+	if s[offset] == ']' {
 		v := c.getValue()
 		v.t = TypeArray
 		v.a = v.a[:0]
-		return v, s[1:], nil
+		v.do = start_offset
+		v.dl = offset - start_offset + 1
+		return v, offset - start_offset + 1, nil
 	}
 
 	a := c.getValue()
 	a.t = TypeArray
 	a.a = a.a[:0]
+	a.do = start_offset
 	for {
 		var v *Value
 		var err error
 
-		s = skipWS(s)
-		v, s, err = parseValue(s, c, depth)
+		offset += skipWS(s[offset:])
+		v, _, err = parseValue(s, offset, c, depth)
 		if err != nil {
-			return nil, s, fmt.Errorf("cannot parse array value: %s", err)
+			return nil, offset, fmt.Errorf("cannot parse array value: %s", err)
 		}
 		a.a = append(a.a, v)
 
-		s = skipWS(s)
-		if len(s) == 0 {
-			return nil, s, fmt.Errorf("unexpected end of array")
+		offset += v.dl
+		offset += skipWS(s[offset:])
+		if offset >= len(s) {
+			return nil, offset, fmt.Errorf("unexpected end of array")
 		}
-		if s[0] == ',' {
-			s = s[1:]
+		if s[offset] == ',' {
+			offset++
 			continue
 		}
-		if s[0] == ']' {
-			s = s[1:]
-			return a, s, nil
+		if s[offset] == ']' {
+			offset++
+			a.dl = offset - start_offset
+			return a, a.dl, nil
 		}
-		return nil, s, fmt.Errorf("missing ',' after array value")
+		return nil, offset - start_offset, fmt.Errorf("missing ',' after array value")
 	}
 }
 
-func parseObject(s string, c *cache, depth int) (*Value, string, error) {
-	s = skipWS(s)
-	if len(s) == 0 {
-		return nil, s, fmt.Errorf("missing '}'")
+func parseObject(s string, offset int, c *cache, depth int) (*Value, int, error) {
+	start_offset := offset
+	offset++
+	offset += skipWS(s[offset:])
+	if offset >= len(s) {
+		return nil, offset - start_offset, fmt.Errorf("missing '}'")
 	}
 
-	if s[0] == '}' {
+	if s[offset] == '}' {
 		v := c.getValue()
 		v.t = TypeObject
 		v.o.reset()
-		return v, s[1:], nil
+		v.do = start_offset
+		v.dl = offset - start_offset + 1
+		return v, offset - start_offset + 1, nil
 	}
 
 	o := c.getValue()
 	o.t = TypeObject
 	o.o.reset()
+	o.do = start_offset
 	for {
 		var err error
+		var klen int
 		kv := o.o.getKV()
 
 		// Parse key.
-		s = skipWS(s)
-		if len(s) == 0 || s[0] != '"' {
-			return nil, s, fmt.Errorf(`cannot find opening '"" for object key`)
+		offset += skipWS(s[offset:])
+		if len(s[offset:]) == 0 || s[offset] != '"' {
+			return nil, offset - start_offset, fmt.Errorf(`cannot find opening '"" for object key`)
 		}
-		kv.k, s, err = parseRawKey(s[1:])
+		kv.k, klen, err = parseRawKey(s, offset)
+		offset += klen
 		if err != nil {
-			return nil, s, fmt.Errorf("cannot parse object key: %s", err)
+			return nil, offset - start_offset, fmt.Errorf("cannot parse object key: %s", err)
 		}
-		s = skipWS(s)
-		if len(s) == 0 || s[0] != ':' {
-			return nil, s, fmt.Errorf("missing ':' after object key")
+		offset += skipWS(s[offset:])
+		if offset >= len(s) || s[offset] != ':' {
+			return nil, offset - start_offset, fmt.Errorf("missing ':' after object key")
 		}
-		s = s[1:]
+		offset++
 
 		// Parse value
-		s = skipWS(s)
-		kv.v, s, err = parseValue(s, c, depth)
+		offset += skipWS(s[offset:])
+		kv.v, _, err = parseValue(s, offset, c, depth)
 		if err != nil {
-			return nil, s, fmt.Errorf("cannot parse object value: %s", err)
+			return nil, offset - start_offset, fmt.Errorf("cannot parse object value: %s", err)
 		}
-		s = skipWS(s)
-		if len(s) == 0 {
-			return nil, s, fmt.Errorf("unexpected end of object")
+		offset += kv.v.dl
+		offset += skipWS(s[offset:])
+		if offset >= len(s) {
+			return nil, offset - start_offset, fmt.Errorf("unexpected end of object")
 		}
-		if s[0] == ',' {
-			s = s[1:]
+		if s[offset] == ',' {
+			offset++
 			continue
 		}
-		if s[0] == '}' {
-			return o, s[1:], nil
+		if s[offset] == '}' {
+			o.dl = offset + 1 - start_offset
+			return o, o.dl, nil
 		}
-		return nil, s, fmt.Errorf("missing ',' after object value")
+		return nil, offset - start_offset, fmt.Errorf("missing ',' after object value")
 	}
 }
 
@@ -374,75 +410,83 @@ func unescapeStringBestEffort(s string) string {
 
 // parseRawKey is similar to parseRawString, but is optimized
 // for small-sized keys without escape sequences.
-func parseRawKey(s string) (string, string, error) {
-	for i := 0; i < len(s); i++ {
+func parseRawKey(s string, offset int) (string, int, error) {
+	start_offset := offset
+	for i := offset+1; i < len(s); i++ {
 		if s[i] == '"' {
 			// Fast path.
-			return s[:i], s[i+1:], nil
+			return s[start_offset+1:i], i-offset+1 /* include quotes */, nil
 		}
 		if s[i] == '\\' {
 			// Slow path.
-			return parseRawString(s)
+			return parseRawString(s, start_offset)
 		}
 	}
-	return s, "", fmt.Errorf(`missing closing '"'`)
+	return s, len(s[start_offset:]), fmt.Errorf(`missing closing '"'`)
 }
 
-func parseRawString(s string) (string, string, error) {
-	n := strings.IndexByte(s, '"')
-	if n < 0 {
-		return s, "", fmt.Errorf(`missing closing '"'`)
+func parseRawString(s string, offset int) (string, int, error) {
+	start_offset := offset
+	offset++
+	if offset >= len(s) {
+		return "", 1, fmt.Errorf(`missing closing '"'`)
 	}
-	if n == 0 || s[n-1] != '\\' {
+	n := strings.IndexByte(s[offset:], '"')
+	if n < 0 {
+		return "", len(s[start_offset:]), fmt.Errorf(`missing closing '"'`)
+	}
+	if n == 0 || s[offset+n-1] != '\\' {
 		// Fast path. No escaped ".
-		return s[:n], s[n+1:], nil
+		return s[offset:offset+n], n+1+1 /* include quotes */, nil
 	}
 
 	// Slow path - possible escaped " found.
-	ss := s
+	ss := s[offset:]
 	for {
 		i := n - 1
-		for i > 0 && s[i-1] == '\\' {
+		for i > 0 && s[offset+i-1] == '\\' {
 			i--
 		}
 		if uint(n-i)%2 == 0 {
-			return ss[:len(ss)-len(s)+n], s[n+1:], nil
+			return ss[:len(ss)-len(s[offset:])+n], offset-start_offset+n+1, nil
 		}
-		s = s[n+1:]
+		offset += n+1
 
-		n = strings.IndexByte(s, '"')
+		n = strings.IndexByte(s[offset:], '"')
 		if n < 0 {
-			return ss, "", fmt.Errorf(`missing closing '"'`)
+			return ss, len(s[start_offset:]), fmt.Errorf(`missing closing '"'`)
 		}
-		if n == 0 || s[n-1] != '\\' {
-			return ss[:len(ss)-len(s)+n], s[n+1:], nil
+		if n == 0 || s[offset+n-1] != '\\' {
+			return ss[:len(ss)-len(s[offset:])+n], offset-start_offset+n+1, nil
 		}
 	}
 }
 
-func parseRawNumber(s string) (string, string, error) {
-	// The caller must ensure len(s) > 0
+func parseRawNumber(s string, offset int) (string, int, error) {
+	// The caller must ensure len(s[offset:]) > 0
+	start_offset := offset
 
 	// Find the end of the number.
-	for i := 0; i < len(s); i++ {
-		ch := s[i]
+	for i := 0; start_offset+i < len(s); i++ {
+		ch := s[offset]
 		if (ch >= '0' && ch <= '9') || ch == '.' || ch == '-' || ch == 'e' || ch == 'E' || ch == '+' {
+			offset++
 			continue
 		}
-		if i == 0 || i == 1 && (s[0] == '-' || s[0] == '+') {
-			if len(s[i:]) >= 3 {
-				xs := s[i : i+3]
+		if i == 0 || i == 1 && (s[offset-1] == '-' || s[offset-1] == '+') {
+			if len(s[offset:]) >= 3 {
+				// offset += i
+				xs := s[offset : offset+3]
 				if strings.EqualFold(xs, "inf") || strings.EqualFold(xs, "nan") {
-					return s[:i+3], s[i+3:], nil
+					return s[start_offset:offset+3], offset-start_offset+3, nil
 				}
 			}
-			return "", s, fmt.Errorf("unexpected char: %q", s[:1])
+			return "", 0, fmt.Errorf("unexpected char: %q", s[offset:offset+1])
 		}
-		ns := s[:i]
-		s = s[i:]
-		return ns, s, nil
+		ns := s[start_offset:offset]
+		return ns, offset - start_offset, nil
 	}
-	return s, "", nil
+	return s, offset - start_offset, nil
 }
 
 // Object represents JSON object.
@@ -570,6 +614,8 @@ type Value struct {
 	a []*Value
 	s string
 	t Type
+	do int
+	dl int
 }
 
 // MarshalTo appends marshaled v to dst and returns the result.
@@ -681,6 +727,22 @@ func (v *Value) Type() Type {
 		v.t = TypeString
 	}
 	return v.t
+}
+
+// Offset returns the zero-indexed offset of the v in the original JSON string.
+func (v *Value) Offset() int {
+	if v == nil {
+		return 0
+	}
+	return v.do
+}
+
+// Len returns the length of the v in the original JSON string.
+func (v *Value) Len() int {
+	if v == nil {
+		return 0
+	}
+	return v.dl
 }
 
 // Exists returns true if the field exists for the given keys path.
@@ -970,7 +1032,7 @@ func (v *Value) Bool() (bool, error) {
 }
 
 var (
-	valueTrue  = &Value{t: TypeTrue}
-	valueFalse = &Value{t: TypeFalse}
-	valueNull  = &Value{t: TypeNull}
+	valueTrue  = &Value{t: TypeTrue, dl: 4}
+	valueFalse = &Value{t: TypeFalse, dl: 5}
+	valueNull  = &Value{t: TypeNull, dl: 4}
 )

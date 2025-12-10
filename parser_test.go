@@ -13,7 +13,8 @@ func TestParseRawNumber(t *testing.T) {
 		f := func(s, expectedRN, expectedTail string) {
 			t.Helper()
 
-			rn, tail, err := parseRawNumber(s)
+			rn, rlen, err := parseRawNumber(s, 0)
+			tail := s[rlen:]
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
 			}
@@ -50,7 +51,8 @@ func TestParseRawNumber(t *testing.T) {
 		f := func(s, expectedTail string) {
 			t.Helper()
 
-			_, tail, err := parseRawNumber(s)
+			_, rlen, err := parseRawNumber(s, 0)
+			tail := s[rlen:]
 			if err == nil {
 				t.Fatalf("expecting non-nil error")
 			}
@@ -106,7 +108,8 @@ func TestParseRawString(t *testing.T) {
 		f := func(s, expectedRS, expectedTail string) {
 			t.Helper()
 
-			rs, tail, err := parseRawString(s[1:])
+			rs, rlen, err := parseRawString(s, 0)
+			tail := s[rlen:]
 			if err != nil {
 				t.Fatalf("unexpected error on parseRawString: %s", err)
 			}
@@ -118,7 +121,8 @@ func TestParseRawString(t *testing.T) {
 			}
 
 			// parseRawKey results must be identical to parseRawString.
-			rs, tail, err = parseRawKey(s[1:])
+			rs, rlen, err = parseRawKey(s, 0)
+			tail = s[rlen:]
 			if err != nil {
 				t.Fatalf("unexpected error on parseRawKey: %s", err)
 			}
@@ -151,7 +155,8 @@ func TestParseRawString(t *testing.T) {
 		f := func(s, expectedTail string) {
 			t.Helper()
 
-			_, tail, err := parseRawString(s[1:])
+			_, rlen, err := parseRawString(s, 0)
+			tail := s[rlen:]
 			if err == nil {
 				t.Fatalf("expecting non-nil error on parseRawString")
 			}
@@ -160,7 +165,8 @@ func TestParseRawString(t *testing.T) {
 			}
 
 			// parseRawKey results must be identical to parseRawString.
-			_, tail, err = parseRawKey(s[1:])
+			_, rlen, err = parseRawKey(s, 0)
+			tail = s[rlen:]
 			if err == nil {
 				t.Fatalf("expecting non-nil error on parseRawKey")
 			}
@@ -453,12 +459,19 @@ func TestValueGet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
+	if v.Offset() != 0 {
+		t.Fatalf("unexpected main data offset; got %d; want 0", v.Offset())
+	}
+	if v.Len() != 84 {
+		t.Fatalf("unexpected main data length; got %d; want 84", v.Len())
+	}
 
 	t.Run("positive", func(t *testing.T) {
 		sb := v.GetStringBytes("")
 		if string(sb) != "empty-key" {
 			t.Fatalf("unexpected value for empty key; got %q; want %q", sb, "empty-key")
 		}
+
 		sb = v.GetStringBytes("empty-value")
 		if string(sb) != "" {
 			t.Fatalf("unexpected non-empty value: %q", sb)
@@ -467,6 +480,12 @@ func TestValueGet(t *testing.T) {
 		vv := v.Get("foo", "1")
 		if vv == nil {
 			t.Fatalf("cannot find the required value")
+		}
+		if vv.Offset() != 23 {
+			t.Fatalf("unexpected data offset for foo, 1 value; got %d; want 23", vv.Offset())
+		}
+		if vv.Len() != 23 {
+			t.Fatalf("unexpected data length for foo, 1 value; got %d; want 23", vv.Len())
 		}
 		o, err := vv.Object()
 		if err != nil {
@@ -485,6 +504,12 @@ func TestValueGet(t *testing.T) {
 				if s != `["baz"]` {
 					t.Fatalf("unexpected array; got %q; want %q", s, `["baz"]`)
 				}
+				if v.Offset() != 30 {
+					t.Fatalf("unexpected data offset for baz; got %d; want 30", v.Offset())
+				}
+				if v.Len() != 7 {
+					t.Fatalf("unexpected data length for baz, 1 value; got %d; want 7", v.Len())
+				}
 			case "x":
 				sb, err := v.StringBytes()
 				if err != nil {
@@ -492,6 +517,12 @@ func TestValueGet(t *testing.T) {
 				}
 				if string(sb) != "y" {
 					t.Fatalf("unexpected string; got %q; want %q", sb, "y")
+				}
+				if v.Offset() != 42 {
+					t.Fatalf("unexpected data offset for y; got %d; want 42", v.Offset())
+				}
+				if v.Len() != 3 {
+					t.Fatalf("unexpected data length for y; got %d; want 3", v.Len())
 				}
 			default:
 				t.Fatalf("unknown key: %s", k)
