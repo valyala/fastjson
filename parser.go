@@ -826,6 +826,19 @@ func (v *Value) GetUint64(keys ...string) uint64 {
 	return fastfloat.ParseUint64BestEffort(v.s)
 }
 
+// GetString returns the string value by the given keys path.
+//
+// Array indexes may be represented as decimal numbers in keys.
+//
+// "" is returned for non-existing keys path or for invalid value type.
+func (v *Value) GetString(keys ...string) string {
+	v = v.Get(keys...)
+	if v == nil || v.Type() != TypeString {
+		return ""
+	}
+	return v.s
+}
+
 // GetStringBytes returns string value by the given keys path.
 //
 // Array indexes may be represented as decimal numbers in keys.
