@@ -19,15 +19,16 @@ func BenchmarkParseRawString(b *testing.B) {
 func benchmarkParseRawString(b *testing.B, s string) {
 	b.ReportAllocs()
 	b.SetBytes(int64(len(s)))
-	s = s[1:] // skip the opening '"'
+	// s = s[1:] // skip the opening '"'
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			rs, tail, err := parseRawString(s)
+			rs, rlen, err := parseRawString(s, 0)
+			tail := s[rlen:]
 			if err != nil {
 				panic(fmt.Errorf("cannot parse %q: %s", s, err))
 			}
-			if rs != s[:len(s)-1] {
-				panic(fmt.Errorf("invalid string obtained; got %q; want %q", rs, s[:len(s)-1]))
+			if rs != s[1:len(s)-1] {
+				panic(fmt.Errorf("invalid string obtained; got %q; want %q", rs, s[1:len(s)-1]))
 			}
 			if len(tail) > 0 {
 				panic(fmt.Errorf("non-empty tail got: %q", tail))
@@ -49,7 +50,8 @@ func benchmarkParseRawNumber(b *testing.B, s string) {
 	b.SetBytes(int64(len(s)))
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			rn, tail, err := parseRawNumber(s)
+			rn, rlen, err := parseRawNumber(s, 0)
+			tail := s[rlen:]
 			if err != nil {
 				panic(fmt.Errorf("cannot parse %q: %s", s, err))
 			}
