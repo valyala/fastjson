@@ -35,6 +35,8 @@
     Adhere recommendations from [docs](https://godoc.org/github.com/valyala/fastjson).
   * Cannot parse JSON from `io.Reader`. There is [Scanner](https://godoc.org/github.com/valyala/fastjson#Scanner)
     for parsing stream of JSON values from a string.
+  * `Parse` will interpret `NaN`, `Inf` and `-Inf` as float64 values if present while `Validate` and `ValidParse` will
+    return an error. These tokens are not strictly valid according to the JSON spec.
 
 
 ## Usage
@@ -196,6 +198,29 @@ BenchmarkValidate/citm/stdjson           	     200	   7273172 ns/op	 237.48 MB/s
 BenchmarkValidate/citm/fastjson          	    1000	   1684430 ns/op	1025.39 MB/s	       0 B/op	       0 allocs/op
 BenchmarkValidate/twitter/stdjson        	     500	   2849439 ns/op	 221.63 MB/s	     312 B/op	       6 allocs/op
 BenchmarkValidate/twitter/fastjson       	    2000	   1036796 ns/op	 609.10 MB/s	       0 B/op	       0 allocs/op
+```
+
+Benchmark results for Parse vs ValidParse vs Validate & Parse:
+
+```
+BenchmarkParse/small/fastjson-12                        10067671      111.0 ns/op  1712.14 MB/s    0 B/op  0 allocs/op
+BenchmarkParse/small/fastjson-validate-parser-12        10503465      109.8 ns/op  1729.86 MB/s    0 B/op  0 allocs/op
+BenchmarkParse/small/fastjson-validate-and-parse-12      6553486      176.5 ns/op  1076.23 MB/s    0 B/op  0 allocs/op
+BenchmarkParse/medium/fastjson-12                        1797662      639.2 ns/op  3643.68 MB/s    0 B/op  0 allocs/op
+BenchmarkParse/medium/fastjson-validate-parser-12        1635453      795.7 ns/op  2927.14 MB/s    0 B/op  0 allocs/op
+BenchmarkParse/medium/fastjson-validate-and-parse-12      945916     1400 ns/op    1663.97 MB/s    0 B/op  0 allocs/op
+BenchmarkParse/large/fastjson-12                          121093     9001 ns/op    3123.79 MB/s    0 B/op  0 allocs/op
+BenchmarkParse/large/fastjson-validate-parser-12          116598    10946 ns/op    2568.69 MB/s    0 B/op  0 allocs/op
+BenchmarkParse/large/fastjson-validate-and-parse-12        57669    20630 ns/op    1362.95 MB/s    0 B/op  0 allocs/op
+BenchmarkParse/canada/fastjson-12                           1072  1205458 ns/op    1867.39 MB/s    1 B/op  0 allocs/op
+BenchmarkParse/canada/fastjson-validate-parser-12           1022  1151216 ns/op    1955.38 MB/s    1 B/op  0 allocs/op
+BenchmarkParse/canada/fastjson-validate-and-parse-12         678  1781026 ns/op    1263.91 MB/s    2 B/op  0 allocs/op
+BenchmarkParse/citm/fastjson-12                             2584   476059 ns/op    3628.13 MB/s    0 B/op  0 allocs/op
+BenchmarkParse/citm/fastjson-validate-parser-12             2528   481104 ns/op    3590.09 MB/s    0 B/op  0 allocs/op
+BenchmarkParse/citm/fastjson-validate-and-parse-12          1443   844153 ns/op    2046.08 MB/s    1 B/op  0 allocs/op
+BenchmarkParse/twitter/fastjson-12                          6711   164653 ns/op    3835.42 MB/s  756 B/op  0 allocs/op
+BenchmarkParse/twitter/fastjson-validate-parser-12          5918   192253 ns/op    3284.80 MB/s    0 B/op  0 allocs/op
+BenchmarkParse/twitter/fastjson-validate-and-parse-12       3758   317174 ns/op    1991.06 MB/s    0 B/op  0 allocs/op
 ```
 
 ## FAQ
