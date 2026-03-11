@@ -44,6 +44,8 @@ func TestParseRawNumber(t *testing.T) {
 		f("Inftail", "Inf", "tail")
 		f("-INF", "-INF", "")
 		f("-Inftail", "-Inf", "tail")
+		f("1.2.3.4", "1.2", ".3.4")
+		f("-12.345e67e70", "-12.345e67", "e70")
 	})
 
 	t.Run("error", func(t *testing.T) {
