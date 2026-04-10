@@ -2,10 +2,11 @@ package fastjson
 
 import (
 	"fmt"
-	"github.com/valyala/fastjson/fastfloat"
 	"strconv"
 	"strings"
 	"unicode/utf16"
+
+	"github.com/valyala/fastjson/fastfloat"
 )
 
 // Parser parses JSON.
@@ -30,6 +31,27 @@ type Parser struct {
 func (p *Parser) Parse(s string) (*Value, error) {
 	s = skipWS(s)
 	p.b = append(p.b[:0], s...)
+	p.c.reset()
+
+	v, tail, err := p.c.parseValue(b2s(p.b), 0)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse JSON: %s; unparsed tail: %q", err, startEndString(tail))
+	}
+	tail = skipWS(tail)
+	if len(tail) > 0 {
+		return nil, fmt.Errorf("unexpected tail: %q", startEndString(tail))
+	}
+	return v, nil
+}
+
+func (p *Parser) Reset() {
+	p.b = p.b[:0]
+	p.c.reset()
+}
+
+func (p *Parser) ParseNoCopy(s string) (*Value, error) {
+	s = skipWS(s)
+	p.b = s2b(s)
 	p.c.reset()
 
 	v, tail, err := p.c.parseValue(b2s(p.b), 0)
@@ -81,12 +103,20 @@ func skipWS(s string) string {
 	return skipWSSlow(s)
 }
 
+var wsSearchTable = func() [256]bool {
+	var table [256]bool
+	for _, c := range []byte{0x20, 0x0A, 0x09, 0x0D} {
+		table[c] = true
+	}
+	return table
+}()
+
 func skipWSSlow(s string) string {
-	if len(s) == 0 || s[0] != 0x20 && s[0] != 0x0A && s[0] != 0x09 && s[0] != 0x0D {
+	if len(s) == 0 || !wsSearchTable[s[0]] {
 		return s
 	}
 	for i := 1; i < len(s); i++ {
-		if s[i] != 0x20 && s[i] != 0x0A && s[i] != 0x09 && s[i] != 0x0D {
+		if !wsSearchTable[s[i]] {
 			return s[i:]
 		}
 	}
