@@ -1,21 +1,15 @@
 package fastjson
 
 import (
-	"reflect"
 	"unsafe"
 )
 
 func b2s(b []byte) string {
-	return *(*string)(unsafe.Pointer(&b))
+	return unsafe.String(unsafe.SliceData(b), len(b))
 }
 
-func s2b(s string) (b []byte) {
-	strh := (*reflect.StringHeader)(unsafe.Pointer(&s))
-	sh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
-	sh.Data = strh.Data
-	sh.Len = strh.Len
-	sh.Cap = strh.Len
-	return b
+func s2b(s string) []byte {
+	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
 const maxStartEndStringLen = 80
