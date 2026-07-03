@@ -2,8 +2,6 @@ package fastjson
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 )
 
 // Validate validates JSON s.
@@ -31,46 +29,36 @@ func validateValue(s string) (string, error) {
 		return s, fmt.Errorf("cannot parse empty string")
 	}
 
-	if s[0] == '{' {
+	switch s[0] {
+	case '{':
 		tail, err := validateObject(s[1:])
 		if err != nil {
 			return tail, fmt.Errorf("cannot parse object: %s", err)
 		}
 		return tail, nil
-	}
-	if s[0] == '[' {
+	case '[':
 		tail, err := validateArray(s[1:])
 		if err != nil {
 			return tail, fmt.Errorf("cannot parse array: %s", err)
 		}
 		return tail, nil
-	}
-	if s[0] == '"' {
-		sv, tail, err := validateString(s[1:])
+	case '"':
+		_, tail, err := validateString(s[1:])
 		if err != nil {
 			return tail, fmt.Errorf("cannot parse string: %s", err)
 		}
-		// Scan the string for control chars.
-		for i := range len(sv) {
-			if sv[i] < 0x20 {
-				return tail, fmt.Errorf("string cannot contain control char 0x%02X", sv[i])
-			}
-		}
 		return tail, nil
-	}
-	if s[0] == 't' {
+	case 't':
 		if len(s) < len("true") || s[:len("true")] != "true" {
 			return s, fmt.Errorf("unexpected value found: %q", s)
 		}
 		return s[len("true"):], nil
-	}
-	if s[0] == 'f' {
+	case 'f':
 		if len(s) < len("false") || s[:len("false")] != "false" {
 			return s, fmt.Errorf("unexpected value found: %q", s)
 		}
 		return s[len("false"):], nil
-	}
-	if s[0] == 'n' {
+	case 'n':
 		if len(s) < len("null") || s[:len("null")] != "null" {
 			return s, fmt.Errorf("unexpected value found: %q", s)
 		}
@@ -111,8 +99,7 @@ func validateArray(s string) (string, error) {
 			continue
 		}
 		if s[0] == ']' {
-			s = s[1:]
-			return s, nil
+			return s[1:], nil
 		}
 		return s, fmt.Errorf("missing ',' after array value")
 	}
@@ -136,16 +123,9 @@ func validateObject(s string) (string, error) {
 			return s, fmt.Errorf(`cannot find opening '"" for object key`)
 		}
 
-		var key string
-		key, s, err = validateKey(s[1:])
+		_, s, err = validateKey(s[1:])
 		if err != nil {
 			return s, fmt.Errorf("cannot parse object key: %s", err)
-		}
-		// Scan the key for control chars.
-		for i := range len(key) {
-			if key[i] < 0x20 {
-				return s, fmt.Errorf("object key cannot contain control char 0x%02X", key[i])
-			}
 		}
 		s = skipWS(s)
 		if len(s) == 0 || s[0] != ':' {
@@ -177,59 +157,80 @@ func validateObject(s string) (string, error) {
 // validateKey is similar to validateString, but is optimized
 // for typical object keys, which are quite small and have no escape sequences.
 func validateKey(s string) (string, string, error) {
-	for i := range len(s) {
-		if s[i] == '"' {
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c == '"' {
 			// Fast path - the key doesn't contain escape sequences.
 			return s[:i], s[i+1:], nil
 		}
-		if s[i] == '\\' {
+		if c == '\\' {
 			// Slow path - the key contains escape sequences.
-			return validateString(s)
+			return validateStringSlow(s, i)
+		}
+		if c < 0x20 {
+			return s[:i], s[i:], fmt.Errorf("object key cannot contain control char 0x%02X", c)
 		}
 	}
 	return "", s, fmt.Errorf(`missing closing '"'`)
 }
 
 func validateString(s string) (string, string, error) {
-	// Try fast path - a string without escape sequences.
-	if n := strings.IndexByte(s, '"'); n >= 0 && strings.IndexByte(s[:n], '\\') < 0 {
-		return s[:n], s[n+1:], nil
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c == '"' {
+			return s[:i], s[i+1:], nil
+		}
+		if c == '\\' {
+			return validateStringSlow(s, i)
+		}
+		if c < 0x20 {
+			return s[:i], s[i:], fmt.Errorf("string cannot contain control char 0x%02X", c)
+		}
 	}
+	return "", s, fmt.Errorf(`missing closing '"'`)
+}
 
-	// Slow path - escape sequences are present.
-	rs, tail, err := parseRawString(s)
-	if err != nil {
-		return rs, tail, err
-	}
-	for {
-		n := strings.IndexByte(rs, '\\')
-		if n < 0 {
-			return rs, tail, nil
+func validateStringSlow(s string, i int) (string, string, error) {
+	for ; i < len(s); i++ {
+		c := s[i]
+		if c == '"' {
+			return s[:i], s[i+1:], nil
 		}
-		n++
-		if n >= len(rs) {
-			return rs, tail, fmt.Errorf("BUG: parseRawString returned invalid string with trailing backslash: %q", rs)
+		if c < 0x20 {
+			return s[:i], s[i:], fmt.Errorf("string cannot contain control char 0x%02X", c)
 		}
-		ch := rs[n]
-		rs = rs[n+1:]
+		if c != '\\' {
+			continue
+		}
+
+		i++
+		if i >= len(s) {
+			return s, "", fmt.Errorf(`missing closing '"'`)
+		}
+		ch := s[i]
 		switch ch {
 		case '"', '\\', '/', 'b', 'f', 'n', 'r', 't':
 			// Valid escape sequences - see http://json.org/
-			break
 		case 'u':
-			if len(rs) < 4 {
-				return rs, tail, fmt.Errorf(`too short escape sequence: \u%s`, rs)
+			if i+4 >= len(s) {
+				return s[i+1:], "", fmt.Errorf(`too short escape sequence: \u%s`, s[i+1:])
 			}
-			xs := rs[:4]
-			_, err := strconv.ParseUint(xs, 16, 16)
-			if err != nil {
-				return rs, tail, fmt.Errorf(`invalid escape sequence \u%s: %s`, xs, err)
+			for j := i + 1; j <= i+4; j++ {
+				c := s[j]
+				if !isHexChar(c) {
+					return s[j:], "", fmt.Errorf(`invalid escape sequence \u%s`, s[i+1:i+5])
+				}
 			}
-			rs = rs[4:]
+			i += 4
 		default:
-			return rs, tail, fmt.Errorf(`unknown escape sequence \%c`, ch)
+			return s[i:], "", fmt.Errorf(`unknown escape sequence \%c`, ch)
 		}
 	}
+	return "", s, fmt.Errorf(`missing closing '"'`)
+}
+
+func isHexChar(c byte) bool {
+	return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')
 }
 
 func validateNumber(s string) (string, error) {
