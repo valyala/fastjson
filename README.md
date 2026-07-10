@@ -20,7 +20,7 @@
   * May quickly extract a part of the original JSON with `Value.Get(...).MarshalTo` and modify it
     with [Del](https://godoc.org/github.com/valyala/fastjson#Value.Del)
     and [Set](https://godoc.org/github.com/valyala/fastjson#Value.Set) functions.
-  * May parse array containing values with distinct types (aka non-homogenous types).
+  * May parse array containing values with distinct types (aka non-homogeneous types).
     For instance, `fastjson` easily parses the following JSON array `[123, "foo", [456], {"k": "v"}, null]`.
   * `fastjson` preserves the original order of object items when calling
     [Object.Visit](https://godoc.org/github.com/valyala/fastjson#Object.Visit).
@@ -28,7 +28,7 @@
 
 ## Known limitations
 
-  * Requies extra care to work with - references to certain objects recursively
+  * Requires extra care to work with - references to certain objects recursively
     returned by [Parser](https://godoc.org/github.com/valyala/fastjson#Parser)
     must be released before the next call to [Parse](https://godoc.org/github.com/valyala/fastjson#Parser.Parse).
     Otherwise the program may work improperly. The same applies to objects returned by [Arena](https://godoc.org/github.com/valyala/fastjson#Arena).
@@ -210,7 +210,7 @@ BenchmarkValidate/twitter/fastjson       	    2000	   1036796 ns/op	 609.10 MB/s
     A: High-perf JSON parsing for [RTB](https://www.iab.com/wp-content/uploads/2015/05/OpenRTB_API_Specification_Version_2_3_1.pdf)
        and other [JSON-RPC](https://en.wikipedia.org/wiki/JSON-RPC) services.
 
-  * Q: _Why fastjson doesn't provide fast marshaling (serialization)?_
+  * Q: _Why doesn't fastjson provide fast marshaling (serialization)?_
     A: Actually it provides some sort of marshaling - see [Value.MarshalTo](https://godoc.org/github.com/valyala/fastjson#Value.MarshalTo).
        But I'd recommend using [quicktemplate](https://github.com/valyala/quicktemplate#use-cases)
        for high-performance JSON marshaling :)
@@ -224,4 +224,4 @@ BenchmarkValidate/twitter/fastjson       	    2000	   1036796 ns/op	 609.10 MB/s
          if such restriction is mentioned in [docs](https://github.com/valyala/fastjson/issues/new).
        * Build and run your program with [-race](https://golang.org/doc/articles/race_detector.html) flag.
          Make sure the race detector detects zero races.
-       * If your program continue crashing after fixing issues mentioned above, [file a bug](https://github.com/valyala/fastjson/issues/new).
+       * If your program continues crashing after fixing issues mentioned above, [file a bug](https://github.com/valyala/fastjson/issues/new).
