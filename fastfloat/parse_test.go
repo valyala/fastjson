@@ -292,6 +292,7 @@ func TestParseBestEffort(t *testing.T) {
 	f("-123e456", math.Inf(-1)) // too big exponent
 	f("1e4", 1e4)
 	f("-1E-10", -1e-10)
+	f("2.0250405e+07", 20250405)
 
 	// Fractional + exponent part
 	f("0.123e4", 0.123e4)
@@ -445,6 +446,7 @@ func TestParseSuccess(t *testing.T) {
 	f("-123e456", math.Inf(-1)) // too big exponent
 	f("1e4", 1e4)
 	f("-1E-10", -1e-10)
+	f("2.0250405e+07", 20250405)
 
 	// Fractional + exponent part
 	f("0.123e4", 0.123e4)
