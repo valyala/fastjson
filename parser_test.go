@@ -38,6 +38,9 @@ func TestParseRawNumber(t *testing.T) {
 		f("12.tail", "12.", "tail")
 		f(".2tail", ".2", "tail")
 		f("-.2tail", "-.2", "tail")
+		f("1.0.1", "1.0", ".1")
+		f("1.2.3tail", "1.2", ".3tail")
+		f("1e2e3", "1e2", "e3")
 		f("NaN", "NaN", "")
 		f("nantail", "nan", "tail")
 		f("inf", "inf", "")
@@ -66,6 +69,22 @@ func TestParseRawNumber(t *testing.T) {
 		f("{", "{")
 		f("\"", "\"")
 	})
+}
+
+func TestParseRejectsExtraDotInNumber(t *testing.T) {
+	// Invalid JSON: 1.0.1 is not a number. Validate already rejected this;
+	// Parse used to accept it (#119).
+	s := `{"cmdId":"AktdDyEqjgHj","version":1.0.1,"ts":"2026-01-29T17:58:40+08:00","data":[{"oewr":false}]}`
+	if err := Validate(s); err == nil {
+		t.Fatalf("Validate unexpectedly accepted extra-dot number")
+	}
+	var p Parser
+	if _, err := p.Parse(s); err == nil {
+		t.Fatalf("Parse unexpectedly accepted extra-dot number")
+	}
+	if _, err := p.Parse(`1.0.1`); err == nil {
+		t.Fatalf("Parse unexpectedly accepted 1.0.1")
+	}
 }
 
 func TestUnescapeStringBestEffort(t *testing.T) {
@@ -590,18 +609,9 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("invalid-number", func(t *testing.T) {
-		v, err := p.Parse("123+456")
-		if err != nil {
-			t.Fatalf("unexpected error when parsing int")
-		}
-
-		// Make sure invalid int isn't parsed.
-		n, err := v.Int()
+		_, err := p.Parse("123+456")
 		if err == nil {
-			t.Fatalf("expecting non-nil error")
-		}
-		if n != 0 {
-			t.Fatalf("unexpected int; got %d; want %d", n, 0)
+			t.Fatalf("expecting non-nil error when parsing 123+456")
 		}
 	})
 

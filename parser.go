@@ -426,26 +426,58 @@ func parseRawString(s string) (string, string, error) {
 func parseRawNumber(s string) (string, string, error) {
 	// The caller must ensure len(s) > 0
 
-	// Find the end of the number.
-	for i := range len(s) {
+	i := 0
+	if s[0] == '-' || s[0] == '+' {
+		i = 1
+	}
+	if i < len(s) {
+		rest := s[i:]
+		if len(rest) >= 3 {
+			xs := rest[:3]
+			if strings.EqualFold(xs, "inf") || strings.EqualFold(xs, "nan") {
+				return s[:i+3], s[i+3:], nil
+			}
+		}
+	}
+	if i >= len(s) {
+		return "", s, fmt.Errorf("unexpected char: %q", s[:1])
+	}
+
+	// Scan one JSON-ish number: digits, at most one '.', then optional exponent.
+	// A second '.' or a second 'e' is not part of the number (see #119).
+	seenDot := false
+	seenExp := false
+	for i < len(s) {
 		ch := s[i]
-		if (ch >= '0' && ch <= '9') || ch == '.' || ch == '-' || ch == 'e' || ch == 'E' || ch == '+' {
+		if ch >= '0' && ch <= '9' {
+			i++
 			continue
 		}
-		if i == 0 || i == 1 && (s[0] == '-' || s[0] == '+') {
-			if len(s[i:]) >= 3 {
-				xs := s[i : i+3]
-				if strings.EqualFold(xs, "inf") || strings.EqualFold(xs, "nan") {
-					return s[:i+3], s[i+3:], nil
-				}
+		if ch == '.' {
+			if seenDot || seenExp {
+				break
 			}
-			return "", s, fmt.Errorf("unexpected char: %q", s[:1])
+			seenDot = true
+			i++
+			continue
 		}
-		ns := s[:i]
-		s = s[i:]
-		return ns, s, nil
+		if ch == 'e' || ch == 'E' {
+			if seenExp {
+				break
+			}
+			seenExp = true
+			i++
+			if i < len(s) && (s[i] == '+' || s[i] == '-') {
+				i++
+			}
+			continue
+		}
+		break
 	}
-	return s, "", nil
+	if i == 0 || (i == 1 && (s[0] == '-' || s[0] == '+')) {
+		return "", s, fmt.Errorf("unexpected char: %q", s[:1])
+	}
+	return s[:i], s[i:], nil
 }
 
 // Object represents JSON object.
