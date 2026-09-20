@@ -68,6 +68,44 @@ func TestParseRawNumber(t *testing.T) {
 	})
 }
 
+func TestParseRejectsInvalidNumber(t *testing.T) {
+	// Parse used to accept extra-dot tokens such as 1.0.1 because
+	// parseRawNumber is a greedy scanner. Validate already rejected them
+	// (https://github.com/valyala/fastjson/issues/119).
+	invalid := []string{
+		`1.0.1`,
+		`{"cmdId":"AktdDyEqjgHj","version":1.0.1,"ts":"2026-01-29T17:58:40+08:00","data":[{"oewr":false}]}`,
+		`12.34.56`,
+		`1e1e1`,
+		`{"a":1.2.3}`,
+	}
+	for _, s := range invalid {
+		if err := Validate(s); err == nil {
+			t.Fatalf("Validate unexpectedly accepted %q", s)
+		}
+		if _, err := Parse(s); err == nil {
+			t.Fatalf("Parse unexpectedly accepted %q", s)
+		}
+	}
+
+	valid := []string{`1.01`, `{"version":1.01}`, `-12.345e67`, `0.1`}
+	for _, s := range valid {
+		if err := Validate(s); err != nil {
+			t.Fatalf("Validate rejected valid %q: %s", s, err)
+		}
+		if _, err := Parse(s); err != nil {
+			t.Fatalf("Parse rejected valid %q: %s", s, err)
+		}
+	}
+
+	// inf/nan remain accepted by Parse as documented extensions.
+	for _, s := range []string{`NaN`, `Inf`, `-INF`} {
+		if _, err := Parse(s); err != nil {
+			t.Fatalf("Parse rejected special float %q: %s", s, err)
+		}
+	}
+}
+
 func TestUnescapeStringBestEffort(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		testUnescapeStringBestEffort(t, ``, ``)
@@ -590,18 +628,13 @@ func TestParserParse(t *testing.T) {
 	})
 
 	t.Run("invalid-number", func(t *testing.T) {
-		v, err := p.Parse("123+456")
-		if err != nil {
-			t.Fatalf("unexpected error when parsing int")
+		// parseRawNumber used to greedily accept "123+456"; Parse must
+		// reject it the same way Validate does (see issue 119).
+		if _, err := p.Parse("123+456"); err == nil {
+			t.Fatalf("expecting error when parsing invalid number 123+456")
 		}
-
-		// Make sure invalid int isn't parsed.
-		n, err := v.Int()
-		if err == nil {
-			t.Fatalf("expecting non-nil error")
-		}
-		if n != 0 {
-			t.Fatalf("unexpected int; got %d; want %d", n, 0)
+		if err := Validate("123+456"); err == nil {
+			t.Fatalf("expecting Validate error for 123+456")
 		}
 	})
 
