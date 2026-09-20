@@ -164,10 +164,33 @@ func (c *cache) parseValue(s string, depth int) (*Value, string, error) {
 	if err != nil {
 		return nil, tail, fmt.Errorf("cannot parse number: %s", err)
 	}
+	// parseRawNumber is a greedy scanner (digits, '.', 'e', '+', '-').
+	// Reject tokens that Validate would also reject, e.g. "1.0.1",
+	// so Parse and Validate stay consistent. inf/nan remain extensions.
+	if !isSpecialFloatToken(ns) {
+		rest, verr := validateNumber(ns)
+		if verr != nil || len(rest) > 0 {
+			if verr == nil {
+				verr = fmt.Errorf("unexpected number tail %q", rest)
+			}
+			return nil, s, fmt.Errorf("cannot parse number: %s", verr)
+		}
+	}
 	v := c.getValue()
 	v.t = TypeNumber
 	v.s = ns
 	return v, tail, nil
+}
+
+func isSpecialFloatToken(ns string) bool {
+	if len(ns) == 0 {
+		return false
+	}
+	s := ns
+	if s[0] == '-' || s[0] == '+' {
+		s = s[1:]
+	}
+	return strings.EqualFold(s, "inf") || strings.EqualFold(s, "nan") || strings.EqualFold(s, "infinity")
 }
 
 func (c *cache) parseArray(s string, depth int) (*Value, string, error) {
