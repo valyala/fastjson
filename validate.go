@@ -10,7 +10,7 @@ import (
 func Validate(s string) error {
 	s = skipWS(s)
 
-	tail, err := validateValue(s)
+	tail, err := validateValue(s, 0)
 	if err != nil {
 		return fmt.Errorf("cannot parse JSON: %s; unparsed tail: %q", err, startEndString(tail))
 	}
@@ -26,20 +26,30 @@ func ValidateBytes(b []byte) error {
 	return Validate(b2s(b))
 }
 
-func validateValue(s string) (string, error) {
+// Keep validation bounded like encoding/json. Parser.Parse has a lower MaxDepth
+// because it builds a tree; Validate only checks the syntax.
+const maxValidateDepth = 10000
+
+func validateValue(s string, depth int) (string, error) {
 	if len(s) == 0 {
 		return s, fmt.Errorf("cannot parse empty string")
 	}
 
 	if s[0] == '{' {
-		tail, err := validateObject(s[1:])
+		if depth >= maxValidateDepth {
+			return s, fmt.Errorf("JSON nesting exceeds %d levels", maxValidateDepth)
+		}
+		tail, err := validateObject(s[1:], depth+1)
 		if err != nil {
 			return tail, fmt.Errorf("cannot parse object: %s", err)
 		}
 		return tail, nil
 	}
 	if s[0] == '[' {
-		tail, err := validateArray(s[1:])
+		if depth >= maxValidateDepth {
+			return s, fmt.Errorf("JSON nesting exceeds %d levels", maxValidateDepth)
+		}
+		tail, err := validateArray(s[1:], depth+1)
 		if err != nil {
 			return tail, fmt.Errorf("cannot parse array: %s", err)
 		}
@@ -84,7 +94,7 @@ func validateValue(s string) (string, error) {
 	return tail, nil
 }
 
-func validateArray(s string) (string, error) {
+func validateArray(s string, depth int) (string, error) {
 	s = skipWS(s)
 	if len(s) == 0 {
 		return s, fmt.Errorf("missing ']'")
@@ -97,7 +107,7 @@ func validateArray(s string) (string, error) {
 		var err error
 
 		s = skipWS(s)
-		s, err = validateValue(s)
+		s, err = validateValue(s, depth)
 		if err != nil {
 			return s, fmt.Errorf("cannot parse array value: %s", err)
 		}
@@ -118,7 +128,7 @@ func validateArray(s string) (string, error) {
 	}
 }
 
-func validateObject(s string) (string, error) {
+func validateObject(s string, depth int) (string, error) {
 	s = skipWS(s)
 	if len(s) == 0 {
 		return s, fmt.Errorf("missing '}'")
@@ -155,7 +165,7 @@ func validateObject(s string) (string, error) {
 
 		// Parse value
 		s = skipWS(s)
-		s, err = validateValue(s)
+		s, err = validateValue(s, depth)
 		if err != nil {
 			return s, fmt.Errorf("cannot parse object value: %s", err)
 		}
