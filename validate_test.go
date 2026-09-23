@@ -37,6 +37,20 @@ func TestValidateSimple(t *testing.T) {
 	}
 }
 
+func TestValidateExcessiveNesting(t *testing.T) {
+	const depth = 10000
+	for _, delimiter := range []struct{ open, close string }{{"[", "]"}, {`{"x":`, "}"}} {
+		valid := strings.Repeat(delimiter.open, depth) + "0" + strings.Repeat(delimiter.close, depth)
+		if err := Validate(valid); err != nil {
+			t.Fatalf("valid depth rejected: %v", err)
+		}
+		tooDeep := delimiter.open + valid + delimiter.close
+		if err := Validate(tooDeep); err == nil {
+			t.Fatal("nesting beyond the limit was accepted")
+		}
+	}
+}
+
 func TestValidateNumberZeroLen(t *testing.T) {
 	tail, err := validateNumber("")
 	if err == nil {
