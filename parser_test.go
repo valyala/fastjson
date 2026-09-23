@@ -1,6 +1,7 @@
 package fastjson
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"strings"
@@ -87,6 +88,44 @@ func TestUnescapeStringBestEffort(t *testing.T) {
 		testUnescapeStringBestEffort(t, `\u12\"пролw`, `\u12"пролw`)
 		testUnescapeStringBestEffort(t, `п\ud83eи`, "п\\ud83eи")
 	})
+}
+
+func TestStringTypeDoesNotCorruptFollowingBytes(t *testing.T) {
+	const caption = "\U000e0067\U000e0062\U000e0065\U000e006e\U000e0067\U000e007f\U0001f3f4\U000e0067\U000e0062"
+	input := `{"caption":"` + caption + `\n"}`
+	var p Parser
+	v, err := p.Parse(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := string(v.MarshalTo(nil))
+	captionValue := v.Get("caption")
+	if captionValue.Type() != TypeString {
+		t.Fatal("caption is not a string")
+	}
+	if got := string(v.MarshalTo(nil)); got != before {
+		t.Fatalf("Type changed JSON: before %q, after %q", before, got)
+	}
+	if got := string(v.GetStringBytes("caption")); got != caption+"\n" {
+		t.Fatalf("caption changed after Type: %q", got)
+	}
+}
+
+func TestEscapeStringProducesJSONEscapes(t *testing.T) {
+	for _, input := range []string{
+		"quote \" and slash \\",
+		"\b\f\n\r\t" + string([]byte{0, 1, 0x1f}),
+		"\U000e0067\U000e0062🏴",
+	} {
+		encoded := escapeString(nil, input)
+		var decoded string
+		if err := json.Unmarshal(encoded, &decoded); err != nil {
+			t.Fatalf("invalid JSON escape for %q: %v", input, err)
+		}
+		if decoded != input {
+			t.Fatalf("round trip for %q yielded %q", input, decoded)
+		}
+	}
 }
 
 func testUnescapeStringBestEffort(t *testing.T, s, expectedS string) {
