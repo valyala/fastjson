@@ -298,6 +298,11 @@ func TestParseBestEffort(t *testing.T) {
 	f("-123.456E-10", -123.456e-10)
 	f("1.e4", 1.e4)
 	f("-1.E-10", -1.e-10)
+	f("8.54E-4", 8.54e-4)
+	f("-8.54E-4", -8.54e-4)
+	f("8.54e-4", 8.54e-4)
+	f("-8.54e-4", -8.54e-4)
+	f("1.2345e5", 1.2345e5)
 
 	// inf and nan
 	f("12345678909123456789012e45678", math.Inf(1))
@@ -453,6 +458,11 @@ func TestParseSuccess(t *testing.T) {
 	f("-1.E-10", -1.e-10)
 	f(".1e3", 100)
 	f("-.12e3", -120)
+	f("8.54E-4", 8.54e-4)
+	f("-8.54E-4", -8.54e-4)
+	f("8.54e-4", 8.54e-4)
+	f("-8.54e-4", -8.54e-4)
+	f("1.2345e5", 1.2345e5)
 
 	// inf and nan
 	f("12345678909123456789012e45678", math.Inf(1))
@@ -504,6 +514,77 @@ func TestParseFuzz(t *testing.T) {
 		}
 		if num != numExpected {
 			t.Fatalf("unexpected number parsed from %q; got %g; want %g", s, num, numExpected)
+		}
+	}
+}
+
+func TestParseScientificEquivalence(t *testing.T) {
+	tests := []string{
+		"8.54E-4",
+		"-8.54E-4",
+		"8.54e-4",
+		"-8.54e-4",
+		"8.54E+4",
+		"1.2345e5",
+		"8.3461040379165e+01",
+		"7.7657847244556e-04",
+		"9.32551706440358e-02",
+		"6.84390135538214e+04",
+		"6.6388901092876e-09",
+		"7.35599884539419e+08",
+		"3.90750799913304e+02",
+		"7.01089646842274e+08",
+		"9.77664207030885e+02",
+		"4.97097554966829e+01",
+		"1e-4",
+		"-1e-4",
+		"1e4",
+		"0.000854",
+	}
+	for _, s := range tests {
+		t.Run(s, func(t *testing.T) {
+			expected, err := strconv.ParseFloat(s, 64)
+			if err != nil {
+				t.Fatalf("strconv.ParseFloat(%q): %v", s, err)
+			}
+			got, err := Parse(s)
+			if err != nil {
+				t.Fatalf("Parse(%q): %v", s, err)
+			}
+			if math.Float64bits(got) != math.Float64bits(expected) {
+				t.Fatalf("Parse(%q) = %g (%x), want %g (%x)", s, got, math.Float64bits(got), expected, math.Float64bits(expected))
+			}
+			gotBE := ParseBestEffort(s)
+			if math.Float64bits(gotBE) != math.Float64bits(expected) {
+				t.Fatalf("ParseBestEffort(%q) = %g (%x), want %g (%x)", s, gotBE, math.Float64bits(gotBE), expected, math.Float64bits(expected))
+			}
+		})
+	}
+}
+
+func TestParseScientificFuzz(t *testing.T) {
+	r := rand.New(rand.NewSource(0))
+	for range 100000 {
+		f := r.Float64() * math.Pow10(r.Intn(40)-20)
+		fmtChar := byte('e')
+		if r.Intn(2) == 1 {
+			fmtChar = 'E'
+		}
+		s := strconv.FormatFloat(f, fmtChar, -1, 64)
+		expected, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			t.Fatalf("unexpected error when parsing %q: %s", s, err)
+		}
+		got, err := Parse(s)
+		if err != nil {
+			t.Fatalf("unexpected error in Parse(%q): %s", s, err)
+		}
+		if math.Float64bits(got) != math.Float64bits(expected) {
+			t.Fatalf("Parse(%q) = %g (%x); want %g (%x)", s, got, math.Float64bits(got), expected, math.Float64bits(expected))
+		}
+		gotBE := ParseBestEffort(s)
+		if math.Float64bits(gotBE) != math.Float64bits(expected) {
+			t.Fatalf("ParseBestEffort(%q) = %g (%x); want %g (%x)", s, gotBE, math.Float64bits(gotBE), expected, math.Float64bits(expected))
 		}
 	}
 }
