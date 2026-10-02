@@ -192,7 +192,10 @@ func ParseInt64(s string) (int64, error) {
 // This works faster than math.Pow10, since it avoids additional multiplication.
 var float64pow10 = [...]float64{
 	1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16,
+	1e17, 1e18, 1e19, 1e20, 1e21, 1e22,
 }
+
+const maxMantissaLen = 17
 
 // ParseBestEffort parses floating-point number s.
 //
@@ -265,6 +268,7 @@ func ParseBestEffort(s string) float64 {
 		return f
 	}
 
+	fractDigits := uint(0)
 	if s[i] == '.' {
 		// Parse fractional part.
 		i++
@@ -278,7 +282,7 @@ func ParseBestEffort(s string) float64 {
 			if s[i] >= '0' && s[i] <= '9' {
 				d = d*10 + uint64(s[i]-'0')
 				i++
-				if i-j >= uint(len(float64pow10)) {
+				if i-j >= maxMantissaLen {
 					// The mantissa is out of range. Fall back to standard parsing.
 					f, err := strconv.ParseFloat(s, 64)
 					if err != nil && !math.IsInf(f, 0) {
@@ -293,8 +297,9 @@ func ParseBestEffort(s string) float64 {
 		if i < k {
 			return 0
 		}
+		fractDigits = i - k
 		// Convert the entire mantissa to a float at once to avoid rounding errors.
-		f = float64(d) / float64pow10[i-k]
+		f = float64(d) / float64pow10[fractDigits]
 		if i >= uint(len(s)) {
 			// Fast path - parsed fractional number.
 			if minus {
@@ -342,10 +347,24 @@ func ParseBestEffort(s string) float64 {
 		if expMinus {
 			exp = -exp
 		}
-		f *= math.Pow10(int(exp))
 		if i >= uint(len(s)) {
-			if minus {
-				f = -f
+			realExp := int(exp) - int(fractDigits)
+			if d <= 1<<53-1 && realExp >= -22 && realExp <= 22 {
+				if realExp >= 0 {
+					f = float64(d) * float64pow10[realExp]
+				} else {
+					f = float64(d) / float64pow10[-realExp]
+				}
+				if minus {
+					f = -f
+				}
+				return f
+			}
+			// Fall back to standard parsing for exponents or mantissas out of range
+			// of exact floating-point representation.
+			f, err := strconv.ParseFloat(s, 64)
+			if err != nil && !math.IsInf(f, 0) {
+				return 0
 			}
 			return f
 		}
@@ -423,6 +442,7 @@ func Parse(s string) (float64, error) {
 		return f, nil
 	}
 
+	fractDigits := uint(0)
 	if s[i] == '.' {
 		// Parse fractional part.
 		i++
@@ -436,7 +456,7 @@ func Parse(s string) (float64, error) {
 			if s[i] >= '0' && s[i] <= '9' {
 				d = d*10 + uint64(s[i]-'0')
 				i++
-				if i-j >= uint(len(float64pow10)) {
+				if i-j >= maxMantissaLen {
 					// The mantissa is out of range. Fall back to standard parsing.
 					f, err := strconv.ParseFloat(s, 64)
 					if err != nil && !math.IsInf(f, 0) {
@@ -451,8 +471,9 @@ func Parse(s string) (float64, error) {
 		if i < k {
 			return 0, fmt.Errorf("cannot find mantissa in %q", s)
 		}
+		fractDigits = i - k
 		// Convert the entire mantissa to a float at once to avoid rounding errors.
-		f = float64(d) / float64pow10[i-k]
+		f = float64(d) / float64pow10[fractDigits]
 		if i >= uint(len(s)) {
 			// Fast path - parsed fractional number.
 			if minus {
@@ -500,10 +521,24 @@ func Parse(s string) (float64, error) {
 		if expMinus {
 			exp = -exp
 		}
-		f *= math.Pow10(int(exp))
 		if i >= uint(len(s)) {
-			if minus {
-				f = -f
+			realExp := int(exp) - int(fractDigits)
+			if d <= 1<<53-1 && realExp >= -22 && realExp <= 22 {
+				if realExp >= 0 {
+					f = float64(d) * float64pow10[realExp]
+				} else {
+					f = float64(d) / float64pow10[-realExp]
+				}
+				if minus {
+					f = -f
+				}
+				return f, nil
+			}
+			// Fall back to standard parsing for exponents or mantissas out of range
+			// of exact floating-point representation.
+			f, err := strconv.ParseFloat(s, 64)
+			if err != nil && !math.IsInf(f, 0) {
+				return 0, fmt.Errorf("cannot parse exponent in %q: %s", s, err)
 			}
 			return f, nil
 		}
