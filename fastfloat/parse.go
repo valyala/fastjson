@@ -271,6 +271,9 @@ func ParseBestEffort(s string) float64 {
 		if i >= uint(len(s)) {
 			// the fractional part may be elided to remain compliant
 			// with https://go.dev/ref/spec#Floating-point_literals
+			if minus {
+				f = -f
+			}
 			return f
 		}
 		k := i
@@ -429,6 +432,9 @@ func Parse(s string) (float64, error) {
 		if i >= uint(len(s)) {
 			// the fractional part might be elided to remain compliant
 			// with https://go.dev/ref/spec#Floating-point_literals
+			if minus {
+				f = -f
+			}
 			return f, nil
 		}
 		k := i
