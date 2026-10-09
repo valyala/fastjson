@@ -103,9 +103,11 @@ func (v *Value) Set(key string, value *Value) {
 
 // SetArrayItem sets the value in the array v at idx position.
 //
+// Negative indexes are ignored.
+//
 // The value must be unchanged during v lifetime.
 func (v *Value) SetArrayItem(idx int, value *Value) {
-	if v == nil || v.t != TypeArray {
+	if v == nil || v.t != TypeArray || idx < 0 {
 		return
 	}
 	for idx >= len(v.a) {

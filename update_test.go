@@ -101,3 +101,43 @@ func TestValueDelSet(t *testing.T) {
 	v.Set("x", MustParse(`[]`))
 	v.SetArrayItem(1, MustParse(`[]`))
 }
+
+func TestValueSetArrayItem(t *testing.T) {
+	minInt := -int(^uint(0)>>1) - 1
+	for _, tc := range []struct {
+		name        string
+		input       string
+		idx         int
+		replacement string
+		want        string
+	}{
+		{"empty_negative", `[]`, -1, `3`, `[]`},
+		{"empty_negative_nil", `[]`, -1, "", `[]`},
+		{"empty_negative_two", `[]`, -2, `3`, `[]`},
+		{"empty_negative_two_nil", `[]`, -2, "", `[]`},
+		{"empty_min_int", `[]`, minInt, `3`, `[]`},
+		{"empty_min_int_nil", `[]`, minInt, "", `[]`},
+		{"populated_negative", `[1,2]`, -1, `3`, `[1,2]`},
+		{"populated_negative_nil", `[1,2]`, -1, "", `[1,2]`},
+		{"populated_negative_two", `[1,2]`, -2, `3`, `[1,2]`},
+		{"populated_negative_two_nil", `[1,2]`, -2, "", `[1,2]`},
+		{"populated_min_int", `[1,2]`, minInt, `3`, `[1,2]`},
+		{"populated_min_int_nil", `[1,2]`, minInt, "", `[1,2]`},
+		{"replace", `[1,2]`, 0, `3`, `[3,2]`},
+		{"replace_nil", `[1,2]`, 0, "", `[null,2]`},
+		{"grow", `[1,2]`, 3, `3`, `[1,2,null,3]`},
+		{"grow_nil", `[1,2]`, 3, "", `[1,2,null,null]`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			v := MustParse(tc.input)
+			var replacement *Value
+			if tc.replacement != "" {
+				replacement = MustParse(tc.replacement)
+			}
+			v.SetArrayItem(tc.idx, replacement)
+			if got := v.String(); got != tc.want {
+				t.Fatalf("unexpected array; got %s; want %s", got, tc.want)
+			}
+		})
+	}
+}
