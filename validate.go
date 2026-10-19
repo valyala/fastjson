@@ -136,11 +136,13 @@ func validateObject(s string) (string, error) {
 			return s, fmt.Errorf(`cannot find opening '"" for object key`)
 		}
 
+		keyStart := s
 		var key string
 		key, s, err = validateKey(s[1:])
 		if err != nil {
 			return s, fmt.Errorf("cannot parse object key: %s", err)
 		}
+		keyJSON := keyStart[:len(keyStart)-len(s)]
 		// Scan the key for control chars.
 		for i := range len(key) {
 			if key[i] < 0x20 {
@@ -157,7 +159,7 @@ func validateObject(s string) (string, error) {
 		s = skipWS(s)
 		s, err = validateValue(s)
 		if err != nil {
-			return s, fmt.Errorf("cannot parse object value: %s", err)
+			return s, fmt.Errorf("cannot parse object value for key %s: %s", startEndString(keyJSON), err)
 		}
 		s = skipWS(s)
 		if len(s) == 0 {

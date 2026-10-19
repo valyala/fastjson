@@ -159,3 +159,37 @@ func TestValidate(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateObjectKeyContext(t *testing.T) {
+	tests := []struct {
+		input string
+		keys  []string
+	}{
+		{"{\"test\":\"bad\njson\",\"good\":\"again\"}", []string{`"test"`}},
+		{`{"outer":{"inner":tru}}`, []string{`"outer"`, `"inner"`}},
+		{`{"items":[{"value":tru}]}`, []string{`"items"`, `"value"`}},
+		{`{"first\"name":tru}`, []string{`"first\"name"`}},
+		{`{"\u006eame":tru}`, []string{`"\u006eame"`}},
+		{`{"":tru}`, []string{`""`}},
+		{`{"名":tru}`, []string{`"名"`}},
+		{`{"value":}`, []string{`"value"`}},
+		{`{"` + strings.Repeat("k", 200) + `":tru}`, []string{`"` + strings.Repeat("k", 39) + `...` + strings.Repeat("k", 39) + `"`}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			for _, err := range []error{Validate(tt.input), ValidateBytes([]byte(tt.input))} {
+				if err == nil {
+					t.Fatal("expected invalid JSON")
+				}
+				for _, key := range tt.keys {
+					if !strings.Contains(err.Error(), "object value for key "+key+":") {
+						t.Errorf("missing key %s in error: %s", key, err)
+					}
+				}
+				if !strings.Contains(err.Error(), "unparsed tail:") {
+					t.Errorf("missing input context: %s", err)
+				}
+			}
+		})
+	}
+}
