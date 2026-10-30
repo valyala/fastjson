@@ -316,3 +316,37 @@ func benchmarkStdJSONParseEmptyStruct(b *testing.B, s string) {
 		}
 	})
 }
+
+func BenchmarkParseNewParser(b *testing.B) {
+	b.Run("small", func(b *testing.B) {
+		benchmarkParseNewParser(b, smallFixture)
+	})
+	b.Run("medium", func(b *testing.B) {
+		benchmarkParseNewParser(b, mediumFixture)
+	})
+	b.Run("large", func(b *testing.B) {
+		benchmarkParseNewParser(b, largeFixture)
+	})
+	b.Run("canada", func(b *testing.B) {
+		benchmarkParseNewParser(b, canadaFixture)
+	})
+	b.Run("citm", func(b *testing.B) {
+		benchmarkParseNewParser(b, citmFixture)
+	})
+	b.Run("twitter", func(b *testing.B) {
+		benchmarkParseNewParser(b, twitterFixture)
+	})
+}
+
+func benchmarkParseNewParser(b *testing.B, s string) {
+	b.ReportAllocs()
+	b.SetBytes(int64(len(s)))
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			var p Parser
+			if _, err := p.Parse(s); err != nil {
+				panic(fmt.Errorf("unexpected error: %s", err))
+			}
+		}
+	})
+}

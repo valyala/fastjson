@@ -53,23 +53,50 @@ func (p *Parser) ParseBytes(b []byte) (*Value, error) {
 }
 
 type cache struct {
+	// vs is the chunk the next value is taken from.
 	vs []Value
+
+	// chunks contains all the chunks allocated by the cache.
+	// The first n chunks are in use, and vs is the last of them.
+	//
+	// Values are never moved to a bigger chunk, since parsed values refer to them by pointers,
+	// so the parsed tree would keep every outgrown chunk alive.
+	chunks [][]Value
+	n      int
 }
 
+// The first chunk holds cacheChunkMin values. Every next chunk is twice bigger
+// until it reaches cacheChunkMin<<cacheChunkMaxShift values.
+const (
+	cacheChunkMin      = 16
+	cacheChunkMaxShift = 8
+)
+
 func (c *cache) reset() {
+	if c.n > 1 {
+		for _, vs := range c.chunks[:c.n-1] {
+			for i := range vs {
+				vs[i].reset()
+			}
+		}
+	}
 	vs := c.vs
 	for i := range vs {
 		vs[i].reset()
 	}
-	c.vs = vs[:0]
+	c.vs = nil
+	c.n = 0
 }
 
 func (c *cache) getValue() *Value {
-	if cap(c.vs) > len(c.vs) {
-		c.vs = c.vs[:len(c.vs)+1]
-	} else {
-		c.vs = append(c.vs, Value{})
+	if len(c.vs) == cap(c.vs) {
+		if c.n == len(c.chunks) {
+			c.chunks = append(c.chunks, make([]Value, cacheChunkMin<<min(c.n, cacheChunkMaxShift)))
+		}
+		c.vs = c.chunks[c.n][:0]
+		c.n++
 	}
+	c.vs = c.vs[:len(c.vs)+1]
 	return &c.vs[len(c.vs)-1]
 }
 

@@ -3,6 +3,8 @@ package fastjson
 import (
 	"fmt"
 	"math"
+	"runtime"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -1274,4 +1276,181 @@ func testParseGetSerial(s string) error {
 		}
 	}
 	return nil
+}
+
+func TestParserCacheReuse(t *testing.T) {
+	var p Parser
+	f := func(s string) {
+		t.Helper()
+
+		v, err := p.Parse(s)
+		if err != nil {
+			t.Fatalf("cannot parse %s: %s", startEndString(s), err)
+		}
+		if result := v.String(); result != s {
+			t.Fatalf("unexpected result for %s; got %s", startEndString(s), startEndString(result))
+		}
+	}
+
+	// Array lengths around every chunk boundary.
+	// An array with n items needs n+1 values.
+	var lens []int
+	total := 0
+	for i := range cacheChunkMaxShift + 3 {
+		total += cacheChunkMin << min(i, cacheChunkMaxShift)
+		lens = append(lens, total-2, total-1, total)
+	}
+	for _, n := range lens {
+		f(numbersJSON(n))
+	}
+	for _, n := range slices.Backward(lens) {
+		f(numbersJSON(n))
+	}
+
+	f(`{}`)
+	f(itemsJSON(20000))
+	f(`{"a":[1,{"b":2}]}`)
+}
+
+func TestParserCacheReset(t *testing.T) {
+	s := itemsJSON(5000)
+	var p Parser
+	if _, err := p.Parse(s); err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	// Parser must re-use the allocated chunks.
+	n := testing.AllocsPerRun(10, func() {
+		if _, err := p.Parse(s); err != nil {
+			panic(fmt.Errorf("unexpected error: %s", err))
+		}
+	})
+	if n != 0 {
+		t.Fatalf("unexpected number of allocations; got %v; want 0", n)
+	}
+
+	// All the values in all the chunks must be reset.
+	p.c.reset()
+	for i, vs := range p.c.chunks {
+		for j := range vs {
+			v := &vs[j]
+			if v.t != 0 || v.s != "" || len(v.a) != 0 || len(v.o.kvs) != 0 {
+				t.Fatalf("value %d at chunk %d isn't reset", j, i)
+			}
+		}
+	}
+}
+
+func TestArenaCacheReuse(t *testing.T) {
+	var a Arena
+	for _, n := range []int{20000, 3, 0, 20000} {
+		a.Reset()
+		result := buildItems(&a, n).String()
+		expected := itemsJSON(n)
+		if result != expected {
+			t.Fatalf("unexpected result for n=%d; got %s; want %s", n, startEndString(result), startEndString(expected))
+		}
+	}
+}
+
+func TestCacheMemoryUsage(t *testing.T) {
+	// The tree built with a new Parser or Arena must use about the same memory
+	// as the tree built with a re-used one.
+	const itemsCount = 40000
+	s := itemsJSON(itemsCount)
+
+	f := func(name string, build func(reuse bool) any) {
+		t.Helper()
+
+		newBytes := heapGrowth(func() any { return build(false) })
+		reusedBytes := heapGrowth(func() any { return build(true) })
+		if newBytes > reusedBytes*3/2 {
+			t.Fatalf("too big memory usage for a new %s; got %d bytes; want up to 1.5x of %d bytes used by a re-used %s",
+				name, newBytes, reusedBytes, name)
+		}
+	}
+
+	f("Parser", func(reuse bool) any {
+		var p Parser
+		if reuse {
+			if _, err := p.Parse(s); err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+		}
+		v, err := p.Parse(s)
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+		return []any{&p, v}
+	})
+	f("Arena", func(reuse bool) any {
+		var a Arena
+		if reuse {
+			buildItems(&a, itemsCount)
+			a.Reset()
+		}
+		return []any{&a, buildItems(&a, itemsCount)}
+	})
+}
+
+// heapGrowth returns the growth of the live heap while the result of build is alive.
+func heapGrowth(build func() any) int64 {
+	before := liveHeap()
+	x := build()
+	after := liveHeap()
+	runtime.KeepAlive(x)
+	return after - before
+}
+
+func liveHeap() int64 {
+	runtime.GC()
+	var ms runtime.MemStats
+	runtime.ReadMemStats(&ms)
+	return int64(ms.HeapAlloc)
+}
+
+// numbersJSON returns JSON array with numbers from 0 to n-1.
+func numbersJSON(n int) string {
+	var sb strings.Builder
+	sb.WriteByte('[')
+	for i := range n {
+		if i > 0 {
+			sb.WriteByte(',')
+		}
+		fmt.Fprintf(&sb, "%d", i)
+	}
+	sb.WriteByte(']')
+	return sb.String()
+}
+
+// itemsJSON returns JSON object with n items.
+func itemsJSON(n int) string {
+	var sb strings.Builder
+	sb.WriteString(`{"items":[`)
+	for i := range n {
+		if i > 0 {
+			sb.WriteByte(',')
+		}
+		fmt.Fprintf(&sb, `{"sku":"s%06d","qty":%d,"tags":["a","b"]}`, i, i%100)
+	}
+	sb.WriteString(`]}`)
+	return sb.String()
+}
+
+// buildItems builds the value for itemsJSON(n) with a.
+func buildItems(a *Arena, n int) *Value {
+	items := a.NewArray()
+	root := a.NewObject()
+	root.Set("items", items)
+	for i := range n {
+		o := a.NewObject()
+		items.SetArrayItem(i, o)
+		o.Set("sku", a.NewString(fmt.Sprintf("s%06d", i)))
+		o.Set("qty", a.NewNumberInt(i%100))
+		tags := a.NewArray()
+		o.Set("tags", tags)
+		tags.SetArrayItem(0, a.NewString("a"))
+		tags.SetArrayItem(1, a.NewString("b"))
+	}
+	return root
 }
