@@ -278,8 +278,35 @@ func escapeString(dst []byte, s string) []byte {
 		return dst
 	}
 
-	// Slow path.
-	return strconv.AppendQuote(dst, s)
+	// Slow path. strconv.AppendQuote may emit Go-specific escapes such as \x,
+	// which are invalid in JSON. Escape each byte explicitly instead.
+	dst = append(dst, '"')
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch {
+		case c == '"':
+			dst = append(dst, '\\', '"')
+		case c == '\\':
+			dst = append(dst, '\\', '\\')
+		case c >= 0x20:
+			dst = append(dst, c)
+		case c == '\b':
+			dst = append(dst, '\\', 'b')
+		case c == '\f':
+			dst = append(dst, '\\', 'f')
+		case c == '\n':
+			dst = append(dst, '\\', 'n')
+		case c == '\r':
+			dst = append(dst, '\\', 'r')
+		case c == '\t':
+			dst = append(dst, '\\', 't')
+		default:
+			const hex = "0123456789abcdef"
+			dst = append(dst, '\\', 'u', '0', '0', hex[c>>4], hex[c&0xf])
+		}
+	}
+	dst = append(dst, '"')
+	return dst
 }
 
 func hasSpecialChars(s string) bool {
